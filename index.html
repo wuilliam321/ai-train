@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Entrenamiento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 2.2rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        select, input {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: white;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .day-selector {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .day-btn {
+            padding: 10px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            min-width: 80px;
+        }
+
+        .day-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .day-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .day-btn.today {
+            border-color: #f6ad55;
+            background: #fef5e7;
+        }
+
+        .day-btn.active.today {
+            background: #ed8936;
+            border-color: #ed8936;
+        }
+
+        /* Toggle para estadísticas */
+        .stats-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stats-container.expanded {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .stats-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            font-weight: 600;
+            color: #4a5568;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .stats-toggle:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .stats-toggle-icon {
+            transition: transform 0.3s ease;
+            font-size: 0.9rem;
+            color: #667eea;
+        }
+
+        .stats-toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .stats-summary {
+            background: transparent;
+            padding: 0 20px 20px 20px;
+            display: none;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .stats-summary.show {
+            display: flex;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #4a5568;
+            margin-top: 5px;
+        }
+
+        .exercises-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .exercise-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .exercise-card.completed {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left-color: #28a745;
+            opacity: 0.8;
+            order: 999; /* Envía al final */
+        }
+
+        .exercise-card.completed .exercise-title::after {
+            content: " ✅";
+            color: #28a745;
+        }
+
+        .exercise-card:not(.completed):hover {
+            transform: translateX(5px);
+        }
+
+        .exercise-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .exercise-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .exercise-group {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .exercise-card.completed .exercise-group {
+            background: #28a745;
+        }
+
+/* Acordeón para detalles del ejercicio */
+.exercise-details-toggle {
+    background: #f7fafc;
+    border: none;
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #4a5568;
+    transition: all 0.3s ease;
+    margin: 10px 0;
+}
+
+.exercise-details-toggle:hover {
+    background: #edf2f7;
+}
+
+.exercise-card.completed .exercise-details-toggle {
+    background: #e8f5e8;
+}
+
+.exercise-card.completed .exercise-details-toggle:hover {
+    background: #d4edda;
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.toggle-icon.open {
+    transform: rotate(180deg);
+}
+
+.exercise-details {
+    display: none;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 0 0 8px 8px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.exercise-details.open {
+    display: grid;
+}
+
+.exercise-card.completed .exercise-details {
+    background: #e8f5e8;
+    border-top-color: #c6f6d5;
+}
+
+.detail-item {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 3px solid #667eea;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.exercise-card.completed .detail-item {
+    background: #f8fff8;
+    border-left-color: #28a745;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.8rem;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.detail-value {
+    color: #2d3748;
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+/* Resumen compacto de detalles clave */
+.exercise-summary {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 10px 0;
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #edf2f7;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.exercise-card.completed .summary-item {
+    background: #e8f5e8;
+    color: #276749;
+}
+
+.summary-item .icon {
+    font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    .exercise-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .exercise-summary {
+        justify-content: center;
+    }
+    
+    .detail-item {
+        padding: 6px 10px;
+    }
+}
+
+        .detail-item {
+            background: #f7fafc;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .exercise-card.completed .detail-item {
+            background: #e8f5e8;
+            border-left-color: #28a745;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.85rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+        /* Sistema de seguimiento de series */
+        .series-tracker {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #e2e8f0;
+        }
+
+        .exercise-card.completed .series-tracker {
+            background: #e8f5e8;
+            border-color: #28a745;
+        }
+
+        .series-tracker h4 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .series-progress {
+            font-size: 0.9rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .exercise-card.completed .series-progress {
+            color: #28a745;
+        }
+
+        .series-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .series-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .series-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .series-item.completed {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .series-item.completed::after {
+            content: "✓";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #155724;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .series-item.current {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+        }
+
+        .series-number {
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: block;
+        }
+
+        .series-reps {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .quick-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .reset-btn {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .reset-btn:hover {
+            background: #feb2b2;
+        }
+
+        .complete-all-btn {
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        .complete-all-btn:hover {
+            background: #9ae6b4;
+        }
+
+        .exercise-description {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .exercise-card.completed .exercise-description {
+            background: #e8f5e8;
+        }
+
+        .progress-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .effort-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .effort-value {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-weight: 600;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .exercise-card.completed .effort-value {
+            background: #28a745;
+        }
+
+        .notes-input {
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .exercises-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Separador visual entre ejercicios activos y completados */
+        .completed-separator {
+            margin: 30px 0 20px 0;
+            text-align: center;
+            color: #718096;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .completed-separator::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+        }
+
+        .completed-separator span {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .day-selector {
+                justify-content: stretch;
+            }
+            
+            .day-btn {
+                flex: 1;
+                min-width: auto;
+            }
+            
+            .exercise-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .series-grid {
+                grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            }
+            
+            .progress-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .quick-actions {
+                flex-direction: column;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #c53030;
+        }
+/* Cargador de CSV */
+.csv-loader {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border: 2px dashed #667eea;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.csv-loader.collapsed {
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.csv-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: transparent;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    font-weight: 600;
+    color: #4a5568;
+    transition: all 0.3s ease;
+}
+
+.csv-toggle:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.csv-toggle-icon {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+    color: #667eea;
+}
+
+.csv-toggle-icon.open {
+    transform: rotate(180deg);
+}
+
+.csv-content {
+    padding: 0 20px 20px 20px;
+    display: none;
+}
+
+.csv-content.show {
+    display: block;
+}
+
+.csv-loader h3 {
+    color: #4a5568;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.file-input-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.file-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.file-input:hover {
+    border-color: #667eea;
+}
+
+.csv-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.csv-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.load-btn {
+    background: #667eea;
+    color: white;
+}
+
+.load-btn:hover {
+    background: #5a67d8;
+}
+
+.load-btn:disabled {
+    background: #a0aec0;
+    cursor: not-allowed;
+}
+
+.sample-btn {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+.sample-btn:hover {
+    background: #cbd5e0;
+}
+
+.clear-btn {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.clear-btn:hover {
+    background: #feb2b2;
+}
+
+.csv-status {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.csv-status.success {
+    background: #c6f6d5;
+    color: #276749;
+    border: 1px solid #9ae6b4;
+}
+
+.csv-status.error {
+    background: #fed7d7;
+    color: #c53030;
+    border: 1px solid #feb2b2;
+}
+
+.csv-status.info {
+    background: #bee3f8;
+    color: #2c5282;
+    border: 1px solid #90cdf4;
+}
+
+@media (max-width: 768px) {
+    .csv-actions {
+        flex-direction: column;
+    }
+    
+    .csv-btn {
+        width: 100%;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>💪 Control de Entrenamiento</h1>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="weekSelect">Semana:</label>
+                    <select id="weekSelect">
+                        <!-- Se llena dinámicamente -->
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="currentDate">Fecha actual:</label>
+                    <input type="date" id="currentDate">
+                </div>
+            </div>
+            <div class="day-selector" id="daySelector">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </header>
+
+<div class="csv-loader collapsed" id="csvLoader">
+    <button class="csv-toggle" id="csvToggle">
+        <span>📊 Cargar Datos de Entrenamiento</span>
+        <span class="csv-toggle-icon" id="csvToggleIcon">▼</span>
+    </button>
+    <div class="csv-content" id="csvContent">
+        <div class="file-input-wrapper">
+            <input type="file" 
+                   id="csvFileInput" 
+                   class="file-input" 
+                   accept=".csv,.txt" 
+                   placeholder="Selecciona tu archivo data.csv">
+        </div>
+        <div class="csv-actions">
+            <button class="csv-btn load-btn" id="loadCsvBtn" disabled>
+                📁 Cargar CSV
+            </button>
+            <button class="csv-btn sample-btn" id="sampleBtn">
+                📋 Usar Datos de Ejemplo
+            </button>
+            <button class="csv-btn clear-btn" id="clearDataBtn">
+                🗑️ Limpiar Datos
+            </button>
+        </div>
+        <div class="csv-status" id="csvStatus" style="display: none;"></div>
+    </div>
+</div>
+
+        <div class="stats-container" id="statsWrapper">
+            <button class="stats-toggle" id="statsToggle">
+                <span>📊 Ver estadísticas</span>
+                <span class="stats-toggle-icon" id="statsToggleIcon">▼</span>
+            </button>
+            <div class="stats-summary" id="statsContainer">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+
+        <main class="exercises-container">
+            <div id="exercisesContainer" class="exercises-list">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class TrainingApp {
+            constructor() {
+                this.trainingData = [];
+                this.currentWeek = this.getCachedWeek() || 1;
+                this.currentDay = this.getCurrentDayName();
+                this.selectedDay = this.currentDay;
+                this.statsVisible = false;
+                this.csvVisible = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.loadTrainingData();
+                this.setupEventListeners();
+                this.setCurrentDate();
+                this.initializeHistory();
+                this.render();
+            }
+
+loadTrainingData() {
+    // Intentar cargar datos del localStorage primero
+    const savedData = localStorage.getItem('trainingApp_csvData');
+    if (savedData) {
+        try {
+            this.trainingData = JSON.parse(savedData);
+            this.showCsvStatus('Datos cargados desde caché local', 'info');
+            this.loadSavedProgress();
+            return;
+        } catch (e) {
+            console.warn('Error cargando datos guardados:', e);
+        }
+    }
+    
+    // Si no hay datos guardados, usar datos de ejemplo
+    this.loadSampleData();
+}
+
+loadSampleData() {
+    // Datos de entrenamiento de ejemplo
+    this.trainingData = [
+        {
+            semana: 1,
+            dia: "Lunes",
+            grupo: "Piernas",
+            ejercicio: "Sentadilla aire",
+            series: 3,
+            reps: "10-12",
+            peso: "Peso corporal",
+            progresion: "Aumentar reps a 12-15",
+            flexibilidad: "Estiramiento de cadera y piernas",
+            equilibrio: "Equilibrio en 1 pierna",
+            notas: "",
+            seriesCompletas: [],
+            esfuerzo: 5,
+            descripcion: "Párate con pies al ancho de hombros, espalda recta. Baja cadera como si te sentaras, rodillas alineadas con pies, sube controlando el core."
+        },
+        {
+            semana: 1,
+            dia: "Lunes",
+            grupo: "Piernas",
+            ejercicio: "Zancadas alternas",
+            series: 3,
+            reps: "10 c/pierna",
+            peso: "Peso corporal",
+            progresion: "Aumentar reps a 12",
+            flexibilidad: "Estiramiento de cuádriceps",
+            equilibrio: "Equilibrio al bajar",
+            notas: "",
+            seriesCompletas: [],
+            esfuerzo: 5,
+            descripcion: "Da un paso largo hacia adelante, rodilla trasera casi tocando el suelo, torso recto. Empuja con pierna delantera para volver. Alterna piernas."
+        },
+        {
+            semana: 1,
+            dia: "Lunes",
+            grupo: "Piernas",
+            ejercicio: "Puente glúteos",
+            series: 3,
+            reps: "12-15",
+            peso: "Peso corporal",
+            progresion: "Aumentar reps a 15-20",
+            flexibilidad: "Movilidad cadera",
+            equilibrio: "No",
+            notas: "",
+            seriesCompletas: [],
+            esfuerzo: 5,
+            descripcion: "Acostado boca arriba, rodillas flexionadas, pies apoyados. Eleva cadera apretando glúteos, baja controlado."
+        },
+        {
+            semana: 1,
+            dia: "Martes",
+            grupo: "Torso",
+            ejercicio: "Flexiones de pecho",
+            series: 3,
+            reps: "8-12",
+            peso: "Peso corporal",
+            progresion: "Aumentar reps",
+            flexibilidad: "Movilidad hombros y pecho",
+            equilibrio: "No",
+            notas: "",
+            seriesCompletas: [],
+            esfuerzo: 5,
+            descripcion: "Manos al ancho de hombros, cuerpo recto. Baja controlado hasta tocar pecho casi al suelo, sube extendiendo brazos."
+        },
+        {
+            semana: 1,
+            dia: "Martes",
+            grupo: "Torso",
+            ejercicio: "Remo con mancuerna",
+            series: 3,
+            reps: "8-12",
+            peso: "Moderado",
+            progresion: "Aumentar peso progresivamente",
+            flexibilidad: "Movilidad hombros y pecho",
+            equilibrio: "Sí",
+            notas: "",
+            seriesCompletas: [],
+            esfuerzo: 5,
+            descripcion: "Inclina torso ligeramente adelante, mancuerna en mano, lleva codo hacia atrás cerca del torso, control al bajar."
+        },
+        {
+            semana: 1,
+            dia: "Martes",
+            grupo: "Torso",
+            ejercicio: "Press militar mancuerna",
+            series: 3,
+            reps: "8-12",
+            peso: "Moderado",
+            progresion: "Aumentar reps o peso",
+            flexibilidad: "Movilidad hombros",
+            equilibrio: "No",
+            notas: "",
+            seriesCompletas: [],
+            esfuerzo: 5,
+            descripcion: "De pie o sentado, mancuernas a la altura de hombros, empuja hacia arriba sin arquear espalda, baja controlado."
+        },
+        {
+            semana: 1,
+            dia: "Miércoles",
+            grupo: "Movilidad y Core",
+            ejercicio: "Bird Dog",
+            series: 3,
+            reps: "10 c/lado",
+            peso: "Peso corporal",
+            progresion: "Aumentar reps",
+            flexibilidad: "Estiramiento lumbar",
+            equilibrio: "Sí",
+            notas: "",
+            seriesCompletas: [],
+            esfuerzo: 5,
+            descripcion: "En posición de 4 apoyos, extiende brazo derecho y pierna izquierda, mantén alineación, alterna lados."
+        }
+    ];
+
+    this.showCsvStatus('Datos de ejemplo cargados', 'info');
+    this.loadSavedProgress();
+}
+
+            setupEventListeners() {
+                const weekSelect = document.getElementById('weekSelect');
+                const currentDate = document.getElementById('currentDate');
+                const daySelector = document.getElementById('daySelector');
+                const statsToggle = document.getElementById('statsToggle');
+                const csvToggle = document.getElementById('csvToggle');
+
+                weekSelect.addEventListener('change', (e) => {
+                    this.currentWeek = parseInt(e.target.value);
+                    this.cacheWeek(this.currentWeek);
+                    this.render();
+                });
+
+                currentDate.addEventListener('change', (e) => {
+                    this.updateCurrentDay(e.target.value);
+                    this.render();
+                });
+
+                daySelector.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('day-btn')) {
+                        this.selectedDay = e.target.dataset.day;
+                        this.render();
+                    }
+                });
+
+                statsToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleStats();
+                });
+
+                csvToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleCsvLoader();
+                });
+
+                // Event listeners para CSV
+                    const csvFileInput = document.getElementById('csvFileInput');
+                    const loadCsvBtn = document.getElementById('loadCsvBtn');
+                    const sampleBtn = document.getElementById('sampleBtn');
+                    const clearDataBtn = document.getElementById('clearDataBtn');
+
+                    csvFileInput.addEventListener('change', (e) => {
+                            const file = e.target.files[0];
+                            loadCsvBtn.disabled = !file;
+                            
+                            if (file) {
+                                        this.showCsvStatus(`Archivo seleccionado: ${file.name}`, 'info');
+                                                }
+                        });
+
+                    loadCsvBtn.addEventListener('click', () => {
+                            this.loadCsvFile();
+                        });
+
+                    sampleBtn.addEventListener('click', () => {
+                            this.loadSampleData();
+                            this.render();
+                        });
+
+                    clearDataBtn.addEventListener('click', () => {
+                            this.clearAllData();
+                        });
+            }
+
+            toggleStats() {
+                this.statsVisible = !this.statsVisible;
+                const statsContainer = document.getElementById('statsContainer');
+                const statsWrapper = document.getElementById('statsWrapper');
+                const statsToggleIcon = document.getElementById('statsToggleIcon');
+                const statsToggle = document.getElementById('statsToggle');
+                
+                if (this.statsVisible) {
+                    statsContainer.classList.add('show');
+                    statsWrapper.classList.add('expanded');
+                    statsToggleIcon.classList.add('open');
+                    statsToggle.querySelector('span:first-child').textContent = '📊 Ocultar estadísticas';
+                } else {
+                    statsContainer.classList.remove('show');
+                    statsWrapper.classList.remove('expanded');
+                    statsToggleIcon.classList.remove('open');
+                    statsToggle.querySelector('span:first-child').textContent = '📊 Ver estadísticas';
+                }
+            }
+
+            toggleCsvLoader() {
+                this.csvVisible = !this.csvVisible;
+                const csvContent = document.getElementById('csvContent');
+                const csvLoader = document.getElementById('csvLoader');
+                const csvToggleIcon = document.getElementById('csvToggleIcon');
+                const csvToggle = document.getElementById('csvToggle');
+                
+                if (this.csvVisible) {
+                    csvContent.classList.add('show');
+                    csvLoader.classList.remove('collapsed');
+                    csvToggleIcon.classList.add('open');
+                    csvToggle.querySelector('span:first-child').textContent = '📊 Ocultar carga de datos';
+                } else {
+                    csvContent.classList.remove('show');
+                    csvLoader.classList.add('collapsed');
+                    csvToggleIcon.classList.remove('open');
+                    csvToggle.querySelector('span:first-child').textContent = '📊 Cargar Datos de Entrenamiento';
+                }
+            }
+
+            getCurrentDayName() {
+                const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                const today = new Date();
+                return days[today.getDay()];
+            }
+
+            setCurrentDate() {
+                const today = new Date();
+                const dateString = today.toISOString().split('T')[0];
+                document.getElementById('currentDate').value = dateString;
+            }
+
+            updateCurrentDay(dateString) {
+                const date = new Date(dateString + 'T12:00:00');
+                const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                this.currentDay = days[date.getDay()];
+                this.selectedDay = this.currentDay;
+            }
+
+            getCachedWeek() {
+                return localStorage.getItem('trainingApp_currentWeek') ? 
+                       parseInt(localStorage.getItem('trainingApp_currentWeek')) : null;
+            }
+
+            cacheWeek(week) {
+                localStorage.setItem('trainingApp_currentWeek', week.toString());
+            }
+
+loadSavedProgress() {
+    const saved = localStorage.getItem('trainingApp_progress');
+    const history = localStorage.getItem('trainingApp_history');
+    
+    if (saved) {
+        const progress = JSON.parse(saved);
+        this.trainingData.forEach(exercise => {
+            const key = `${exercise.semana}_${exercise.dia}_${exercise.ejercicio}`;
+            if (progress[key]) {
+                // Restaurar progreso actual
+                exercise.seriesCompletas = progress[key].seriesCompletas || [];
+                exercise.esfuerzo = progress[key].esfuerzo || 5;
+                exercise.notas = progress[key].notas || '';
+                
+                // Restaurar timestamps si existen
+                exercise.ultimaActividad = progress[key].ultimaActividad;
+                exercise.fechaInicio = progress[key].fechaInicio;
+            }
+        });
+    }
+    
+    // Cargar historial si no existe, inicializarlo
+    this.exerciseHistory = history ? JSON.parse(history) : {};
+}
+
+saveProgress() {
+    const progress = {};
+    const timestamp = new Date().toISOString();
+    
+    this.trainingData.forEach(exercise => {
+        const key = `${exercise.semana}_${exercise.dia}_${exercise.ejercicio}`;
+        
+        // Determinar si el ejercicio está activo (tiene progreso)
+        const hasProgress = exercise.seriesCompletas && exercise.seriesCompletas.length > 0;
+        const isCompleted = this.isExerciseCompleted(exercise);
+        
+        progress[key] = {
+            seriesCompletas: exercise.seriesCompletas || [],
+            esfuerzo: exercise.esfuerzo,
+            notas: exercise.notas,
+            ultimaActividad: hasProgress ? timestamp : exercise.ultimaActividad,
+            fechaInicio: exercise.fechaInicio || (hasProgress ? timestamp : undefined),
+            completado: isCompleted,
+            fechaCompletado: isCompleted ? timestamp : exercise.fechaCompletado
+        };
+        
+        // Si el ejercicio se completó, agregarlo al historial
+        if (isCompleted && !this.isInHistory(key, timestamp.split('T')[0])) {
+            this.addToHistory(exercise, timestamp);
+        }
+    });
+    
+    localStorage.setItem('trainingApp_progress', JSON.stringify(progress));
+    localStorage.setItem('trainingApp_history', JSON.stringify(this.exerciseHistory));
+}
+
+            getAvailableWeeks() {
+                const weeks = [...new Set(this.trainingData.map(item => item.semana))];
+                return weeks.sort((a, b) => a - b);
+            }
+
+            getAvailableDays() {
+                const days = [...new Set(this.trainingData
+                    .filter(item => item.semana === this.currentWeek)
+                    .map(item => item.dia))];
+                
+                const dayOrder = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                return days.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+            }
+
+            getCurrentExercises() {
+                const exercises = this.trainingData.filter(item => 
+                    item.semana === this.currentWeek && item.dia === this.selectedDay
+                );
+
+                // Separar ejercicios completados y no completados
+                const completed = exercises.filter(ex => this.isExerciseCompleted(ex));
+                const incomplete = exercises.filter(ex => !this.isExerciseCompleted(ex));
+                
+                return [...incomplete, ...completed];
+            }
+
+            isExerciseCompleted(exercise) {
+                return exercise.seriesCompletas && exercise.seriesCompletas.length === exercise.series;
+            }
+
+            getWeekStats() {
+                const weekExercises = this.trainingData.filter(item => item.semana === this.currentWeek);
+                const completed = weekExercises.filter(item => this.isExerciseCompleted(item)).length;
+                const total = weekExercises.length;
+                const avgEffort = weekExercises.reduce((sum, item) => sum + item.esfuerzo, 0) / total;
+
+                return {
+                    completed,
+                    total,
+                    percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+                    avgEffort: Math.round(avgEffort * 10) / 10
+                };
+            }
+
+toggleSerie(exerciseIndex, serieNumber) {
+    const exercises = this.getCurrentExercises();
+    const exercise = exercises[exerciseIndex];
+    
+    if (!exercise.seriesCompletas) {
+        exercise.seriesCompletas = [];
+    }
+
+    const index = exercise.seriesCompletas.indexOf(serieNumber);
+    if (index > -1) {
+        // Si la serie está completada, la removemos
+        exercise.seriesCompletas.splice(index, 1);
+    } else {
+        // Si no está completada, la agregamos
+        exercise.seriesCompletas.push(serieNumber);
+        
+        // Marcar fecha de inicio si es la primera serie
+        if (exercise.seriesCompletas.length === 1 && !exercise.fechaInicio) {
+            exercise.fechaInicio = new Date().toISOString();
+        }
+    }
+
+    exercise.seriesCompletas.sort((a, b) => a - b);
+    
+    // Actualizar timestamp de última actividad
+    exercise.ultimaActividad = new Date().toISOString();
+    
+    this.saveProgress();
+    this.render();
+}
+
+            resetExercise(exerciseIndex) {
+                const exercises = this.getCurrentExercises();
+                exercises[exerciseIndex].seriesCompletas = [];
+                this.saveProgress();
+                this.render();
+            }
+
+            completeAllSeries(exerciseIndex) {
+                const exercises = this.getCurrentExercises();
+                const exercise = exercises[exerciseIndex];
+                exercise.seriesCompletas = Array.from({length: exercise.series}, (_, i) => i + 1);
+                this.saveProgress();
+                this.render();
+            }
+
+            updateEffort(exerciseIndex, effort) {
+                const exercises = this.getCurrentExercises();
+                exercises[exerciseIndex].esfuerzo = parseInt(effort);
+                
+                // Actualizar el valor visual dinámicamente
+                const effortValueElement = document.querySelector(`#effort-value-${exerciseIndex}`);
+                if (effortValueElement) {
+                    effortValueElement.textContent = effort;
+                }
+                
+                this.saveProgress();
+                this.renderStats();
+            }
+
+            updateNotes(exerciseIndex, notes) {
+                const exercises = this.getCurrentExercises();
+                exercises[exerciseIndex].notas = notes;
+                this.saveProgress();
+            }
+
+            getCurrentSerie(exercise) {
+                if (!exercise.seriesCompletas || exercise.seriesCompletas.length === 0) {
+                    return 1;
+                }
+                
+                for (let i = 1; i <= exercise.series; i++) {
+                    if (!exercise.seriesCompletas.includes(i)) {
+                        return i;
+                    }
+                }
+                
+                return exercise.series; // Todas completadas
+            }
+
+            renderWeekSelector() {
+                const weekSelect = document.getElementById('weekSelect');
+                const weeks = this.getAvailableWeeks();
+                
+                weekSelect.innerHTML = weeks.map(week => 
+                    `<option value="${week}" ${week === this.currentWeek ? 'selected' : ''}>
+                        Semana ${week}
+                    </option>`
+).join('');
+           }
+
+           renderDaySelector() {
+               const daySelector = document.getElementById('daySelector');
+               const days = this.getAvailableDays();
+               
+               daySelector.innerHTML = days.map(day => {
+                   const isToday = day === this.currentDay;
+                   const isSelected = day === this.selectedDay;
+                   const classes = ['day-btn'];
+                   
+                   if (isSelected) classes.push('active');
+                   if (isToday) classes.push('today');
+                   
+                   return `<button class="${classes.join(' ')}" data-day="${day}">
+                       ${day}${isToday ? ' (Hoy)' : ''}
+                   </button>`;
+               }).join('');
+           }
+
+           renderStats() {
+               const statsContainer = document.getElementById('statsContainer');
+               const stats = this.getWeekStats();
+               
+               statsContainer.innerHTML = `
+                   <div class="stat-item">
+                       <div class="stat-value">${stats.completed}/${stats.total}</div>
+                       <div class="stat-label">Ejercicios Completados</div>
+                   </div>
+                   <div class="stat-item">
+                       <div class="stat-value">${stats.percentage}%</div>
+                       <div class="stat-label">Progreso Semanal</div>
+                   </div>
+                   <div class="stat-item">
+                       <div class="stat-value">${stats.avgEffort}/10</div>
+                       <div class="stat-label">Esfuerzo Promedio</div>
+                   </div>
+               `;
+           }
+
+           renderExercises() {
+               const container = document.getElementById('exercisesContainer');
+               const exercises = this.getCurrentExercises();
+               
+               if (exercises.length === 0) {
+                   container.innerHTML = `
+                       <div class="empty-state">
+                           <h3>No hay ejercicios programados</h3>
+                           <p>No tienes ejercicios para ${this.selectedDay} de la semana ${this.currentWeek}</p>
+                       </div>
+                   `;
+                   return;
+               }
+
+               const incompleteExercises = exercises.filter(ex => !this.isExerciseCompleted(ex));
+               const completedExercises = exercises.filter(ex => this.isExerciseCompleted(ex));
+               
+               let html = '';
+               
+               // Ejercicios incompletos primero
+               incompleteExercises.forEach((exercise, index) => {
+                   html += this.renderExerciseCard(exercise, index, false);
+               });
+               
+               // Separador si hay ejercicios completados
+               if (completedExercises.length > 0 && incompleteExercises.length > 0) {
+                   html += `
+                       <div class="completed-separator">
+                           <span>✅ Ejercicios Completados (${completedExercises.length})</span>
+                       </div>
+                   `;
+               }
+               
+               // Ejercicios completados al final
+               completedExercises.forEach((exercise, index) => {
+                   const realIndex = incompleteExercises.length + index;
+                   html += this.renderExerciseCard(exercise, realIndex, true);
+               });
+
+               container.innerHTML = html;
+           }
+
+toggleExerciseDetails(exerciseIndex) {
+    const detailsElement = document.getElementById(`exercise-details-${exerciseIndex}`);
+    const iconElement = document.getElementById(`toggle-icon-${exerciseIndex}`);
+    
+    if (detailsElement && iconElement) {
+        const isOpen = detailsElement.classList.contains('open');
+        
+        if (isOpen) {
+            detailsElement.classList.remove('open');
+            iconElement.classList.remove('open');
+            iconElement.parentElement.querySelector('span').textContent = 'Ver detalles completos';
+        } else {
+            detailsElement.classList.add('open');
+            iconElement.classList.add('open');
+            iconElement.parentElement.querySelector('span').textContent = 'Ocultar detalles';
+        }
+    }
+}
+
+renderExerciseCard(exercise, index, isCompleted) {
+    const currentSerie = this.getCurrentSerie(exercise);
+    const completedCount = exercise.seriesCompletas ? exercise.seriesCompletas.length : 0;
+    
+    return `
+        <div class="exercise-card ${isCompleted ? 'completed' : ''}">
+            <div class="exercise-header">
+                <div>
+                    <div class="exercise-title">${exercise.ejercicio}</div>
+                    <div class="exercise-group">${exercise.grupo}</div>
+                </div>
+            </div>
+            
+            <!-- Resumen compacto -->
+            <div class="exercise-summary">
+                <div class="summary-item">
+                    <span class="icon">🏋️</span>
+                    <span>${exercise.series} series</span>
+                </div>
+                <div class="summary-item">
+                    <span class="icon">🔁</span>
+                    <span>${exercise.reps}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="icon">⚖️</span>
+                    <span>${exercise.peso}</span>
+                </div>
+                ${exercise.equilibrio !== 'No' ? `
+                <div class="summary-item">
+                    <span class="icon">⚖️</span>
+                    <span>Equilibrio</span>
+                </div>` : ''}
+            </div>
+
+            <!-- Toggle para detalles -->
+            <button class="exercise-details-toggle" onclick="app.toggleExerciseDetails(${index})">
+                <span>Ver detalles completos</span>
+                <span class="toggle-icon" id="toggle-icon-${index}">▼</span>
+            </button>
+
+            <!-- Detalles completos (colapsables) -->
+            <div class="exercise-details" id="exercise-details-${index}">
+                <div class="detail-item">
+                    <span class="detail-label">Series:</span>
+                    <span class="detail-value">${exercise.series}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Repeticiones:</span>
+                    <span class="detail-value">${exercise.reps}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Peso/Intensidad:</span>
+                    <span class="detail-value">${exercise.peso}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Progresión:</span>
+                    <span class="detail-value">${exercise.progresion}</span>
+                </div>
+                ${exercise.flexibilidad !== 'No' ? `
+                <div class="detail-item">
+                    <span class="detail-label">Flexibilidad:</span>
+                    <span class="detail-value">${exercise.flexibilidad}</span>
+                </div>` : ''}
+                ${exercise.equilibrio !== 'No' ? `
+                <div class="detail-item">
+                    <span class="detail-label">Equilibrio:</span>
+                    <span class="detail-value">${exercise.equilibrio}</span>
+                </div>` : ''}
+            </div>
+
+            <div class="series-tracker">
+                <h4>
+                    📊 Seguimiento de Series
+                    <span class="series-progress">(${completedCount}/${exercise.series})</span>
+                </h4>
+                
+                <div class="series-grid">
+                    ${Array.from({length: exercise.series}, (_, i) => {
+                        const serieNum = i + 1;
+                        const isSerieCompleted = exercise.seriesCompletas && exercise.seriesCompletas.includes(serieNum);
+                        const isCurrent = !isCompleted && serieNum === currentSerie;
+                        
+                        let classes = ['series-item'];
+                        if (isSerieCompleted) classes.push('completed');
+                        if (isCurrent) classes.push('current');
+                        
+                        return `
+                            <div class="${classes.join(' ')}" onclick="app.toggleSerie(${index}, ${serieNum})">
+                                <span class="series-number">Serie ${serieNum}</span>
+                                <span class="series-reps">${exercise.reps}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                <div class="quick-actions">
+                    <button class="quick-btn reset-btn" onclick="app.resetExercise(${index})">
+                        🔄 Reiniciar
+                    </button>
+                    <button class="quick-btn complete-all-btn" onclick="app.completeAllSeries(${index})">
+                        ✅ Completar Todas
+                    </button>
+                </div>
+            </div>
+
+            <div class="exercise-description">
+                <strong>Descripción:</strong> ${exercise.descripcion}
+            </div>
+
+            <div class="progress-controls">
+                <div class="effort-slider">
+                    <span>Esfuerzo dedicado:</span>
+                    <input type="range" 
+                           class="slider" 
+                           min="1" 
+                           max="10" 
+                           value="${exercise.esfuerzo}"
+                           oninput="app.updateEffort(${index}, this.value)">
+                    <span class="effort-value" id="effort-value-${index}">${exercise.esfuerzo}</span>
+                </div>
+            </div>
+
+            <textarea class="notes-input" 
+                      placeholder="Notas del ejercicio..."
+                      onchange="app.updateNotes(${index}, this.value)">${exercise.notas}</textarea>
+        </div>
+    `;
+}
+
+// Métodos para manejo de historial
+initializeHistory() {
+    if (!this.exerciseHistory) {
+        this.exerciseHistory = {};
+    }
+}
+
+isInHistory(exerciseKey, date) {
+    if (!this.exerciseHistory[exerciseKey]) return false;
+    return this.exerciseHistory[exerciseKey].some(entry => entry.fecha.startsWith(date));
+}
+
+addToHistory(exercise, timestamp) {
+    const key = `${exercise.semana}_${exercise.dia}_${exercise.ejercicio}`;
+    const date = timestamp.split('T')[0];
+    const time = timestamp.split('T')[1].split('.')[0];
+    
+    if (!this.exerciseHistory[key]) {
+        this.exerciseHistory[key] = [];
+    }
+    
+    // Evitar duplicados del mismo día
+    const existingIndex = this.exerciseHistory[key].findIndex(entry => 
+        entry.fecha.startsWith(date)
+    );
+    
+    const historyEntry = {
+        fecha: timestamp,
+        fechaCorta: date,
+        hora: time,
+        semana: exercise.semana,
+        dia: exercise.dia,
+        grupo: exercise.grupo,
+        ejercicio: exercise.ejercicio,
+        seriesCompletadas: exercise.seriesCompletas ? exercise.seriesCompletas.length : 0,
+        seriesTotal: exercise.series,
+        esfuerzo: exercise.esfuerzo,
+        notas: exercise.notas || '',
+        duracionEstimada: this.calculateExerciseDuration(exercise)
+    };
+    
+    if (existingIndex > -1) {
+        // Actualizar entrada existente
+        this.exerciseHistory[key][existingIndex] = historyEntry;
+    } else {
+        // Agregar nueva entrada
+        this.exerciseHistory[key].push(historyEntry);
+    }
+    
+    // Mantener solo los últimos 30 registros por ejercicio
+    if (this.exerciseHistory[key].length > 30) {
+        this.exerciseHistory[key] = this.exerciseHistory[key]
+            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+            .slice(0, 30);
+    }
+}
+
+calculateExerciseDuration(exercise) {
+    // Estimación simple basada en series y tipo de ejercicio
+    const baseTime = 60; // segundos por serie
+    const restTime = 30; // descanso entre series
+    return (exercise.series * baseTime) + ((exercise.series - 1) * restTime);
+}
+
+// Métodos para obtener estadísticas del historial
+getExerciseHistory(exerciseKey, limit = 10) {
+    if (!this.exerciseHistory[exerciseKey]) return [];
+    return this.exerciseHistory[exerciseKey]
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+        .slice(0, limit);
+}
+
+getTotalWorkoutHistory(limit = 50) {
+    const allHistory = [];
+    Object.values(this.exerciseHistory).forEach(exerciseHistory => {
+        allHistory.push(...exerciseHistory);
+    });
+    
+    return allHistory
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+        .slice(0, limit);
+}
+
+getWeeklyStats(weekNumber) {
+    const weekHistory = this.getTotalWorkoutHistory().filter(entry => 
+        entry.semana === weekNumber
+    );
+    
+    const byDate = {};
+    weekHistory.forEach(entry => {
+        if (!byDate[entry.fechaCorta]) {
+            byDate[entry.fechaCorta] = [];
+        }
+        byDate[entry.fechaCorta].push(entry);
+    });
+    
+    return {
+        totalDays: Object.keys(byDate).length,
+        totalExercises: weekHistory.length,
+        averageEffort: weekHistory.reduce((sum, entry) => sum + entry.esfuerzo, 0) / weekHistory.length || 0,
+        totalEstimatedTime: weekHistory.reduce((sum, entry) => sum + entry.duracionEstimada, 0),
+        dayBreakdown: byDate
+    };
+}
+
+getExerciseStreak(exerciseKey) {
+    const history = this.getExerciseHistory(exerciseKey, 30);
+    if (history.length === 0) return 0;
+    
+    let streak = 0;
+    const today = new Date();
+    
+    for (let i = 0; i < history.length; i++) {
+        const entryDate = new Date(history[i].fecha);
+        const daysDiff = Math.floor((today - entryDate) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff === i) {
+            streak++;
+        } else {
+            break;
+        }
+    }
+    
+    return streak;
+}
+
+// Método para limpiar historial antiguo (opcional)
+cleanOldHistory(daysToKeep = 90) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+    
+    Object.keys(this.exerciseHistory).forEach(key => {
+        this.exerciseHistory[key] = this.exerciseHistory[key].filter(entry => 
+            new Date(entry.fecha) > cutoffDate
+        );
+        
+        // Eliminar arrays vacíos
+        if (this.exerciseHistory[key].length === 0) {
+            delete this.exerciseHistory[key];
+        }
+    });
+    
+    localStorage.setItem('trainingApp_history', JSON.stringify(this.exerciseHistory));
+}
+
+// Métodos para manejo de CSV
+loadCsvFile() {
+    const fileInput = document.getElementById('csvFileInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        this.showCsvStatus('Por favor selecciona un archivo CSV', 'error');
+        return;
+    }
+
+    this.showCsvStatus('Cargando archivo...', 'info');
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const csvContent = e.target.result;
+            const parsedData = this.parseCsvContent(csvContent);
+            
+            if (parsedData.length === 0) {
+                this.showCsvStatus('El archivo CSV está vacío o no tiene datos válidos', 'error');
+                return;
+            }
+
+            this.trainingData = parsedData;
+            
+            // Guardar en localStorage
+            localStorage.setItem('trainingApp_csvData', JSON.stringify(this.trainingData));
+            
+            // Reinicializar progreso para los nuevos datos
+            this.loadSavedProgress();
+            
+            this.showCsvStatus(`✅ CSV cargado exitosamente: ${parsedData.length} ejercicios`, 'success');
+            this.render();
+            
+        } catch (error) {
+            console.error('Error parsing CSV:', error);
+            this.showCsvStatus(`Error al procesar el archivo: ${error.message}`, 'error');
+        }
+    };
+
+    reader.onerror = () => {
+        this.showCsvStatus('Error al leer el archivo', 'error');
+    };
+
+    reader.readAsText(file);
+}
+
+parseCsvContent(csvContent) {
+    console.log('Contenido CSV recibido:', csvContent.substring(0, 200) + '...');
+    
+    const lines = csvContent.trim().split('\n');
+    console.log(`Total líneas: ${lines.length}`);
+    
+    if (lines.length < 2) {
+        throw new Error('El archivo debe tener al menos una línea de cabeceras y una de datos');
+    }
+
+    // Procesar cabeceras
+    const headers = this.parseCsvLine(lines[0]);
+    console.log('Headers parseados:', headers);
+    
+    // Crear mapeo de índices
+    const headerMap = this.createHeaderMap(headers);
+    
+    // Verificar que tenemos los campos esenciales mapeados
+    if (headerMap.semana === undefined || headerMap.ejercicio === undefined) {
+        throw new Error('No se pudieron mapear las columnas esenciales (Semana, Ejercicio)');
+    }
+
+    // Procesar datos
+    const exercises = [];
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) {
+            console.log(`Línea ${i + 1} vacía, saltando`);
+            continue;
+        }
+
+        try {
+            const values = this.parseCsvLine(line);
+            console.log(`Línea ${i + 1} parseada:`, values);
+            
+            const exercise = this.parseExerciseRow(values, headerMap);
+            
+            if (exercise) {
+                exercises.push(exercise);
+                console.log(`Ejercicio agregado: ${exercise.ejercicio}`);
+            } else {
+                console.warn(`Línea ${i + 1} no produjo un ejercicio válido`);
+            }
+        } catch (error) {
+            console.error(`Error en línea ${i + 1}:`, error.message);
+            console.error('Contenido de la línea:', line);
+        }
+    }
+
+    console.log(`Total ejercicios procesados: ${exercises.length}`);
+    return exercises;
+}
+
+parseCsvLine(line) {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+        
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                // Comillas dobles escapadas
+                current += '"';
+                i++; // Saltar la siguiente comilla
+            } else {
+                // Inicio o fin de campo con comillas
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            // Separador de campo (fuera de comillas)
+            values.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    
+    // Agregar el último valor
+    values.push(current.trim());
+    
+    // Limpiar comillas de los valores si las tienen
+    return values.map(value => {
+        if (value.startsWith('"') && value.endsWith('"')) {
+            return value.slice(1, -1).replace(/""/g, '"');
+        }
+        return value;
+    });
+}
+
+createHeaderMap(headers) {
+    const map = {};
+    
+    console.log('Headers detectados:', headers);
+    
+    headers.forEach((header, index) => {
+        const cleanHeader = header.toLowerCase().trim();
+        
+        // Mapeo más específico
+        if (cleanHeader === 'semana') map.semana = index;
+        else if (cleanHeader === 'día' || cleanHeader === 'dia') map.dia = index;
+        else if (cleanHeader === 'grupo') map.grupo = index;
+        else if (cleanHeader === 'ejercicio') map.ejercicio = index;
+        else if (cleanHeader === 'series') map.series = index;
+        else if (cleanHeader.includes('reps') || cleanHeader.includes('duración') || cleanHeader.includes('duracion')) map.reps = index;
+        else if (cleanHeader.includes('peso') || cleanHeader.includes('intensidad')) map.peso = index;
+        else if (cleanHeader.includes('progresión') || cleanHeader.includes('progresion')) map.progresion = index;
+        else if (cleanHeader.includes('flexibilidad') || cleanHeader.includes('movilidad')) map.flexibilidad = index;
+        else if (cleanHeader.includes('equilibrio')) map.equilibrio = index;
+        else if (cleanHeader.includes('notas')) map.notas = index;
+        else if (cleanHeader.includes('completado')) map.completado = index;
+        else if (cleanHeader.includes('esfuerzo') || cleanHeader.includes('nivel')) map.esfuerzo = index;
+        else if (cleanHeader.includes('descripción') || cleanHeader.includes('descripcion') || cleanHeader.includes('detallada')) map.descripcion = index;
+    });
+    
+    console.log('Mapa de headers creado:', map);
+    return map;
+}
+
+parseExerciseRow(values, headerMap) {
+    // Debug: mostrar valores recibidos
+    console.log('Parsing row:', values);
+    console.log('Header map:', headerMap);
+    
+    // Validar que tenemos suficientes valores
+    if (values.length < Object.keys(headerMap).length / 2) {
+        console.warn('Fila con pocos valores:', values);
+        return null;
+    }
+    
+    // Validar datos mínimos
+    const ejercicioValue = values[headerMap.ejercicio];
+    const semanaValue = values[headerMap.semana];
+    
+    if (!ejercicioValue || ejercicioValue.trim() === '') {
+        console.warn('Ejercicio vacío en:', values);
+        return null;
+    }
+    
+    if (!semanaValue || semanaValue.trim() === '') {
+        console.warn('Semana vacía en:', values);
+        return null;
+    }
+
+    const exercise = {
+        semana: parseInt(semanaValue) || 1,
+        dia: (values[headerMap.dia] || 'Lunes').trim(),
+        grupo: (values[headerMap.grupo] || 'General').trim(),
+        ejercicio: ejercicioValue.trim(),
+        series: parseInt(values[headerMap.series]) || 3,
+        reps: (values[headerMap.reps] || '10-12').trim(),
+        peso: (values[headerMap.peso] || 'Peso corporal').trim(),
+        progresion: (values[headerMap.progresion] || 'Aumentar gradualmente').trim(),
+        flexibilidad: (values[headerMap.flexibilidad] || 'No').trim(),
+        equilibrio: (values[headerMap.equilibrio] || 'No').trim(),
+        notas: (values[headerMap.notas] || '').trim(),
+        esfuerzo: parseInt(values[headerMap.esfuerzo]) || 5,
+        descripcion: (values[headerMap.descripcion] || 'Descripción no disponible').trim(),
+        seriesCompletas: []
+    };
+
+    // Procesar completado si existe
+    if (headerMap.completado !== undefined && values[headerMap.completado]) {
+        const completedValue = values[headerMap.completado].toLowerCase().trim();
+        if (completedValue === 's' || completedValue === 'sí' || completedValue === 'si' || completedValue === 'yes') {
+            exercise.seriesCompletas = Array.from({length: exercise.series}, (_, i) => i + 1);
+        }
+    }
+
+    console.log('Ejercicio parseado:', exercise);
+    return exercise;
+}
+
+showCsvStatus(message, type = 'info') {
+    const statusDiv = document.getElementById('csvStatus');
+    statusDiv.textContent = message;
+    statusDiv.className = `csv-status ${type}`;
+    statusDiv.style.display = 'block';
+
+    // Auto-ocultar después de 5 segundos para mensajes de éxito/info
+    if (type === 'success' || type === 'info') {
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 5000);
+    }
+}
+
+clearAllData() {
+    if (confirm('¿Estás seguro de que quieres limpiar todos los datos y el progreso? Esta acción no se puede deshacer.')) {
+        // Limpiar localStorage
+        localStorage.removeItem('trainingApp_csvData');
+        localStorage.removeItem('trainingApp_progress');
+        localStorage.removeItem('trainingApp_history');
+        localStorage.removeItem('trainingApp_currentWeek');
+        
+        // Resetear estado
+        this.trainingData = [];
+        this.exerciseHistory = {};
+        this.currentWeek = 1;
+        
+        // Limpiar input de archivo
+        document.getElementById('csvFileInput').value = '';
+        document.getElementById('loadCsvBtn').disabled = true;
+        
+        this.showCsvStatus('Todos los datos han sido eliminados', 'info');
+        this.render();
+    }
+}
+
+           render() {
+               this.renderWeekSelector();
+               this.renderDaySelector();
+               this.renderStats();
+               this.renderExercises();
+           }
+
+       }
+
+       // Inicializar la aplicación
+       const app = new TrainingApp();
+
+       // Funciones globales para los event handlers inline
+       window.app = app;
+   </script>
+</body>
+</html>
