@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f0f4f8;
             min-height: 100vh;
             color: #333;
         }
@@ -192,11 +192,6 @@
         }
 
         .exercises-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         .exercise-card {
@@ -633,18 +628,7 @@
             position: relative;
         }
 
-        .completed-separator::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
-        }
-
         .completed-separator span {
-            background: rgba(255, 255, 255, 0.95);
             padding: 0 20px;
         }
 
@@ -1625,7 +1609,7 @@ renderExerciseCard(exercise, index, isCompleted) {
 
             <div class="progress-controls">
                 <div class="effort-slider">
-                    <span>Esfuerzo dedicado:</span>
+                    <span>Esfuerzo:</span>
                     <input type="range" 
                            class="slider" 
                            min="1" 
