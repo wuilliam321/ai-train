@@ -286,7 +286,6 @@ export class ContextMenu {
     const canvas = this.canvas.getCurrentCanvas();
 
     if (confirm('¿Organizar items automáticamente por categoría?')) {
-      // Crear conjuntos por categoría si no existen
       const categorias = [...new Set(canvas.items.map(i => i.categoria))].filter(Boolean);
 
       categorias.forEach(categoria => {
@@ -300,14 +299,30 @@ export class ContextMenu {
           );
         }
 
-        // Mover items de esta categoría al conjunto
-        canvas.items.forEach(item => {
-          if (item.categoria === categoria) {
-            item.conjuntoId = conjunto.id;
-            item.x = Math.random() * 200 + 20;
-            item.y = Math.random() * 100 + 50;
-          }
-        });
+        const conjuntoItems = canvas.items.filter(item => item.categoria === categoria);
+        conjuntoItems.forEach(item => item.conjuntoId = conjunto.id);
+
+        if (conjuntoItems.length > 0) {
+          const gridSizeX = 140;
+          const gridSizeY = 280;
+          const paddingX = 20;
+          const paddingTop = 50;
+          const paddingBottom = 20;
+
+          const numItems = conjuntoItems.length;
+          const cols = Math.ceil(Math.sqrt(numItems));
+          const rows = Math.ceil(numItems / cols);
+
+          conjunto.width = (cols * gridSizeX) + (paddingX * 2);
+          conjunto.height = (rows * gridSizeY) + paddingTop + paddingBottom;
+
+          conjuntoItems.forEach((item, index) => {
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            item.x = paddingX + (col * gridSizeX);
+            item.y = paddingTop + (row * gridSizeY);
+          });
+        }
       });
 
       this.canvas.render();

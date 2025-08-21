@@ -77,28 +77,15 @@ export class FileHandler {
     const canvas = this.canvas.getCurrentCanvas();
     const categorias = [...new Set(canvas.items.map(i => i.categoria))].filter(Boolean);
 
-    let lastConjuntoX = 50;
-    let lastConjuntoY = 50;
+    let currentX = 50;
+    let currentY = 50;
+    let maxYinRow = 0;
 
     categorias.forEach(categoria => {
-      let conjunto = canvas.conjuntos.find(c => c.name.toLowerCase() === categoria.toLowerCase());
-
-      if (!conjunto) {
-        conjunto = this.canvas.createConjunto(
-          categoria,
-          lastConjuntoX,
-          lastConjuntoY
-        );
-        lastConjuntoX += conjunto.width + 50;
-        if (lastConjuntoX > 2000) {
-            lastConjuntoX = 50;
-            lastConjuntoY += 700;
-        }
-      }
-
       const conjuntoItems = canvas.items.filter(item => item.categoria === categoria);
-      conjuntoItems.forEach(item => item.conjuntoId = conjunto.id);
+      if (conjuntoItems.length === 0) return;
 
+      // 1. Calculate required size first
       const gridSizeX = 140;
       const gridSizeY = 280;
       const paddingX = 20;
@@ -112,15 +99,40 @@ export class FileHandler {
       const newWidth = (cols * gridSizeX) + (paddingX * 2);
       const newHeight = (rows * gridSizeY) + paddingTop + paddingBottom;
 
-      conjunto.width = newWidth;
-      conjunto.height = newHeight;
+      // 2. Check if it fits in the current row
+      if (currentX + newWidth > 3000) { // Canvas width limit
+        currentX = 50;
+        currentY += maxYinRow + 50;
+        maxYinRow = 0;
+      }
 
+      // 3. Find or create conjunto with correct position and size
+      let conjunto = canvas.conjuntos.find(c => c.name.toLowerCase() === categoria.toLowerCase());
+      if (conjunto) {
+        conjunto.x = currentX;
+        conjunto.y = currentY;
+        conjunto.width = newWidth;
+        conjunto.height = newHeight;
+      } else {
+        // This part of the logic in createConjunto needs to be adjusted
+        // For now, we create it and then immediately update it.
+        conjunto = this.canvas.createConjunto(categoria, currentX, currentY);
+        conjunto.width = newWidth;
+        conjunto.height = newHeight;
+      }
+      
+      // 4. Position items inside the conjunto
+      conjuntoItems.forEach(item => item.conjuntoId = conjunto.id);
       conjuntoItems.forEach((item, index) => {
         const row = Math.floor(index / cols);
         const col = index % cols;
         item.x = paddingX + (col * gridSizeX);
         item.y = paddingTop + (row * gridSizeY);
       });
+
+      // 5. Update coordinates for the next conjunto
+      currentX += newWidth + 50;
+      maxYinRow = Math.max(maxYinRow, newHeight);
     });
 
     this.canvas.render();

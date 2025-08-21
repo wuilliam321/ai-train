@@ -115,6 +115,7 @@
             height: 142px;
             background: #f8f9fa;
             border: 1px solid #dee2e6;
+            border-radius: 5px;
             margin: 0 auto 8px;
             display: flex;
             align-items: center;
