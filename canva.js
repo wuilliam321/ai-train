@@ -318,11 +318,15 @@ class InventoryCanvas {
       this.resizedConjunto = null;
       this.updateStatus('Listo');
       console.log('✅ FIX: Resize completado');
+      // Trigger autosave after resize
+      triggerAutoSave();
     }
 
     if (this.draggedConjunto) {
       this.draggedConjunto = null;
       this.updateStatus('Listo');
+      // Trigger autosave after conjunto move
+      triggerAutoSave();
     }
   }
 
@@ -384,6 +388,9 @@ class InventoryCanvas {
 
     console.log("finishItemDrag", "item.x", item?.x, "item.y", item?.y);
     console.log('✅ FIX: Item drag completado correctamente');
+    
+    // Trigger debounced autosave after item move
+    triggerAutoSave();
   }
 
   highlightConjuntos(e) {
@@ -1202,9 +1209,17 @@ function deleteSelectedItems() {
   }
 }
 
-// ✅ AUTO-GUARDADO EN LOCALSTORAGE
-function setupAutoSave() {
-  setInterval(() => {
+// ✅ AUTO-GUARDADO EN LOCALSTORAGE CON DEBOUNCE
+let autoSaveTimeout = null;
+
+function triggerAutoSave() {
+  // Clear existing timeout
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout);
+  }
+  
+  // Set new debounced timeout
+  autoSaveTimeout = setTimeout(() => {
     if (inventoryCanvas) {
       const data = {
         version: '1.1',
@@ -1215,9 +1230,26 @@ function setupAutoSave() {
       };
 
       localStorage.setItem('inventoryCanvas_autosave', JSON.stringify(data));
-      console.log('💾 Auto-guardado realizado');
+      
+      // Debug: Log some item positions to verify they're being saved
+      const currentCanvas = inventoryCanvas.getCurrentCanvas();
+      const sampleItem = currentCanvas.items.find(i => i.id === 10); // Item 10 from your logs
+      if (sampleItem) {
+        console.log(`💾 Auto-guardado realizado (debounced) - Item 10 position: x=${sampleItem.x}, y=${sampleItem.y}`);
+      } else {
+        console.log('💾 Auto-guardado realizado (debounced)');
+      }
     }
-  }, 30000); // Auto-guardar cada 30 segundos
+  }, 500); // 500ms debounce delay
+}
+
+function setupAutoSave() {
+  // Keep the periodic save as backup (every 5 minutes)
+  setInterval(() => {
+    if (inventoryCanvas) {
+      triggerAutoSave();
+    }
+  }, 300000); // 5 minutes backup save
 }
 
 function loadAutoSave() {
