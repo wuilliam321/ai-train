@@ -16,8 +16,11 @@ export class ItemRenderer {
     const conjunto = canvasData.conjuntos.find(c => c.id === item.conjuntoId);
     const conjuntoName = conjunto ? conjunto.name : 'Unknown';
 
+    // Generate image content based on url_imagen validity
+    const imageContent = this.getImageContent(item);
+
     div.innerHTML = `
-                   <div class="item-image">${item.emoji || '📦'}</div>
+                   <div class="item-image">${imageContent}</div>
                    <div class="item-code">${item.codigo}</div>
                    <div class="item-description" title="${item.descripcion}">${item.descripcion}</div>
                    <div class="item-talla">${item.talla}</div>
@@ -29,6 +32,42 @@ export class ItemRenderer {
       conjuntoElement.appendChild(div);
     } else {
       this.canvas.workspace.appendChild(div);
+    }
+  }
+
+  getImageContent(item) {
+    // Check if url_imagen exists and is a valid URL
+    if (item.url_imagen && this.isValidImageUrl(item.url_imagen)) {
+      return `<img src="${item.url_imagen}" alt="${item.codigo}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+              <div style="display: none; font-size: 24px;">${item.emoji || this.getEmojiForCategory(item.categoria)}</div>`;
+    } else {
+      // Fallback to emoji
+      return item.emoji || this.getEmojiForCategory(item.categoria);
+    }
+  }
+
+  isValidImageUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    
+    try {
+      const urlObj = new URL(url);
+      // Check if it's a valid HTTP/HTTPS URL
+      if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+        return false;
+      }
+      
+      // Check if it looks like an image URL (optional but helpful)
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+      const pathname = urlObj.pathname.toLowerCase();
+      const hasImageExtension = imageExtensions.some(ext => pathname.endsWith(ext));
+      
+      // Accept URLs that either have image extensions or are from common image hosting services
+      const commonImageHosts = ['imgur.com', 'cloudinary.com', 'amazonaws.com', 'googleusercontent.com', 'unsplash.com'];
+      const hasImageHost = commonImageHosts.some(host => urlObj.hostname.includes(host));
+      
+      return hasImageExtension || hasImageHost || pathname.includes('image') || pathname.includes('img');
+    } catch (e) {
+      return false;
     }
   }
 

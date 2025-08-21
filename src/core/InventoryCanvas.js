@@ -16,7 +16,7 @@ export class InventoryCanvas {
     }];
 
     this.currentCanvasIndex = 0;
-    this.nextItemId = 11;
+    this.nextItemId = 12;
     this.nextConjuntoId = 4;
 
     // Initialize sub-modules
@@ -32,16 +32,17 @@ export class InventoryCanvas {
 
   getDemoItems() {
     return [
-      { id: 1, codigo: "CAM001", categoria: "Camisetas", descripcion: "Camiseta básica blanca", talla: "M", color: "#ffffff", conjuntoId: 1, x: 20, y: 40, emoji: "👕" },
+      { id: 1, codigo: "CAM001", categoria: "Camisetas", descripcion: "Camiseta básica blanca", talla: "M", color: "#ffffff", conjuntoId: 1, x: 20, y: 40, emoji: "👕", url_imagen: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100&h=100&fit=crop" },
       { id: 2, codigo: "CAM002", categoria: "Camisetas", descripcion: "Polo deportivo azul", talla: "L", color: "#0066cc", conjuntoId: 1, x: 160, y: 40, emoji: "👔" },
       { id: 3, codigo: "CAM003", categoria: "Camisetas", descripcion: "Tank top negro", talla: "S", color: "#000000", conjuntoId: 1, x: 90, y: 140, emoji: "🎽" },
-      { id: 4, codigo: "PAN001", categoria: "Pantalones", descripcion: "Jean clásico azul", talla: "32", color: "#004080", conjuntoId: 2, x: 20, y: 40, emoji: "👖" },
+      { id: 4, codigo: "PAN001", categoria: "Pantalones", descripcion: "Jean clásico azul", talla: "32", color: "#004080", conjuntoId: 2, x: 20, y: 40, emoji: "👖", url_imagen: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=100&h=100&fit=crop" },
       { id: 5, codigo: "PAN002", categoria: "Pantalones", descripcion: "Short deportivo", talla: "M", color: "#333333", conjuntoId: 2, x: 160, y: 40, emoji: "🩳" },
-      { id: 6, codigo: "ACC001", categoria: "Accesorios", descripcion: "Zapatillas deportivas", talla: "42", color: "#ff0000", conjuntoId: 3, x: 20, y: 40, emoji: "👟" },
+      { id: 6, codigo: "ACC001", categoria: "Accesorios", descripcion: "Zapatillas deportivas", talla: "42", color: "#ff0000", conjuntoId: 3, x: 20, y: 40, emoji: "👟", url_imagen: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=100&h=100&fit=crop" },
       { id: 7, codigo: "ACC002", categoria: "Accesorios", descripcion: "Gorra snapback", talla: "U", color: "#00cc00", conjuntoId: 3, x: 160, y: 40, emoji: "🧢" },
       { id: 8, codigo: "ACC003", categoria: "Accesorios", descripcion: "Mochila urbana", talla: "U", color: "#800080", conjuntoId: 3, x: 300, y: 40, emoji: "👜" },
       { id: 9, codigo: "CHQ001", categoria: "Chaquetas", descripcion: "Chaqueta de cuero", talla: "L", color: "#8B4513", conjuntoId: 0, x: 100, y: 80, emoji: "🧥" },
-      { id: 10, codigo: "VES001", categoria: "Vestidos", descripcion: "Vestido casual", talla: "M", color: "#FF69B4", conjuntoId: 0, x: 150, y: 120, emoji: "👗" }
+      { id: 10, codigo: "VES001", categoria: "Vestidos", descripcion: "Vestido casual elegante con diseño moderno y cómodo para uso diario", talla: "M", color: "#FF69B4", conjuntoId: 0, x: 150, y: 120, emoji: "👗" },
+      { id: 11, codigo: "TEST001", categoria: "Test", descripcion: "Esta es una descripción extremadamente larga para probar el sistema de texto multilinea y verificar que no expanda el ancho del item", talla: "XL", color: "#FFA500", conjuntoId: 0, x: 250, y: 250, emoji: "🧪" }
     ];
   }
 
@@ -156,8 +157,8 @@ export class InventoryCanvas {
       name: name.trim() || `Conjunto ${this.nextConjuntoId - 1}`,
       x: x || Math.random() * 500 + 200,
       y: y || Math.random() * 300 + 100,
-      width: 300,
-      height: 200
+      width: 900,
+      height: 600
     };
 
     canvas.conjuntos.push(conjunto);

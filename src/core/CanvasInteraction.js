@@ -14,6 +14,7 @@ export class CanvasInteraction {
     this.dragStart = { x: 0, y: 0 };
     this.itemDragOffset = { x: 0, y: 0 };
     this.dragMoveCounter = 0;
+    this.highestZIndex = 100;
   }
 
   setupEventListeners() {
@@ -108,6 +109,8 @@ export class CanvasInteraction {
       y: workspaceMouseY - initialAbsY
     };
 
+    this.highestZIndex++;
+    item.style.zIndex = this.highestZIndex;
     item.classList.add('dragging');
     this.canvas.updateStatus('Moviendo item...');
   }
@@ -128,6 +131,7 @@ export class CanvasInteraction {
 
     this.resizing = true;
     this.resizedConjunto = conjunto;
+    this.resizeCorner = handle.dataset.corner || 'se'; // Default to bottom-right
 
     const conjuntoId = parseInt(conjunto.dataset.conjuntoId);
     const conjuntoData = this.canvas.getCurrentCanvas().conjuntos.find(c => c.id === conjuntoId);
@@ -136,11 +140,13 @@ export class CanvasInteraction {
       x: e.clientX,
       y: e.clientY,
       width: conjuntoData.width,
-      height: conjuntoData.height
+      height: conjuntoData.height,
+      left: conjuntoData.x,
+      top: conjuntoData.y
     };
 
-    this.canvas.updateStatus('Redimensionando conjunto...');
-    console.log('✅ FIX: Resize iniciado correctamente');
+    this.canvas.updateStatus(`Redimensionando conjunto (${this.resizeCorner.toUpperCase()})...`);
+    console.log(`✅ FIX: Resize iniciado correctamente desde esquina ${this.resizeCorner}`);
   }
 
   startConjuntoDrag(e, conjunto) {
@@ -219,18 +225,55 @@ export class CanvasInteraction {
     const dx = (e.clientX - this.resizeStart.x) / this.canvas.getCurrentCanvas().transform.scale;
     const dy = (e.clientY - this.resizeStart.y) / this.canvas.getCurrentCanvas().transform.scale;
 
-    const newWidth = Math.max(200, this.resizeStart.width + dx);
-    const newHeight = Math.max(150, this.resizeStart.height + dy);
-
-    this.resizedConjunto.style.width = newWidth + 'px';
-    this.resizedConjunto.style.height = newHeight + 'px';
-
     const conjuntoId = parseInt(this.resizedConjunto.dataset.conjuntoId);
     const conjuntoData = this.canvas.getCurrentCanvas().conjuntos.find(c => c.id === conjuntoId);
-    if (conjuntoData) {
-      conjuntoData.width = newWidth;
-      conjuntoData.height = newHeight;
+    if (!conjuntoData) return;
+
+    let newWidth, newHeight, newX, newY;
+
+    // Calculate new dimensions and position based on corner
+    switch (this.resizeCorner) {
+      case 'nw': // Top-left corner
+        newWidth = Math.max(200, this.resizeStart.width - dx);
+        newHeight = Math.max(150, this.resizeStart.height - dy);
+        newX = this.resizeStart.left + (this.resizeStart.width - newWidth);
+        newY = this.resizeStart.top + (this.resizeStart.height - newHeight);
+        break;
+      
+      case 'ne': // Top-right corner
+        newWidth = Math.max(200, this.resizeStart.width + dx);
+        newHeight = Math.max(150, this.resizeStart.height - dy);
+        newX = this.resizeStart.left;
+        newY = this.resizeStart.top + (this.resizeStart.height - newHeight);
+        break;
+      
+      case 'sw': // Bottom-left corner
+        newWidth = Math.max(200, this.resizeStart.width - dx);
+        newHeight = Math.max(150, this.resizeStart.height + dy);
+        newX = this.resizeStart.left + (this.resizeStart.width - newWidth);
+        newY = this.resizeStart.top;
+        break;
+      
+      case 'se': // Bottom-right corner (default)
+      default:
+        newWidth = Math.max(200, this.resizeStart.width + dx);
+        newHeight = Math.max(150, this.resizeStart.height + dy);
+        newX = this.resizeStart.left;
+        newY = this.resizeStart.top;
+        break;
     }
+
+    // Update DOM element
+    this.resizedConjunto.style.width = newWidth + 'px';
+    this.resizedConjunto.style.height = newHeight + 'px';
+    this.resizedConjunto.style.left = newX + 'px';
+    this.resizedConjunto.style.top = newY + 'px';
+
+    // Update data
+    conjuntoData.width = newWidth;
+    conjuntoData.height = newHeight;
+    conjuntoData.x = newX;
+    conjuntoData.y = newY;
   }
 
   handleConjuntoDrag(e) {
@@ -267,6 +310,7 @@ export class CanvasInteraction {
     if (this.resizing) {
       this.resizing = false;
       this.resizedConjunto = null;
+      this.resizeCorner = null;
       this.canvas.updateStatus('Listo');
       console.log('✅ FIX: Resize completado');
       triggerAutoSave();

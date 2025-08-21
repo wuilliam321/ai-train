@@ -87,12 +87,13 @@
             border-radius: 8px;
             padding: 10px;
             cursor: move;
-            min-width: 120px;
+            width: 120px;
             text-align: center;
             user-select: none;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             transition: box-shadow 0.2s;
             z-index: 100;
+            box-sizing: border-box;
         }
 
         .item:hover {
@@ -111,10 +112,9 @@
 
         .item-image {
             width: 80px;
-            height: 80px;
+            height: 142px;
             background: #f8f9fa;
             border: 1px solid #dee2e6;
-            border-radius: 4px;
             margin: 0 auto 8px;
             display: flex;
             align-items: center;
@@ -134,8 +134,18 @@
             color: #6c757d;
             margin: 4px 0;
             overflow: hidden;
+            word-wrap: break-word;
+            word-break: break-word;
+            line-height: 1.3;
+            max-height: 2.6em; /* Approximately 2 lines */
+            
+            /* Modern browsers */
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            
+            /* Fallback for older browsers */
             text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         .item-talla {
@@ -228,21 +238,74 @@
             box-shadow: 0 4px 16px rgba(0,0,0,0.2);
         }
 
+        /* Base resize handle styles */
         .resize-handle {
             position: absolute;
-            bottom: -2px;
-            right: -2px;
-            width: 20px;
-            height: 20px;
+            width: 12px;
+            height: 12px;
             background: #007bff;
-            cursor: se-resize;
-            opacity: 0.3;
-            transition: opacity 0.2s;
-            border-radius: 0 0 10px 0;
+            border: 2px solid white;
+            border-radius: 50%;
+            opacity: 0.4;
+            transition: all 0.2s ease;
+            z-index: 200;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-
+        
         .resize-handle:hover {
+            opacity: 1;
+            transform: scale(1.2);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+        
+        .conjunto:hover .resize-handle {
             opacity: 0.8;
+        }
+        
+        .conjunto:hover {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+        }
+        
+        /* Corner-specific positioning and cursors */
+        .resize-handle.nw {
+            top: -6px;
+            left: -6px;
+            cursor: nw-resize;
+        }
+        
+        .resize-handle.ne {
+            top: -6px;
+            right: -6px;
+            cursor: ne-resize;
+        }
+        
+        .resize-handle.sw {
+            bottom: -6px;
+            left: -6px;
+            cursor: sw-resize;
+        }
+        
+        .resize-handle.se {
+            bottom: -6px;
+            right: -6px;
+            cursor: se-resize;
+        }
+        
+        /* Different colors for visual distinction */
+        .resize-handle.nw { background: #28a745; }
+        .resize-handle.ne { background: #dc3545; }
+        .resize-handle.sw { background: #ffc107; }
+        .resize-handle.se { background: #007bff; }
+        
+        /* Subtle pulse animation when conjunto is hovered */
+        .conjunto:hover .resize-handle {
+            animation: pulse-resize 2s infinite;
+        }
+        
+        @keyframes pulse-resize {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
         }
 
         .zoom-controls {

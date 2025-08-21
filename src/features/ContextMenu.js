@@ -151,14 +151,15 @@ export class ContextMenu {
         label: '📐 Organizar en grilla',
         action: () => {
           const conjuntoItems = this.canvas.getCurrentCanvas().items.filter(i => i.conjuntoId === conjuntoId);
-          const gridSize = 140;
-          const itemsPerRow = Math.floor((conjuntoData.width - 40) / gridSize);
+          const gridSizeX = 140;
+          const gridSizeY = 280;
+          const itemsPerRow = Math.floor((conjuntoData.width - 40) / gridSizeX);
 
           conjuntoItems.forEach((item, index) => {
             const row = Math.floor(index / itemsPerRow);
             const col = index % itemsPerRow;
-            item.x = 20 + (col * gridSize);
-            item.y = 50 + (row * gridSize);
+            item.x = 20 + (col * gridSizeX);
+            item.y = 50 + (row * gridSizeY);
           });
 
           this.canvas.render();

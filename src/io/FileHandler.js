@@ -69,9 +69,9 @@ export class FileHandler {
 
   downloadTemplate() {
     const template = `codigo,categoria,descripcion,talla,url_imagen,color
-DEMO001,Camisetas,Camiseta básica blanca,M,https://ejemplo.com/imagen1.jpg,#ffffff
-DEMO002,Pantalones,Jean clásico azul,32,https://ejemplo.com/imagen2.jpg,#0066cc
-DEMO003,Accesorios,Zapatillas deportivas,42,https://ejemplo.com/imagen3.jpg,#ff0000`;
+DEMO001,Camisetas,Camiseta básica blanca,M,https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100&h=100&fit=crop,#ffffff
+DEMO002,Pantalones,Jean clásico azul,32,https://images.unsplash.com/photo-1542272604-787c3835535d?w=100&h=100&fit=crop,#0066cc
+DEMO003,Accesorios,Zapatillas deportivas,42,https://images.unsplash.com/photo-1549298916-b41d501d3772?w=100&h=100&fit=crop,#ff0000`;
 
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
