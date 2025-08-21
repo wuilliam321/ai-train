@@ -151,19 +151,36 @@ export class ContextMenu {
         label: '📐 Organizar en grilla',
         action: () => {
           const conjuntoItems = this.canvas.getCurrentCanvas().items.filter(i => i.conjuntoId === conjuntoId);
+          if (conjuntoItems.length === 0) {
+            this.showNotification('No hay items para organizar', 'info');
+            return;
+          }
+
           const gridSizeX = 140;
           const gridSizeY = 280;
-          const itemsPerRow = Math.floor((conjuntoData.width - 40) / gridSizeX);
+          const paddingX = 20;
+          const paddingTop = 50;
+          const paddingBottom = 20;
+
+          const numItems = conjuntoItems.length;
+          const cols = Math.ceil(Math.sqrt(numItems));
+          const rows = Math.ceil(numItems / cols);
+
+          const newWidth = (cols * gridSizeX) + (paddingX * 2);
+          const newHeight = (rows * gridSizeY) + paddingTop + paddingBottom;
+
+          conjuntoData.width = newWidth;
+          conjuntoData.height = newHeight;
 
           conjuntoItems.forEach((item, index) => {
-            const row = Math.floor(index / itemsPerRow);
-            const col = index % itemsPerRow;
-            item.x = 20 + (col * gridSizeX);
-            item.y = 50 + (row * gridSizeY);
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            item.x = paddingX + (col * gridSizeX);
+            item.y = paddingTop + (row * gridSizeY);
           });
 
           this.canvas.render();
-          this.showNotification('Items organizados en grilla', 'success');
+          this.showNotification('Items organizados y conjunto redimensionado', 'success');
         }
       }
     ];

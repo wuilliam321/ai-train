@@ -2,6 +2,7 @@
 export class FileHandler {
   constructor(inventoryCanvas) {
     this.canvas = inventoryCanvas;
+    this.firstImport = true;
   }
 
   handleCSVUpload(event) {
@@ -61,10 +62,70 @@ export class FileHandler {
       this.canvas.updateStatus(`${importedCount} items importados correctamente`);
       console.log(`✅ FASE 2: ${importedCount} items importados desde CSV`);
 
+      if (this.firstImport && importedCount > 0) {
+        this.autoOrganizeAfterImport();
+        this.firstImport = false;
+      }
+
     } catch (error) {
       alert(`Error al importar CSV: ${error.message}`);
       console.error('Error importando CSV:', error);
     }
+  }
+
+  autoOrganizeAfterImport() {
+    const canvas = this.canvas.getCurrentCanvas();
+    const categorias = [...new Set(canvas.items.map(i => i.categoria))].filter(Boolean);
+
+    let lastConjuntoX = 50;
+    let lastConjuntoY = 50;
+
+    categorias.forEach(categoria => {
+      let conjunto = canvas.conjuntos.find(c => c.name.toLowerCase() === categoria.toLowerCase());
+
+      if (!conjunto) {
+        conjunto = this.canvas.createConjunto(
+          categoria,
+          lastConjuntoX,
+          lastConjuntoY
+        );
+        lastConjuntoX += conjunto.width + 50;
+        if (lastConjuntoX > 2000) {
+            lastConjuntoX = 50;
+            lastConjuntoY += 700;
+        }
+      }
+
+      const conjuntoItems = canvas.items.filter(item => item.categoria === categoria);
+      conjuntoItems.forEach(item => item.conjuntoId = conjunto.id);
+
+      const gridSizeX = 140;
+      const gridSizeY = 280;
+      const paddingX = 20;
+      const paddingTop = 50;
+      const paddingBottom = 20;
+
+      const numItems = conjuntoItems.length;
+      const cols = Math.ceil(Math.sqrt(numItems));
+      const rows = Math.ceil(numItems / cols);
+
+      const newWidth = (cols * gridSizeX) + (paddingX * 2);
+      const newHeight = (rows * gridSizeY) + paddingTop + paddingBottom;
+
+      conjunto.width = newWidth;
+      conjunto.height = newHeight;
+
+      conjuntoItems.forEach((item, index) => {
+        const row = Math.floor(index / cols);
+        const col = index % cols;
+        item.x = paddingX + (col * gridSizeX);
+        item.y = paddingTop + (row * gridSizeY);
+      });
+    });
+
+    this.canvas.render();
+    this.canvas.updateStatus('Items importados y organizados automáticamente');
+    console.log('✅ Primera importación: Items organizados automáticamente');
   }
 
   downloadTemplate() {
