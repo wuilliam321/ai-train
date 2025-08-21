@@ -232,4 +232,70 @@ export class InventoryCanvas {
   closeModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
   }
+
+  // Targeted rendering methods for performance optimization
+  addItemToDOM(item) {
+    this.itemRenderer.renderItem(item);
+    this.searchFilter.updateCategoryFilter();
+    console.log(`🎨 Added single item ${item.id} to DOM`);
+  }
+
+  addItemsToDOM(items) {
+    items.forEach(item => this.itemRenderer.renderItem(item));
+    this.searchFilter.updateCategoryFilter();
+    console.log(`🎨 Added ${items.length} items to DOM`);
+  }
+
+  removeItemFromDOM(itemId) {
+    const itemElement = this.workspace.querySelector(`[data-item-id="${itemId}"]`);
+    if (itemElement) {
+      itemElement.remove();
+      this.searchFilter.updateCategoryFilter();
+      console.log(`🎨 Removed item ${itemId} from DOM`);
+      return true;
+    }
+    return false;
+  }
+
+  removeItemsFromDOM(itemIds) {
+    let removedCount = 0;
+    itemIds.forEach(itemId => {
+      const itemElement = this.workspace.querySelector(`[data-item-id="${itemId}"]`);
+      if (itemElement) {
+        itemElement.remove();
+        removedCount++;
+      }
+    });
+    if (removedCount > 0) {
+      this.searchFilter.updateCategoryFilter();
+      console.log(`🎨 Removed ${removedCount} items from DOM`);
+    }
+    return removedCount;
+  }
+
+  updateItemSelection(itemId, selected) {
+    const itemElement = this.workspace.querySelector(`[data-item-id="${itemId}"]`);
+    if (itemElement) {
+      if (selected) {
+        itemElement.classList.add('selected');
+      } else {
+        itemElement.classList.remove('selected');
+      }
+      return true;
+    }
+    return false;
+  }
+
+  clearAllSelections() {
+    const selectedElements = this.workspace.querySelectorAll('.item.selected');
+    selectedElements.forEach(element => element.classList.remove('selected'));
+    console.log(`🎨 Cleared ${selectedElements.length} item selections`);
+  }
+
+  selectAllVisibleItems() {
+    const visibleElements = this.workspace.querySelectorAll('.item:not([style*="display: none"])');
+    visibleElements.forEach(element => element.classList.add('selected'));
+    console.log(`🎨 Selected ${visibleElements.length} visible items`);
+    return visibleElements.length;
+  }
 }

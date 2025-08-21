@@ -63,8 +63,25 @@ export class ContextMenu {
                        cursor: pointer;
                        font-size: 14px;
                        border-bottom: ${index < items.length - 1 ? '1px solid #f8f9fa' : 'none'};
+                       display: flex;
+                       justify-content: space-between;
+                       align-items: center;
                    `;
-      menuItem.textContent = item.label;
+      
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = item.label;
+      menuItem.appendChild(labelSpan);
+      
+      if (item.shortcut) {
+        const shortcutSpan = document.createElement('span');
+        shortcutSpan.textContent = item.shortcut;
+        shortcutSpan.style.cssText = `
+          color: #666;
+          font-size: 12px;
+          margin-left: 20px;
+        `;
+        menuItem.appendChild(shortcutSpan);
+      }
       menuItem.addEventListener('mouseover', () => {
         menuItem.style.background = '#f8f9fa';
       });
@@ -104,7 +121,46 @@ export class ContextMenu {
       },
       'separator',
       {
+        label: '📋 Copiar',
+        shortcut: 'Ctrl+C',
+        action: () => {
+          if (this.canvas.keyboardShortcuts) {
+            if (!this.canvas.keyboardShortcuts.selectedItems.has(itemId)) {
+              this.canvas.keyboardShortcuts.selectedItems.clear();
+              this.canvas.keyboardShortcuts.selectedItems.add(itemId);
+              item.classList.add('selected');
+            }
+            this.canvas.keyboardShortcuts.copySelectedItems();
+          }
+        }
+      },
+      {
+        label: '✂️ Cortar',
+        shortcut: 'Ctrl+X',
+        action: () => {
+          if (this.canvas.keyboardShortcuts) {
+            if (!this.canvas.keyboardShortcuts.selectedItems.has(itemId)) {
+              this.canvas.keyboardShortcuts.selectedItems.clear();
+              this.canvas.keyboardShortcuts.selectedItems.add(itemId);
+              item.classList.add('selected');
+            }
+            this.canvas.keyboardShortcuts.cutSelectedItems();
+          }
+        }
+      },
+      {
+        label: '📄 Pegar',
+        shortcut: 'Ctrl+V',
+        action: () => {
+          if (this.canvas.keyboardShortcuts) {
+            this.canvas.keyboardShortcuts.pasteItemsAtPosition(e.clientX, e.clientY);
+          }
+        }
+      },
+      'separator',
+      {
         label: '📋 Duplicar',
+        shortcut: 'Ctrl+D',
         action: () => this.duplicateItem(itemId)
       },
       {
@@ -121,6 +177,7 @@ export class ContextMenu {
       'separator',
       {
         label: '🗑️ Eliminar',
+        shortcut: 'Del',
         action: () => {
           if (confirm(`¿Eliminar "${itemData.codigo}"?`)) {
             const canvas = this.canvas.getCurrentCanvas();
@@ -137,20 +194,77 @@ export class ContextMenu {
     const conjuntoId = parseInt(conjunto.dataset.conjuntoId);
     const conjuntoData = this.canvas.getCurrentCanvas().conjuntos.find(c => c.id === conjuntoId);
 
+    const conjuntoItems = this.canvas.getCurrentCanvas().items.filter(i => i.conjuntoId === conjuntoId);
+
     const menuItems = [
       {
         label: `📦 ${conjuntoData.name}`,
-        action: () => this.showNotification(`Conjunto: ${conjuntoData.name}\nItems: ${this.canvas.getCurrentCanvas().items.filter(i => i.conjuntoId === conjuntoId).length}`)
+        action: () => this.showNotification(`Conjunto: ${conjuntoData.name}\nItems: ${conjuntoItems.length}`)
+      },
+      'separator',
+      {
+        label: '📋 Copiar items',
+        shortcut: 'Ctrl+C',
+        action: () => {
+          if (this.canvas.keyboardShortcuts && conjuntoItems.length > 0) {
+            this.canvas.keyboardShortcuts.selectedItems.clear();
+            conjuntoItems.forEach(item => {
+              this.canvas.keyboardShortcuts.selectedItems.add(item.id);
+              const itemElement = this.canvas.workspace.querySelector(`[data-item-id="${item.id}"]`);
+              if (itemElement) itemElement.classList.add('selected');
+            });
+            this.canvas.keyboardShortcuts.copySelectedItems();
+          }
+        }
+      },
+      {
+        label: '✂️ Cortar items',
+        shortcut: 'Ctrl+X',
+        action: () => {
+          if (this.canvas.keyboardShortcuts && conjuntoItems.length > 0) {
+            this.canvas.keyboardShortcuts.selectedItems.clear();
+            conjuntoItems.forEach(item => {
+              this.canvas.keyboardShortcuts.selectedItems.add(item.id);
+              const itemElement = this.canvas.workspace.querySelector(`[data-item-id="${item.id}"]`);
+              if (itemElement) itemElement.classList.add('selected');
+            });
+            this.canvas.keyboardShortcuts.cutSelectedItems();
+          }
+        }
+      },
+      {
+        label: '📄 Pegar en conjunto',
+        shortcut: 'Ctrl+V',
+        action: () => {
+          if (this.canvas.keyboardShortcuts) {
+            this.canvas.keyboardShortcuts.pasteItemsToConjunto(conjuntoId, e.clientX, e.clientY);
+          }
+        }
+      },
+      'separator',
+      {
+        label: '🔍 Seleccionar todos los items',
+        action: () => {
+          if (this.canvas.keyboardShortcuts && conjuntoItems.length > 0) {
+            this.canvas.keyboardShortcuts.selectedItems.clear();
+            conjuntoItems.forEach(item => {
+              this.canvas.keyboardShortcuts.selectedItems.add(item.id);
+              const itemElement = this.canvas.workspace.querySelector(`[data-item-id="${item.id}"]`);
+              if (itemElement) itemElement.classList.add('selected');
+            });
+            this.canvas.updateStatus(`${conjuntoItems.length} items seleccionados`);
+          }
+        }
       },
       'separator',
       {
         label: '📋 Duplicar conjunto',
+        shortcut: 'Ctrl+D',
         action: () => this.duplicateConjunto(conjuntoId)
       },
       {
         label: '📐 Organizar en grilla',
         action: () => {
-          const conjuntoItems = this.canvas.getCurrentCanvas().items.filter(i => i.conjuntoId === conjuntoId);
           if (conjuntoItems.length === 0) {
             this.showNotification('No hay items para organizar', 'info');
             return;
@@ -198,22 +312,55 @@ export class ContextMenu {
   }
 
   showCanvasContextMenu(e) {
+    const hasSelection = this.canvas.keyboardShortcuts && this.canvas.keyboardShortcuts.selectedItems.size > 0;
+    const hasClipboard = this.canvas.keyboardShortcuts && this.canvas.keyboardShortcuts.clipboard.length > 0;
+
     this.createContextMenu([
       {
         label: '➕ Nuevo conjunto',
         action: () => this.canvas.createConjunto()
       },
+      'separator',
       {
-        label: '📐 Organizar automáticamente',
-        action: () => this.autoOrganizeItems()
+        label: '📋 Copiar',
+        shortcut: 'Ctrl+C',
+        action: () => {
+          if (this.canvas.keyboardShortcuts) {
+            this.canvas.keyboardShortcuts.copySelectedItems();
+          }
+        }
       },
       {
+        label: '✂️ Cortar',
+        shortcut: 'Ctrl+X',
+        action: () => {
+          if (this.canvas.keyboardShortcuts) {
+            this.canvas.keyboardShortcuts.cutSelectedItems();
+          }
+        }
+      },
+      {
+        label: '📄 Pegar',
+        shortcut: 'Ctrl+V',
+        action: () => {
+          if (this.canvas.keyboardShortcuts) {
+            this.canvas.keyboardShortcuts.pasteItemsAtPosition(e.clientX, e.clientY);
+          }
+        }
+      },
+      'separator',
+      {
         label: '🔍 Seleccionar todo',
+        shortcut: 'Ctrl+A',
         action: () => {
           if (this.canvas.keyboardShortcuts) {
             this.canvas.keyboardShortcuts.selectAllItems();
           }
         }
+      },
+      {
+        label: '📐 Organizar automáticamente',
+        action: () => this.autoOrganizeItems()
       },
       'separator',
       {

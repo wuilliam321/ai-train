@@ -48,6 +48,13 @@ export class CanvasInteraction {
     console.log("🖱️ Mouse down on:", e.target, "className:", e.target.className);
     console.log(`🖱️ Mouse down position: x=${e.clientX}, y=${e.clientY}`);
     
+    // Check for Ctrl+click - let KeyboardShortcuts handle selection
+    const ctrlOrMeta = e.ctrlKey || e.metaKey;
+    if (ctrlOrMeta) {
+      console.log("🖱️ Ctrl+click detected - allowing KeyboardShortcuts to handle selection");
+      return; // Don't start drag operations on Ctrl+click
+    }
+    
     const item = e.target.closest('.item');
     if (item) {
       console.log("📦 Detected item click");
@@ -178,6 +185,12 @@ export class CanvasInteraction {
       this.handleResize(e);
     } else if (this.draggedConjunto) {
       this.handleConjuntoDrag(e);
+    } else if (this.isPanning && this.lastMousePos) {
+      this.handleKeyboardPan(e);
+    }
+    
+    if (this.isPanning) {
+      this.lastMousePos = { x: e.clientX, y: e.clientY };
     }
   }
 
@@ -435,5 +448,31 @@ export class CanvasInteraction {
 
     this.canvas.updateTransform();
     this.canvas.updateStatus();
+  }
+
+  // --- Keyboard Pan Support ---
+  startPan() {
+    this.isPanning = true;
+    this.lastMousePos = null;
+    this.canvas.container.style.cursor = 'grab';
+    this.canvas.updateStatus('Modo navegación activado - Mueve el mouse para navegar');
+  }
+
+  stopPan() {
+    this.isPanning = false;
+    this.lastMousePos = null;
+    this.canvas.container.style.cursor = 'default';
+    this.canvas.updateStatus('Modo navegación desactivado');
+  }
+
+  handleKeyboardPan(e) {
+    const dx = e.clientX - this.lastMousePos.x;
+    const dy = e.clientY - this.lastMousePos.y;
+    
+    const canvasData = this.canvas.getCurrentCanvas();
+    canvasData.transform.x += dx;
+    canvasData.transform.y += dy;
+    
+    this.canvas.updateTransform();
   }
 }
