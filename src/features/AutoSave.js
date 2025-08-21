@@ -46,14 +46,10 @@ export class AutoSave {
     if (autosave) {
       try {
         const data = JSON.parse(autosave);
-        const saveDate = new Date(data.timestamp).toLocaleString();
-
-        if (confirm(`¿Cargar sesión guardada automáticamente?\n\nFecha: ${saveDate}\nCanvas: ${data.canvases.length}\nItems: ${data.canvases.reduce((sum, c) => sum + c.items.length, 0)}`)) {
-          this.canvas.fileHandler.importCanvasData(data);
-          this.canvas.updateStatus('Sesión auto-guardada cargada');
-          console.log('✅ FASE 3: Auto-guardado cargado');
-          return true;
-        }
+        this.canvas.fileHandler.importCanvasData(data);
+        this.canvas.updateStatus('Sesión guardada cargada automáticamente');
+        console.log('✅ FASE 3: Auto-guardado cargado');
+        return true;
       } catch (error) {
         console.error('Error cargando auto-guardado:', error);
         localStorage.removeItem('inventoryCanvas_autosave');

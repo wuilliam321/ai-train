@@ -3,145 +3,200 @@ export class KeyboardShortcuts {
   constructor(inventoryCanvas) {
     this.canvas = inventoryCanvas;
     this.selectedItems = new Set();
+    this.clipboard = [];
+    this.undoStack = [];
+    this.redoStack = [];
   }
 
   setupAdvancedEventListeners() {
     document.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-      switch (e.code) {
-        case 'KeyA':
-          if (e.ctrlKey || e.metaKey) {
+      const key = e.code;
+      const ctrlOrMeta = e.ctrlKey || e.metaKey;
+
+      if (ctrlOrMeta) {
+        switch (key) {
+          case 'KeyA':
             e.preventDefault();
             this.selectAllItems();
-          }
-          break;
-        case 'Delete':
-        case 'Backspace':
-          e.preventDefault();
-          this.deleteSelectedItems();
-          break;
-        case 'Escape':
-          this.clearSelection();
-          this.canvas.closeModal('conjuntoModal');
-          this.canvas.closeModal('canvasModal');
-          break;
-        case 'Plus':
-        case 'Equal':
-          if (e.ctrlKey || e.metaKey) {
+            break;
+          case 'KeyC':
+            e.preventDefault();
+            this.copySelectedItems();
+            break;
+          case 'KeyV':
+            e.preventDefault();
+            this.pasteItems();
+            break;
+          case 'KeyS':
+            e.preventDefault();
+            if (this.canvas.autoSave) {
+              this.canvas.autoSave.save();
+              this.canvas.autoSave.showNotification('Canvas guardado manualmente', 'success');
+            }
+            break;
+          case 'KeyZ':
+            e.preventDefault();
+            this.undo();
+            break;
+          case 'KeyY':
+            e.preventDefault();
+            this.redo();
+            break;
+          case 'Plus':
+          case 'Equal':
             e.preventDefault();
             this.canvas.zoomIn();
-          }
-          break;
-        case 'Minus':
-          if (e.ctrlKey || e.metaKey) {
+            break;
+          case 'Minus':
             e.preventDefault();
             this.canvas.zoomOut();
-          }
-          break;
-        case 'Digit0':
-          if (e.ctrlKey || e.metaKey) {
+            break;
+          case 'Digit0':
             e.preventDefault();
             this.canvas.resetZoom();
-          }
-          break;
-        case 'KeyS':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            this.canvas.fileHandler.exportCanvas();
-          }
-          break;
-        case 'KeyO':
-          if (e.ctrlKey || e.metaKey) {
+            break;
+          case 'KeyO':
             e.preventDefault();
             document.getElementById('jsonFile').click();
-          }
-          break;
-      }
-    });
-
-    document.querySelectorAll('.modal').forEach(modal => {
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          modal.style.display = 'none';
+            break;
         }
-      });
-    });
-
-    document.getElementById('conjuntoName').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        // Use global function for compatibility
-        if (window.createNewConjunto) {
-          window.createNewConjunto();
-        } else {
-          // Fallback: create conjunto directly
-          const name = document.getElementById('conjuntoName').value.trim();
-          if (!name) {
-            alert('Por favor ingrese un nombre para el conjunto');
-            return;
-          }
-          this.canvas.createConjunto(name);
-          this.canvas.closeModal('conjuntoModal');
-          document.getElementById('conjuntoName').value = '';
+      } else {
+        switch (key) {
+          case 'Delete':
+          case 'Backspace':
+            e.preventDefault();
+            this.deleteSelectedItems();
+            break;
+          case 'Escape':
+            this.clearSelection();
+            this.canvas.closeModal('conjuntoModal');
+            this.canvas.closeModal('canvasModal');
+            break;
         }
       }
     });
 
-    document.getElementById('canvasName').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        // Use global function for compatibility
-        if (window.createNewCanvasWithName) {
-          window.createNewCanvasWithName();
-        } else {
-          // Fallback: create canvas directly
-          this.canvas.canvasManager.createNewCanvasWithName();
-        }
+    this.canvas.container.addEventListener('mousedown', (e) => {
+      if (e.target === this.canvas.container || e.target === this.canvas.workspace) {
+        this.clearSelection();
       }
     });
 
     console.log('✅ FASE 3: Event listeners avanzados configurados');
   }
 
+  // --- Selection ---
   selectAllItems() {
-    this.selectedItems.clear();
+    this.clearSelection();
     const canvasData = this.canvas.getCurrentCanvas();
-
-    document.querySelectorAll('.item').forEach(itemElement => {
-      const itemId = parseInt(itemElement.dataset.itemId);
-      if (canvasData.items.find(item => item.id === itemId && itemElement.style.display !== 'none')) {
-        this.selectedItems.add(itemId);
+    canvasData.items.forEach(item => {
+      const itemElement = this.canvas.workspace.querySelector(`[data-item-id="${item.id}"]`);
+      if (itemElement && itemElement.style.display !== 'none') {
+        this.selectedItems.add(item.id);
         itemElement.classList.add('selected');
       }
     });
-
     this.canvas.updateStatus(`${this.selectedItems.size} items seleccionados`);
-    console.log(`✅ FASE 3: ${this.selectedItems.size} items seleccionados`);
   }
 
   clearSelection() {
-    this.selectedItems.clear();
-    document.querySelectorAll('.item.selected').forEach(el => {
-      el.classList.remove('selected');
+    this.selectedItems.forEach(itemId => {
+      const itemElement = this.canvas.workspace.querySelector(`[data-item-id="${itemId}"]`);
+      if (itemElement) {
+        itemElement.classList.remove('selected');
+      }
     });
+    this.selectedItems.clear();
     this.canvas.updateStatus('Selección limpiada');
   }
 
-  deleteSelectedItems() {
-    if (this.selectedItems.size === 0) {
-      this.canvas.updateStatus('No hay items seleccionados');
-      return;
-    }
+  // --- Clipboard ---
+  copySelectedItems() {
+    if (this.selectedItems.size === 0) return;
+    const canvasData = this.canvas.getCurrentCanvas();
+    this.clipboard = Array.from(this.selectedItems).map(id => {
+      const item = canvasData.items.find(i => i.id === id);
+      return JSON.parse(JSON.stringify(item)); // Deep copy
+    });
+    this.canvas.updateStatus(`${this.clipboard.length} items copiados`);
+  }
 
+  pasteItems() {
+    if (this.clipboard.length === 0) return;
+    this.pushStateToUndoStack('Paste Items');
+    const canvasData = this.canvas.getCurrentCanvas();
+    const newItems = this.clipboard.map(item => {
+      const newItem = { ...item };
+      newItem.id = this.canvas.nextItemId++;
+      newItem.x += 20;
+      newItem.y += 20;
+      return newItem;
+    });
+    canvasData.items.push(...newItems);
+    this.clearSelection();
+    newItems.forEach(item => this.selectedItems.add(item.id));
+    this.canvas.render();
+    this.canvas.updateStatus(`${newItems.length} items pegados`);
+  }
+
+  // --- Deletion ---
+  deleteSelectedItems() {
+    if (this.selectedItems.size === 0) return;
     if (confirm(`¿Eliminar ${this.selectedItems.size} item(s) seleccionado(s)?`)) {
+      this.pushStateToUndoStack('Delete Items');
       const canvasData = this.canvas.getCurrentCanvas();
       const deletedCount = this.selectedItems.size;
-
       canvasData.items = canvasData.items.filter(item => !this.selectedItems.has(item.id));
       this.selectedItems.clear();
-
       this.canvas.render();
       this.canvas.updateStatus(`${deletedCount} items eliminados`);
-      console.log(`✅ FASE 3: ${deletedCount} items eliminados`);
     }
+  }
+
+  // --- Undo/Redo ---
+  pushStateToUndoStack(actionName) {
+    const currentState = JSON.stringify(this.canvas.getCurrentCanvas());
+    this.undoStack.push({ action: actionName, state: currentState });
+    this.redoStack = []; // Clear redo stack on new action
+    if (this.undoStack.length > 30) {
+      this.undoStack.shift(); // Limit history size
+    }
+  }
+
+  undo() {
+    if (this.undoStack.length === 0) {
+      this.canvas.updateStatus('Nada que deshacer');
+      return;
+    }
+    const lastState = this.undoStack.pop();
+    const currentState = JSON.stringify(this.canvas.getCurrentCanvas());
+    this.redoStack.push({ action: 'Redo ' + lastState.action, state: currentState });
+
+    this.restoreState(lastState.state);
+    this.canvas.updateStatus(`Deshecho: ${lastState.action}`);
+  }
+
+  redo() {
+    if (this.redoStack.length === 0) {
+      this.canvas.updateStatus('Nada que rehacer');
+      return;
+    }
+    const nextState = this.redoStack.pop();
+    const currentState = JSON.stringify(this.canvas.getCurrentCanvas());
+    this.undoStack.push({ action: 'Undo ' + nextState.action, state: currentState });
+
+    this.restoreState(nextState.state);
+    this.canvas.updateStatus(`Rehecho: ${nextState.action}`);
+  }
+
+  restoreState(stateString) {
+    const state = JSON.parse(stateString);
+    const currentCanvas = this.canvas.getCurrentCanvas();
+    currentCanvas.items = state.items;
+    currentCanvas.conjuntos = state.conjuntos;
+    currentCanvas.transform = state.transform;
+    this.canvas.render();
   }
 }

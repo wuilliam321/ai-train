@@ -10,14 +10,13 @@ export class InventoryCanvas {
   constructor() {
     this.canvases = [{
       name: 'Canvas 1',
-      items: this.getDemoItems(),
-      conjuntos: this.getDemoConjuntos(),
+      items: [],
+      conjuntos: [],
       transform: { x: 0, y: 0, scale: 1 }
     }];
-
     this.currentCanvasIndex = 0;
-    this.nextItemId = 12;
-    this.nextConjuntoId = 4;
+    this.nextItemId = 1;
+    this.nextConjuntoId = 1;
 
     // Initialize sub-modules
     this.interaction = new CanvasInteraction(this);
@@ -28,6 +27,20 @@ export class InventoryCanvas {
     this.canvasManager = new CanvasManager(this);
 
     this.init();
+  }
+
+  loadDemoData() {
+    this.canvases = [{
+      name: 'Canvas 1',
+      items: this.getDemoItems(),
+      conjuntos: this.getDemoConjuntos(),
+      transform: { x: 0, y: 0, scale: 1 }
+    }];
+    this.currentCanvasIndex = 0;
+    this.nextItemId = 12;
+    this.nextConjuntoId = 4;
+    this.render();
+    this.canvasManager.updateCanvasTabs();
   }
 
   getDemoItems() {
@@ -113,6 +126,7 @@ export class InventoryCanvas {
     const canvas = this.getCurrentCanvas();
     const conjunto = canvas.conjuntos.find(c => c.id === conjuntoId);
     if (conjunto && conjunto.id !== 0) {
+      this.keyboardShortcuts.pushStateToUndoStack('Rename Conjunto');
       conjunto.name = newName.trim() || `Conjunto ${conjuntoId}`;
       this.updateStatus(`Conjunto renombrado: ${conjunto.name}`);
       console.log(`✅ FIX: Conjunto ${conjuntoId} renombrado a "${conjunto.name}"`);
@@ -161,6 +175,7 @@ export class InventoryCanvas {
       height: 600
     };
 
+    this.keyboardShortcuts.pushStateToUndoStack('Create Conjunto');
     canvas.conjuntos.push(conjunto);
     this.render();
     this.updateStatus(`Conjunto "${conjunto.name}" creado`);

@@ -74,9 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // ✅ INICIALIZACIÓN COMPLETA DE LA FASE 3
 setTimeout(() => {
   if (inventoryCanvas && autoSave) {
-    // Cargar auto-guardado si existe
+    // Cargar auto-guardado si existe. Si no, cargar datos de demostración.
     if (!autoSave.loadAutoSave()) {
-      console.log('✅ FASE 3: Iniciando con datos de demostración');
+      inventoryCanvas.loadDemoData();
+      console.log('✅ FASE 3: No se encontró auto-guardado. Iniciando con datos de demostración.');
     }
 
     // Configurar auto-guardado

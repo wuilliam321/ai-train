@@ -179,6 +179,7 @@ export class ContextMenu {
             item.y = paddingTop + (row * gridSizeY);
           });
 
+          this.canvas.keyboardShortcuts.pushStateToUndoStack('Organize in Grid');
           this.canvas.updateConjuntoLayout(conjuntoId);
           this.showNotification('Items organizados y conjunto redimensionado', 'success');
         }

@@ -304,10 +304,12 @@ export class CanvasInteraction {
     }
 
     if (this.itemDragging && this.draggedItem) {
+      this.canvas.keyboardShortcuts.pushStateToUndoStack('Move Item');
       this.finishItemDrag(e);
     }
 
     if (this.resizing) {
+      this.canvas.keyboardShortcuts.pushStateToUndoStack('Resize Conjunto');
       this.resizing = false;
       this.resizedConjunto = null;
       this.resizeCorner = null;
@@ -317,6 +319,7 @@ export class CanvasInteraction {
     }
 
     if (this.draggedConjunto) {
+      this.canvas.keyboardShortcuts.pushStateToUndoStack('Move Conjunto');
       this.draggedConjunto.classList.remove('dragging-conjunto');
       this.draggedConjunto = null;
       this.canvas.updateStatus('Listo');
