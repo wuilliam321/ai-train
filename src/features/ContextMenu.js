@@ -179,7 +179,7 @@ export class ContextMenu {
             item.y = paddingTop + (row * gridSizeY);
           });
 
-          this.canvas.render();
+          this.canvas.updateConjuntoLayout(conjuntoId);
           this.showNotification('Items organizados y conjunto redimensionado', 'success');
         }
       }

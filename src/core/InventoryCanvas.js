@@ -169,6 +169,29 @@ export class InventoryCanvas {
     return conjunto;
   }
 
+  updateConjuntoLayout(conjuntoId) {
+    const canvas = this.getCurrentCanvas();
+    const conjuntoData = canvas.conjuntos.find(c => c.id === conjuntoId);
+    if (!conjuntoData) return;
+
+    const conjuntoEl = this.workspace.querySelector(`[data-conjunto-id="${conjuntoId}"]`);
+    if (!conjuntoEl) return;
+
+    conjuntoEl.style.width = conjuntoData.width + 'px';
+    conjuntoEl.style.height = conjuntoData.height + 'px';
+
+    const conjuntoItems = canvas.items.filter(i => i.conjuntoId === conjuntoId);
+    conjuntoItems.forEach(itemData => {
+      const itemEl = this.workspace.querySelector(`[data-item-id="${itemData.id}"]`);
+      if (itemEl) {
+        itemEl.style.left = itemData.x + 'px';
+        itemEl.style.top = itemData.y + 'px';
+      }
+    });
+
+    console.log(`✅ Layout actualizado para conjunto ${conjuntoId}`);
+  }
+
   // Zoom controls
   zoomIn() {
     const canvas = this.getCurrentCanvas();
