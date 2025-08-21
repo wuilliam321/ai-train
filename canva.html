@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario Visual - Canvas v1.1</title>
+  <link rel="stylesheet" href="canva.css">
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="importCSV()">📁 Importar CSV</button>
+        <input type="file" id="csvFile" accept=".csv" style="display: none;">
+        
+        <button onclick="downloadTemplate()">📋 Template</button>
+        <button onclick="createConjunto()">➕ Conjunto</button>
+        <button onclick="exportCanvas()">💾 Exportar</button>
+        
+        <input type="file" id="jsonFile" accept=".json" style="display: none;">
+        <button onclick="importCanvas()">📂 Importar</button>
+        
+        <input type="text" id="searchInput" placeholder="Buscar items..." style="width: 200px;">
+        <select id="categoryFilter">
+            <option value="">Todas las categorías</option>
+        </select>
+        
+        <div class="canvas-tabs" id="canvasTabs">
+            <button class="canvas-tab active" data-canvas="0">Canvas 1</button>
+            <button onclick="createNewCanvas()">+ Nuevo</button>
+        </div>
+    </div>
+
+    <div class="canvas-container" id="canvasContainer">
+        <div id="workspace">
+            <!-- El contenido se generará dinámicamente -->
+        </div>
+    </div>
+
+    <div class="zoom-controls">
+        <button onclick="zoomIn()" title="Acercar">+</button>
+        <button onclick="zoomOut()" title="Alejar">-</button>
+        <button onclick="resetZoom()" title="Restablecer">⌂</button>
+    </div>
+
+    <div class="status-bar">
+        <span id="statusText">Listo</span>
+        <span class="progress" id="progressText">Items: 0 | Conjuntos: 0 | Zoom: 100%</span>
+    </div>
+
+    <!-- Modales -->
+    <div class="modal" id="conjuntoModal">
+        <div class="modal-content">
+            <h3>Crear Nuevo Conjunto</h3>
+            <input type="text" id="conjuntoName" placeholder="Nombre del conjunto">
+            <div class="modal-buttons">
+                <button class="secondary" onclick="closeModal('conjuntoModal')">Cancelar</button>
+                <button onclick="createNewConjunto()">Crear</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="canvasModal">
+        <div class="modal-content">
+            <h3>Crear Nuevo Canvas</h3>
+            <input type="text" id="canvasName" placeholder="Nombre del canvas">
+            <div class="modal-buttons">
+                <button class="secondary" onclick="closeModal('canvasModal')">Cancelar</button>
+                <button onclick="createNewCanvasWithName()">Crear</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="canva.js"></script>
+</body>
+</html>
