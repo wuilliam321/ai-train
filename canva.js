@@ -28,6 +28,7 @@ class InventoryCanvas {
 
     this.dragStart = { x: 0, y: 0 };
     this.itemDragOffset = { x: 0, y: 0 };
+    this.dragMoveCounter = 0;
 
     this.init();
   }
@@ -89,6 +90,7 @@ class InventoryCanvas {
   // ✅ FIX 1: DRAG DE ITEMS CORREGIDO
   handleCanvasMouseDown(e) {
     console.log("🖱️ Mouse down on:", e.target, "className:", e.target.className);
+    console.log(`🖱️ Mouse down position: x=${e.clientX}, y=${e.clientY}`);
     
     // Verificar si es un item
     const item = e.target.closest('.item');
@@ -134,38 +136,32 @@ class InventoryCanvas {
 
     this.itemDragging = true;
     this.draggedItem = item;
+    this.dragMoveCounter = 0;
+
+    const itemId = parseInt(item.dataset.itemId);
+    const itemData = this.getCurrentCanvas().items.find(i => i.id === itemId);
+    const conjuntoData = this.getCurrentCanvas().conjuntos.find(c => c.id === itemData.conjuntoId);
+    const initialAbsX = (conjuntoData?.x || 0) + itemData.x;
+    const initialAbsY = (conjuntoData?.y || 0) + itemData.y;
+
+    console.log(`-- Drag Start --`);
+    console.log(`Item "${itemData.codigo}" initial absolute position: x=${initialAbsX.toFixed(2)}, y=${initialAbsY.toFixed(2)}`);
 
     const containerRect = this.container.getBoundingClientRect();
-    const itemRect = item.getBoundingClientRect();
     const canvas = this.getCurrentCanvas();
 
-    // Calcular offset simple: distancia del mouse al borde del item (en screen coordinates)
-    const screenOffsetX = e.clientX - itemRect.left;
-    const screenOffsetY = e.clientY - itemRect.top;
+    // Mouse position in workspace coordinates
+    const workspaceMouseX = (e.clientX - containerRect.left - canvas.transform.x) / canvas.transform.scale;
+    const workspaceMouseY = (e.clientY - containerRect.top - canvas.transform.y) / canvas.transform.scale;
 
-    // Convertir offset a workspace coordinates
+    // Offset between mouse and item's absolute top-left corner
     this.itemDragOffset = {
-      x: screenOffsetX / canvas.transform.scale,
-      y: screenOffsetY / canvas.transform.scale
+      x: workspaceMouseX - initialAbsX,
+      y: workspaceMouseY - initialAbsY
     };
-
-    console.log("📏 Item rect:", itemRect.left, itemRect.top);
-    console.log("📏 Screen offset:", screenOffsetX, screenOffsetY);
-    console.log("📏 Final offset:", this.itemDragOffset.x, this.itemDragOffset.y);
 
     item.classList.add('dragging');
     this.updateStatus('Moviendo item...');
-
-    console.log("startItemDrag",
-      "workspaceX", workspaceX,
-      "workspaceY", workspaceY,
-      "currentItemX", currentItemX,
-      "currentItemY", currentItemY,
-      "this.itemDragOffset.x", this.itemDragOffset.x,
-      "this.itemDragOffset.y", this.itemDragOffset.y);
-
-    console.log('✅ FIX: Item drag iniciado correctamente', this.itemDragOffset);
-
   }
 
   startCanvasPan(e) {
@@ -249,29 +245,30 @@ class InventoryCanvas {
     const canvas = this.getCurrentCanvas();
     const containerRect = this.container.getBoundingClientRect();
 
-    // Convertir coordenadas de pantalla a workspace
-    const workspaceX = (e.clientX - containerRect.left - canvas.transform.x) / canvas.transform.scale;
-    const workspaceY = (e.clientY - containerRect.top - canvas.transform.y) / canvas.transform.scale;
+    // Mouse position in workspace coordinates
+    const workspaceMouseX = (e.clientX - containerRect.left - canvas.transform.x) / canvas.transform.scale;
+    const workspaceMouseY = (e.clientY - containerRect.top - canvas.transform.y) / canvas.transform.scale;
 
-    // Aplicar posición con offset correcto
-    const newX = workspaceX - this.itemDragOffset.x;
-    const newY = workspaceY - this.itemDragOffset.y;
-    // console.log("handleItemDrag",
-    //   "workspaceX", workspaceX,
-    //   "workspaceY", workspaceY,
-    //   "e.clientX", e.clientX,
-    //   "e.clientY", e.clientY,
-    //   "containerRect.left", containerRect.left,
-    //   "containerRect.top", containerRect.top,
-    //   "canvas.transform.x", canvas.transform.x,
-    //   "canvas.transform.y", canvas.transform.y,
-    //   "this.itemDragOffset.x", this.itemDragOffset.x,
-    //   "this.itemDragOffset.y", this.itemDragOffset.y,
-    //   "newX", newX,
-    //   "newY", newY);
+    // New absolute position of the item
+    const newAbsX = workspaceMouseX - this.itemDragOffset.x;
+    const newAbsY = workspaceMouseY - this.itemDragOffset.y;
 
-    this.draggedItem.style.left = newX + 'px';
-    this.draggedItem.style.top = newY + 'px';
+    // The item's parent conjunto hasn't changed yet. We need its offset.
+    const itemId = parseInt(this.draggedItem.dataset.itemId);
+    const itemData = this.getCurrentCanvas().items.find(i => i.id === itemId);
+    const conjuntoData = this.getCurrentCanvas().conjuntos.find(c => c.id === itemData.conjuntoId);
+
+    // Convert absolute position to relative for styling
+    const newRelativeX = newAbsX - (conjuntoData?.x || 0);
+    const newRelativeY = newAbsY - (conjuntoData?.y || 0);
+
+    this.dragMoveCounter++;
+    if (this.dragMoveCounter % 15 === 0) {
+        console.log(`Item dragging at absolute: x=${newAbsX.toFixed(2)}, y=${newAbsY.toFixed(2)}`);
+    }
+    
+    this.draggedItem.style.left = newRelativeX + 'px';
+    this.draggedItem.style.top = newRelativeY + 'px';
 
     // Highlight conjuntos
     this.highlightConjuntos(e);
@@ -317,6 +314,7 @@ class InventoryCanvas {
   }
 
   handleGlobalMouseUp(e) {
+    console.log(`🖱️ Mouse up position: x=${e.clientX}, y=${e.clientY}`);
     if (this.canvasDragging) {
       this.canvasDragging = false;
       this.container.classList.remove('dragging');
@@ -352,79 +350,78 @@ class InventoryCanvas {
     const itemId = parseInt(this.draggedItem.dataset.itemId);
     const item = this.getCurrentCanvas().items.find(i => i.id === itemId);
     
-    // Buscar conjunto bajo el cursor del mouse
-    let targetConjunto = null;
-    document.querySelectorAll('.conjunto').forEach(conjunto => {
-      const rect = conjunto.getBoundingClientRect();
-      if (e.clientX >= rect.left && e.clientX <= rect.right &&
-          e.clientY >= rect.top && e.clientY <= rect.bottom) {
-        targetConjunto = conjunto;
-      }
-    });
+    // Calculate final absolute position
+    const canvas = this.getCurrentCanvas();
+    const containerRect = this.container.getBoundingClientRect();
+    const workspaceMouseX = (e.clientX - containerRect.left - canvas.transform.x) / canvas.transform.scale;
+    const workspaceMouseY = (e.clientY - containerRect.top - canvas.transform.y) / canvas.transform.scale;
+    const finalAbsX = workspaceMouseX - this.itemDragOffset.x;
+    const finalAbsY = workspaceMouseY - this.itemDragOffset.y;
+
+    // Find target conjunto
+    let targetConjuntoEl = null;
+    // Use elementFromPoint to be more reliable with overlapping elements
+    this.draggedItem.style.pointerEvents = 'none';
+    const elementUnderMouse = document.elementFromPoint(e.clientX, e.clientY);
+    this.draggedItem.style.pointerEvents = 'auto';
+    if (elementUnderMouse) {
+      targetConjuntoEl = elementUnderMouse.closest('.conjunto');
+    }
     
     let conjuntoChanged = false;
-    
-    if (targetConjunto) {
-      // Se soltó sobre un conjunto - asignar ese conjunto
-      const targetConjuntoId = parseInt(targetConjunto.dataset.conjuntoId);
-      if (item && item.conjuntoId !== targetConjuntoId) {
-        item.conjuntoId = targetConjuntoId;
-        conjuntoChanged = true;
-        console.log(`✅ Item ${itemId} movido a conjunto ${targetConjuntoId}`);
-      }
+    const oldConjuntoId = item.conjuntoId;
+    let targetConjuntoId = oldConjuntoId;
+
+    if (targetConjuntoEl) {
+      targetConjuntoId = parseInt(targetConjuntoEl.dataset.conjuntoId);
     } else {
-      // Se soltó fuera de cualquier conjunto - quitar conjunto (Sin categorizar)
-      if (item && item.conjuntoId !== 0) {
-        item.conjuntoId = 0;
-        conjuntoChanged = true;
-        console.log(`✅ Item ${itemId} removido de conjunto (Sin categorizar)`);
-      }
+      // Dropped outside any conjunto, move to "Sin categorizar"
+      targetConjuntoId = 0;
     }
 
-    // Actualizar posición en datos
+    if (oldConjuntoId !== targetConjuntoId) {
+      item.conjuntoId = targetConjuntoId;
+      conjuntoChanged = true;
+      console.log(`✅ Item ${itemId} movido a conjunto ${targetConjuntoId}`);
+    }
+
+    // Calculate new relative position based on the target conjunto
+    const targetConjuntoData = this.getCurrentCanvas().conjuntos.find(c => c.id === targetConjuntoId);
+    const newRelativeX = finalAbsX - (targetConjuntoData?.x || 0);
+    const newRelativeY = finalAbsY - (targetConjuntoData?.y || 0);
+
+    // Update item data with the new relative position
     if (item) {
-      item.x = parseFloat(this.draggedItem.style.left);
-      item.y = parseFloat(this.draggedItem.style.top);
+      item.x = newRelativeX;
+      item.y = newRelativeY;
+      console.log(`-- Drag End --`);
+      console.log(`Item "${item.codigo}" final absolute position: x=${finalAbsX.toFixed(2)}, y=${finalAbsY.toFixed(2)}`);
+      console.log(`Item "${item.codigo}" final relative position: x=${item.x.toFixed(2)}, y=${item.y.toFixed(2)}`);
     }
 
-    // Mover físicamente el DOM element al nuevo conjunto si cambió
+    // If conjunto changed, move the DOM element
     if (conjuntoChanged) {
       const newConjuntoElement = this.workspace.querySelector(`[data-conjunto-id="${item.conjuntoId}"]`);
       if (newConjuntoElement) {
-        console.log(`🔄 Moving DOM element from old conjunto to conjunto ${item.conjuntoId}`);
-        
-        // Store current position (already updated in item data)
-        const currentX = item.x;
-        const currentY = item.y;
-        
-        // Move the DOM element to the correct conjunto container
         newConjuntoElement.appendChild(this.draggedItem);
         
-        // Restore the correct position after moving to new parent
-        this.draggedItem.style.left = currentX + 'px';
-        this.draggedItem.style.top = currentY + 'px';
-        
-        console.log(`📍 Position preserved: x=${currentX}, y=${currentY}`);
-        
-        // Update the debug text
+        // Update debug text
         const conjuntoNameElement = this.draggedItem.querySelector('.item-conjunto');
         if (conjuntoNameElement) {
-          const canvas = this.getCurrentCanvas();
-          const conjunto = canvas.conjuntos.find(c => c.id === item.conjuntoId);
-          conjuntoNameElement.textContent = conjunto ? conjunto.name : 'Unknown';
+          conjuntoNameElement.textContent = targetConjuntoData ? targetConjuntoData.name : 'Unknown';
         }
       }
     }
+
+    // Update style to final correct relative position
+    this.draggedItem.style.left = newRelativeX + 'px';
+    this.draggedItem.style.top = newRelativeY + 'px';
 
     this.draggedItem.classList.remove('dragging');
     this.draggedItem = null;
     this.itemDragging = false;
     this.updateStatus('Listo');
-
-    console.log("finishItemDrag", "item.x", item?.x, "item.y", item?.y);
-    console.log('✅ FIX: Item drag completado correctamente');
     
-    // Trigger debounced autosave after item move
     triggerAutoSave();
   }
 
