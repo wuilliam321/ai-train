@@ -88,9 +88,12 @@ class InventoryCanvas {
 
   // ✅ FIX 1: DRAG DE ITEMS CORREGIDO
   handleCanvasMouseDown(e) {
+    console.log("🖱️ Mouse down on:", e.target, "className:", e.target.className);
+    
     // Verificar si es un item
     const item = e.target.closest('.item');
     if (item) {
+      console.log("📦 Detected item click");
       this.startItemDrag(e, item);
       return;
     }
@@ -102,13 +105,20 @@ class InventoryCanvas {
       return;
     }
 
-    // Verificar si es header de conjunto (para mover conjunto)
-    const conjuntoHeader = e.target.closest('.conjunto-header');
-    if (conjuntoHeader) {
-      const conjunto = conjuntoHeader.closest('.conjunto');
-      if (conjunto && !e.target.matches('input, button')) {
+    // Verificar si es cualquier parte del conjunto (excepto items y controles específicos)
+    const conjunto = e.target.closest('.conjunto');
+    if (conjunto) {
+      console.log("📦 Detected conjunto click on:", e.target.tagName, e.target.className);
+      
+      // Permitir drag excepto en: items, input fields, buttons, resize handle
+      if (!e.target.closest('.item') && 
+          !e.target.matches('input, button') && 
+          !e.target.closest('.resize-handle')) {
+        console.log("🔄 Iniciando drag de conjunto");
         this.startConjuntoDrag(e, conjunto);
         return;
+      } else {
+        console.log("❌ Conjunto drag blocked - clicked on:", e.target.tagName);
       }
     }
 
@@ -126,21 +136,22 @@ class InventoryCanvas {
     this.draggedItem = item;
 
     const containerRect = this.container.getBoundingClientRect();
+    const itemRect = item.getBoundingClientRect();
     const canvas = this.getCurrentCanvas();
 
-    // Convertir coordenadas de pantalla a workspace
-    const workspaceX = (e.clientX - containerRect.left - canvas.transform.x) / canvas.transform.scale;
-    const workspaceY = (e.clientY - containerRect.top - canvas.transform.y) / canvas.transform.scale;
+    // Calcular offset simple: distancia del mouse al borde del item (en screen coordinates)
+    const screenOffsetX = e.clientX - itemRect.left;
+    const screenOffsetY = e.clientY - itemRect.top;
 
-    // Obtener posición actual del item en workspace
-    const currentItemX = parseFloat(item.style.left) || 0;
-    const currentItemY = parseFloat(item.style.top) || 0;
-
-    // Calcular offset relativo dentro del item
+    // Convertir offset a workspace coordinates
     this.itemDragOffset = {
-      x: workspaceX - currentItemX,
-      y: workspaceY - currentItemY
+      x: screenOffsetX / canvas.transform.scale,
+      y: screenOffsetY / canvas.transform.scale
     };
+
+    console.log("📏 Item rect:", itemRect.left, itemRect.top);
+    console.log("📏 Screen offset:", screenOffsetX, screenOffsetY);
+    console.log("📏 Final offset:", this.itemDragOffset.x, this.itemDragOffset.y);
 
     item.classList.add('dragging');
     this.updateStatus('Moviendo item...');
@@ -204,7 +215,10 @@ class InventoryCanvas {
       y: conjuntoData.y
     };
 
+    // Add visual feedback
+    conjunto.classList.add('dragging-conjunto');
     this.updateStatus('Moviendo conjunto...');
+    console.log(`🔄 Conjunto ${conjuntoId} siendo arrastrado`);
   }
 
   handleGlobalMouseMove(e) {
@@ -323,6 +337,8 @@ class InventoryCanvas {
     }
 
     if (this.draggedConjunto) {
+      // Remove visual feedback
+      this.draggedConjunto.classList.remove('dragging-conjunto');
       this.draggedConjunto = null;
       this.updateStatus('Listo');
       // Trigger autosave after conjunto move
@@ -371,13 +387,32 @@ class InventoryCanvas {
       item.y = parseFloat(this.draggedItem.style.top);
     }
 
-    // Actualizar solo el texto de debug del conjunto si cambió
+    // Mover físicamente el DOM element al nuevo conjunto si cambió
     if (conjuntoChanged) {
-      const conjuntoNameElement = this.draggedItem.querySelector('.item-conjunto');
-      if (conjuntoNameElement) {
-        const canvas = this.getCurrentCanvas();
-        const conjunto = canvas.conjuntos.find(c => c.id === item.conjuntoId);
-        conjuntoNameElement.textContent = conjunto ? conjunto.name : 'Unknown';
+      const newConjuntoElement = this.workspace.querySelector(`[data-conjunto-id="${item.conjuntoId}"]`);
+      if (newConjuntoElement) {
+        console.log(`🔄 Moving DOM element from old conjunto to conjunto ${item.conjuntoId}`);
+        
+        // Store current position (already updated in item data)
+        const currentX = item.x;
+        const currentY = item.y;
+        
+        // Move the DOM element to the correct conjunto container
+        newConjuntoElement.appendChild(this.draggedItem);
+        
+        // Restore the correct position after moving to new parent
+        this.draggedItem.style.left = currentX + 'px';
+        this.draggedItem.style.top = currentY + 'px';
+        
+        console.log(`📍 Position preserved: x=${currentX}, y=${currentY}`);
+        
+        // Update the debug text
+        const conjuntoNameElement = this.draggedItem.querySelector('.item-conjunto');
+        if (conjuntoNameElement) {
+          const canvas = this.getCurrentCanvas();
+          const conjunto = canvas.conjuntos.find(c => c.id === item.conjuntoId);
+          conjuntoNameElement.textContent = conjunto ? conjunto.name : 'Unknown';
+        }
       }
     }
 
