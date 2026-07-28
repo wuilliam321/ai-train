@@ -11,8 +11,8 @@ Una feature se completa solo si funciona mediante `TrainingOrchestrator`, tiene 
 | completed | F2. Ejercicios | Crear, consultar, buscar, editar, archivar y restaurar ejercicios. | F1 |
 | completed | F3. Rutinas | Crear, consultar, buscar, editar, archivar y restaurar rutinas y variantes. | F2 |
 | completed | F4. Sesión activa | Iniciar desde vacío o rutina y recuperarla tras reconstruir el orquestador. | F3 |
-| in_progress | F5. Ejecución | Editar ejercicios y series, completar y reabrir series. | F4 |
-| pending | F6. Descanso y referencias | Descanso persistente y referencias inline por ejercicio y posición. | F5 |
+| completed | F5. Ejecución | Editar ejercicios y series, completar y reabrir series. | F4 |
+| in_progress | F6. Descanso y referencias | Descanso persistente y referencias inline por ejercicio y posición. | F5 |
 | pending | F7. Cierre e historial | Finalizar, descartar, paginar historial y emitir snapshots. | F6 |
 | pending | F8. Métricas | Dashboard, volumen efectivo, distribución muscular y progreso. | F7 |
 | pending | F9. Simulación longitudinal | Dos años de entrenamiento determinista y verificación de rendimiento. | F8 |
