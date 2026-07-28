@@ -8,9 +8,11 @@
     "coverage": "vitest run --coverage",
     "verify": "pnpm run typecheck && pnpm run coverage",
     "web:build": "vite build",
-    "build": "pnpm run verify && pnpm run web:build"
+    "e2e": "playwright test",
+    "build": "pnpm run verify && pnpm run web:build && pnpm run e2e"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@types/node": "^24.13.3",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vitest/coverage-v8": "^4.1.10",
