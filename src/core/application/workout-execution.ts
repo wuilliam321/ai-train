@@ -8,6 +8,7 @@ import type {
   WorkoutSet,
 } from "../domain/workout";
 import type {
+  ISODateTime,
   WorkoutExerciseId,
   WorkoutSetId,
 } from "../domain/primitives";
@@ -66,6 +67,9 @@ const isValidEffort = (effort: Effort): boolean =>
 
 const isValidRepetitions = (repetitions: number): boolean =>
   Number.isInteger(repetitions) && repetitions > 0;
+
+const addSeconds = (startedAt: ISODateTime, seconds: number): ISODateTime =>
+  new Date(Date.parse(startedAt) + seconds * 1000).toISOString() as ISODateTime;
 
 const insertAt = <Value>(items: readonly Value[], item: Value, position: number): readonly Value[] => [
   ...items.slice(0, position),
@@ -169,7 +173,7 @@ export class WorkoutExecutionService {
     }
 
     return this.save({
-      ...active.value,
+      ...this.withoutRestForExercises(active.value, active.value.exercises[position]!.sets.map((set) => set.id)),
       exercises: removeAt(active.value.exercises, position),
     });
   }
@@ -261,7 +265,7 @@ export class WorkoutExecutionService {
     };
 
     return this.save({
-      ...active.value,
+      ...this.withoutRestForSets(active.value, [workoutSetId]),
       exercises: active.value.exercises.map((candidate, index) =>
         index === location.exercisePosition ? updatedExercise : candidate),
     });
@@ -296,16 +300,25 @@ export class WorkoutExecutionService {
       return failure(conflictError(input.workoutSetId));
     }
 
+    const completedAt = this.clock.now();
     const set: WorkoutSet = {
       ...location.set,
       status: "completed",
       weight: input.weight,
       repetitions: input.repetitions,
       ...(input.effort === undefined ? {} : { effort: input.effort }),
-      completedAt: this.clock.now(),
+      completedAt,
     };
 
-    return this.save(this.replaceSet(active.value, location.exercisePosition, location.setPosition, set));
+    const exercise = active.value.exercises[location.exercisePosition]!;
+    return this.save({
+      ...this.replaceSet(active.value, location.exercisePosition, location.setPosition, set),
+      restPeriod: {
+        sourceSetId: input.workoutSetId,
+        startedAt: completedAt,
+        endsAt: addSeconds(completedAt, exercise.restSeconds),
+      },
+    });
   }
 
   async reopenWorkoutSet(workoutSetId: WorkoutSetId): ApplicationResult<ActiveWorkoutSession> {
@@ -326,10 +339,12 @@ export class WorkoutExecutionService {
     }
 
     const { completedAt: _completedAt, ...set } = location.set;
-    return this.save(this.replaceSet(active.value, location.exercisePosition, location.setPosition, {
-      ...set,
-      status: "pending",
-    }));
+    return this.save(this.withoutRestForSets(this.replaceSet(
+      active.value,
+      location.exercisePosition,
+      location.setPosition,
+      { ...set, status: "pending" },
+    ), [workoutSetId]));
   }
 
   private async findActiveWorkout(): ApplicationResult<ActiveWorkoutSession> {
@@ -443,5 +458,24 @@ export class WorkoutExecutionService {
         sets: exercise.sets.map((candidate, candidateIndex) => candidateIndex === setPosition ? set : candidate),
       } : exercise),
     };
+  }
+
+  private withoutRestForExercises(
+    workout: ActiveWorkoutSession,
+    exercises: readonly WorkoutSetId[],
+  ): ActiveWorkoutSession {
+    return this.withoutRestForSets(workout, exercises);
+  }
+
+  private withoutRestForSets(
+    workout: ActiveWorkoutSession,
+    workoutSetIds: readonly WorkoutSetId[],
+  ): ActiveWorkoutSession {
+    if (workout.restPeriod === undefined || !workoutSetIds.includes(workout.restPeriod.sourceSetId)) {
+      return workout;
+    }
+
+    const { restPeriod: _restPeriod, ...withoutRestPeriod } = workout;
+    return withoutRestPeriod;
   }
 }

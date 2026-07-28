@@ -1,10 +1,12 @@
-import type { ActiveWorkoutSession } from "../domain/workout";
+import type { ActiveWorkoutSession, PreviousSetReference, RestPeriod } from "../domain/workout";
 import type {
   AddWorkoutExerciseInput,
   AddWorkoutSetInput,
   ApplicationResult,
   CompleteWorkoutSetInput,
   MoveWorkoutExerciseInput,
+  PreviousSetReferencesQuery,
+  SetRestDurationInput,
   StartWorkoutInput,
   UpdateWorkoutSetInput,
 } from "./contracts";
@@ -12,14 +14,20 @@ import type { WorkoutExerciseId, WorkoutSetId } from "../domain/primitives";
 import type { TrainingOrchestratorDependencies } from "./dependencies";
 import { ActiveWorkoutService } from "./active-workout";
 import { WorkoutExecutionService } from "./workout-execution";
+import { RestManagementService } from "./rest-management";
+import { TrainingHistoryService } from "./training-history";
 
 export class TrainingOrchestrator {
   private readonly activeWorkouts: ActiveWorkoutService;
   private readonly execution: WorkoutExecutionService;
+  private readonly rests: RestManagementService;
+  private readonly history: TrainingHistoryService;
 
   constructor(dependencies: TrainingOrchestratorDependencies) {
     this.activeWorkouts = new ActiveWorkoutService(dependencies);
     this.execution = new WorkoutExecutionService(dependencies);
+    this.rests = new RestManagementService(dependencies);
+    this.history = new TrainingHistoryService(dependencies);
   }
 
   startWorkout(input: StartWorkoutInput): ApplicationResult<ActiveWorkoutSession> {
@@ -60,5 +68,23 @@ export class TrainingOrchestrator {
 
   reopenWorkoutSet(workoutSetId: WorkoutSetId): ApplicationResult<ActiveWorkoutSession> {
     return this.execution.reopenWorkoutSet(workoutSetId);
+  }
+
+  getRestPeriod(): ApplicationResult<RestPeriod | null> {
+    return this.rests.getRestPeriod();
+  }
+
+  setRestDuration(input: SetRestDurationInput): ApplicationResult<RestPeriod> {
+    return this.rests.setRestDuration(input);
+  }
+
+  cancelRest(): ApplicationResult<void> {
+    return this.rests.cancelRest();
+  }
+
+  getPreviousSetReferences(
+    query: PreviousSetReferencesQuery,
+  ): ApplicationResult<readonly PreviousSetReference[]> {
+    return this.history.getPreviousSetReferences(query);
   }
 }
