@@ -2,6 +2,7 @@ import type { Exercise, ExerciseStatus } from "./domain/exercise";
 import type {
   ActiveWorkoutSession,
   PreviousSetReference,
+  RestPeriod,
   WorkoutSession,
 } from "./domain/workout";
 import type {
@@ -73,6 +74,19 @@ export interface PreviousSetQuery {
 
 export interface WorkoutHistoryReader {
   findPreviousSets(query: PreviousSetQuery): PersistenceResult<readonly PreviousSetReference[]>;
+}
+
+export interface TrainingChangeSnapshot {
+  readonly activeWorkout: ActiveWorkoutSession | null;
+  readonly restPeriod: RestPeriod | null;
+}
+
+export type TrainingChangeListener = (snapshot: TrainingChangeSnapshot) => void;
+export type TrainingChangeUnsubscribe = () => void;
+
+export interface TrainingChangePublisher {
+  publish(snapshot: TrainingChangeSnapshot): void;
+  subscribe(listener: TrainingChangeListener): TrainingChangeUnsubscribe;
 }
 
 export interface Clock {

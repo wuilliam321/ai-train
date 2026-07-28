@@ -19,6 +19,8 @@ import type {
   WorkoutRepositoryQuery,
   WorkoutSession,
   WorkoutSessionId,
+  TrainingChangePublisher,
+  TrainingChangeSnapshot,
   ActiveWorkoutSession,
   PreviousSetReference,
   PreviousSetQuery,
@@ -134,6 +136,21 @@ class EmptyWorkoutHistoryReader implements WorkoutHistoryReader {
   }
 }
 
+class InMemoryTrainingChangePublisher implements TrainingChangePublisher {
+  private readonly listeners = new Set<(snapshot: TrainingChangeSnapshot) => void>();
+
+  publish(snapshot: TrainingChangeSnapshot): void {
+    for (const listener of this.listeners) {
+      listener(snapshot);
+    }
+  }
+
+  subscribe(listener: (snapshot: TrainingChangeSnapshot) => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+}
+
 export const createTrainingEnvironment = (
   clock: Clock,
 ): TrainingOrchestratorDependencies => ({
@@ -141,6 +158,7 @@ export const createTrainingEnvironment = (
   routines: new InMemoryRoutineRepository(),
   workouts: new InMemoryWorkoutRepository(),
   history: new EmptyWorkoutHistoryReader(),
+  events: new InMemoryTrainingChangePublisher(),
   clock,
   ids: new SequentialIdGenerator(),
 });
