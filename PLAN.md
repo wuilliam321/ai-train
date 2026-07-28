@@ -7,8 +7,8 @@
 | 0. Contratos del núcleo | completed | Dominio, fachada `TrainingOrchestrator` y puertos independientes de infraestructura. |
 | 1. Núcleo funcional | completed | Casos de uso completos y verificables mediante adaptadores en memoria. |
 | 2. Persistencia local | completed | Adaptador JSON local atómico, recuperable y operable sin red. |
-| 3. Datos base | in_progress | Ejercicios y rutinas iniciales normalizados desde `current-routines`; se desarrolla en paralelo. |
-| 4. Aplicación Vue offline | pending | Adaptador web/PWA rápido para ejecutar entrenamientos. |
+| 3. Datos base | completed | Ejercicios y rutinas iniciales normalizados, cargables y verificados desde `current-routines`. |
+| 4. Aplicación Vue offline | in_progress | Adaptador web/PWA rápido para ejecutar entrenamientos sin red. |
 | 5. Experiencia completa | pending | Gestión visual, historial, dashboard y progreso. |
 | 6. Validación y entrega | pending | Rendimiento, respaldo, pruebas end-to-end y distribución. |
 
@@ -67,7 +67,7 @@ Objetivo: ofrecer los flujos del núcleo en una PWA móvil, sin conexión y con 
 - Permitir iniciar una rutina y registrar una serie en menos de cinco segundos.
 - Mostrar referencias inline y descanso flotante durante la ejecución.
 
-Precondiciones: `TrainingOrchestrator` debe ser la fachada pública completa, los datos base deben poder cargarse mediante esa fachada y debe existir persistencia local apta para navegador. La implementación detallada se habilita al cerrar Fase 3.
+Precondiciones cumplidas: `TrainingOrchestrator` es la fachada pública completa y los datos base se cargan de forma repetible. La primera entrega de la fase crea la persistencia local apta para navegador; el adaptador JSON de desarrollo no se distribuye en la aplicación web.
 
 ## Fase 5 — Experiencia completa
 
