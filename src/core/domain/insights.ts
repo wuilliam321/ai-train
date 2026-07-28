@@ -41,7 +41,7 @@ export interface DashboardSummary {
 export interface ExerciseProgressPoint {
   readonly recordedAt: ISODateTime;
   readonly bestWeight: Weight;
-  readonly estimatedOneRepMax: Weight;
+  readonly estimatedOneRepMax?: Weight;
   readonly volume: readonly TrainingVolume[];
 }
 

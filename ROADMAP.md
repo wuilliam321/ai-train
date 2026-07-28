@@ -14,8 +14,8 @@ Una feature se completa solo si funciona mediante `TrainingOrchestrator`, tiene 
 | completed | F5. Ejecución | Editar ejercicios y series, completar y reabrir series. | F4 |
 | completed | F6. Descanso y referencias | Descanso persistente y referencias inline por ejercicio y posición. | F5 |
 | completed | F7. Cierre e historial | Finalizar, descartar, paginar historial y emitir snapshots. | F6 |
-| in_progress | F8. Métricas | Dashboard, volumen efectivo, distribución muscular y progreso. | F7 |
-| pending | F9. Simulación longitudinal | Dos años de entrenamiento determinista y verificación de rendimiento. | F8 |
+| completed | F8. Métricas | Dashboard, volumen efectivo, distribución muscular y progreso. | F7 |
+| in_progress | F9. Simulación longitudinal | Dos años de entrenamiento determinista y verificación de rendimiento. | F8 |
 
 ## F1 — Fundamentos
 

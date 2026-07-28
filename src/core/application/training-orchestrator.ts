@@ -4,6 +4,7 @@ import type {
   AddWorkoutSetInput,
   ApplicationResult,
   CompleteWorkoutSetInput,
+  ExerciseProgressQuery,
   ListWorkoutSessionsQuery,
   MoveWorkoutExerciseInput,
   PreviousSetReferencesQuery,
@@ -13,13 +14,15 @@ import type {
 } from "./contracts";
 import type { Page, WorkoutExerciseId, WorkoutSessionId, WorkoutSetId } from "../domain/primitives";
 import type { WorkoutRepository } from "../ports";
-import type { WorkoutSummary } from "../domain/insights";
+import type { DashboardSummary, ExerciseProgress, WorkoutSummary } from "../domain/insights";
+import type { DateRange } from "../domain/primitives";
 import type { TrainingOrchestratorDependencies } from "./dependencies";
 import { ActiveWorkoutService } from "./active-workout";
 import { WorkoutExecutionService } from "./workout-execution";
 import { RestManagementService } from "./rest-management";
 import { TrainingHistoryService } from "./training-history";
 import { WorkoutLifecycleService } from "./workout-lifecycle";
+import { TrainingMetricsService } from "./training-metrics";
 
 class PublishingWorkoutRepository implements WorkoutRepository {
   private readonly workouts: WorkoutRepository;
@@ -63,6 +66,7 @@ export class TrainingOrchestrator {
   private readonly rests: RestManagementService;
   private readonly history: TrainingHistoryService;
   private readonly lifecycle: WorkoutLifecycleService;
+  private readonly metrics: TrainingMetricsService;
   private readonly events: TrainingOrchestratorDependencies["events"];
 
   constructor(dependencies: TrainingOrchestratorDependencies) {
@@ -76,6 +80,7 @@ export class TrainingOrchestrator {
     this.rests = new RestManagementService(scopedDependencies);
     this.history = new TrainingHistoryService(scopedDependencies);
     this.lifecycle = new WorkoutLifecycleService(scopedDependencies);
+    this.metrics = new TrainingMetricsService(scopedDependencies);
     this.events = dependencies.events;
   }
 
@@ -151,6 +156,14 @@ export class TrainingOrchestrator {
 
   getWorkoutSession(workoutSessionId: WorkoutSessionId): ApplicationResult<WorkoutSession> {
     return this.history.getWorkoutSession(workoutSessionId);
+  }
+
+  getDashboard(period: DateRange): ApplicationResult<DashboardSummary> {
+    return this.metrics.getDashboard(period);
+  }
+
+  getExerciseProgress(query: ExerciseProgressQuery): ApplicationResult<ExerciseProgress> {
+    return this.metrics.getExerciseProgress(query);
   }
 
   subscribe(listener: (snapshot: { readonly activeWorkout: ActiveWorkoutSession | null; readonly restPeriod: RestPeriod | null }) => void): () => void {
