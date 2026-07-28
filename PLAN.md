@@ -8,7 +8,7 @@
 | 1. Núcleo funcional | completed | Casos de uso completos y verificables mediante adaptadores en memoria. |
 | 2. Persistencia local | completed | Adaptador JSON local atómico, recuperable y operable sin red. |
 | 3. Datos base | completed | Ejercicios y rutinas iniciales normalizados, cargables y verificados desde `current-routines`. |
-| 4. Aplicación Vue offline | in_progress | Adaptador web/PWA rápido para ejecutar entrenamientos sin red. |
+| 4. Aplicación offline | in_progress | Primer adaptador web/PWA rápido para ejecutar entrenamientos sin red. |
 | 5. Experiencia completa | pending | Gestión visual, historial, dashboard y progreso. |
 | 6. Validación y entrega | pending | Rendimiento, respaldo, pruebas end-to-end y distribución. |
 
@@ -58,16 +58,16 @@ Objetivo: convertir el material de `current-routines` en ejercicios y rutinas in
 
 `season` es solo parte del nombre de los archivos de origen y no pertenece al dominio.
 
-## Fase 4 — Aplicación Vue offline
+## Fase 4 — Aplicación offline
 
 Objetivo: ofrecer los flujos del núcleo en una PWA móvil, sin conexión y con mínima fricción.
 
-- Crear el adaptador Vue sobre `TrainingOrchestrator`.
+- Crear un adaptador de interfaz sobre `TrainingOrchestrator`; Vue es la implementación inicial, no una dependencia de la lógica.
 - Configurar instalación PWA y disponibilidad offline.
 - Permitir iniciar una rutina y registrar una serie en menos de cinco segundos.
 - Mostrar referencias inline y descanso flotante durante la ejecución.
 
-Precondiciones cumplidas: `TrainingOrchestrator` es la fachada pública completa y los datos base se cargan de forma repetible. La primera entrega de la fase crea la persistencia local apta para navegador; el adaptador JSON de desarrollo no se distribuye en la aplicación web.
+Precondiciones cumplidas: `TrainingOrchestrator` es la fachada pública completa y los datos base se cargan de forma repetible. La primera entrega de la fase crea la persistencia local apta para navegador; el adaptador JSON de desarrollo no se distribuye en la aplicación web. La interfaz es reemplazable: cualquier frontend consume exclusivamente DTOs y comandos de la fachada pública, sin alterar el núcleo, los contratos ni las reglas de negocio.
 
 ## Fase 5 — Experiencia completa
 

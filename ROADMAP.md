@@ -1,14 +1,14 @@
-# Fase 4 — Aplicación Vue offline
+# Fase 4 — Aplicación offline
 
 ## Regla de avance
 
-La aplicación web depende exclusivamente de `TrainingOrchestrator`; no importa servicios internos, repositorios ni el adaptador JSON de Node. Cada entrega conserva TypeScript estricto y `pnpm build` verde con cobertura total del núcleo y aplicación. Solo puede haber una feature `in_progress`.
+La aplicación web depende exclusivamente de `TrainingOrchestrator`; no importa servicios internos, repositorios ni el adaptador JSON de Node. Vue es solo el primer adaptador de interfaz: debe poder sustituirse por cualquier frontend sin cambiar el núcleo, sus contratos ni las reglas de negocio. Los estados propios de interfaz no se filtran a los DTOs públicos. Cada entrega conserva TypeScript estricto y `pnpm build` verde con cobertura total del núcleo y aplicación. Solo puede haber una feature `in_progress`.
 
 | Estado | Feature | Entrega verificable |
 | --- | --- | --- |
 | completed | F19. Persistencia web | Adaptador local para navegador, atómico por comando y recuperable al recargar. |
-| in_progress | F20. Composición y carga web | Punto de entrada que crea el orquestador y carga datos base de forma idempotente. |
-| pending | F21. Base Vue y PWA | Aplicación Vue instalable que abre y opera sin red tras la primera carga. |
+| completed | F20. Composición y carga web | Punto de entrada que crea el orquestador y carga datos base de forma idempotente. |
+| in_progress | F21. Primer frontend y PWA | Aplicación Vue inicial, instalable y sustituible, que abre y opera sin red tras la primera carga. |
 | pending | F22. Inicio de entrenamiento | Selección de rutina/variante e inicio de sesión activa en menos de cinco segundos. |
 | pending | F23. Ejecución de sesión | Registro de series, referencia previa inline y descanso flotante persistido. |
 | pending | F24. Recuperación y entrega del flujo | Recuperación tras recarga, navegación mínima y verificación del flujo offline completo. |
@@ -27,14 +27,16 @@ Aceptación: al reconstruir el adaptador web se recuperan el catálogo, la sesi�
 
 - Crear el punto de composición web que instancia reloj, IDs, eventos, persistencia y `TrainingOrchestrator`.
 - Ejecutar `loadBaseData()` sobre la fachada durante la inicialización, sin duplicar datos existentes.
-- Exponer a Vue únicamente el orquestador y un estado de inicialización serializable.
-- Separar el error recuperable de almacenamiento del estado de interfaz; no inventar un segundo modelo de dominio en Vue.
+- Exponer al frontend únicamente el orquestador y un estado de inicialización serializable.
+- Separar el error recuperable de almacenamiento del estado de interfaz; no inventar un segundo modelo de dominio en el frontend.
 
 Aceptación: una apertura nueva deja disponibles ejercicios y rutinas base; una reapertura preserva los datos y no los duplica.
 
-## F21 — Base Vue y PWA
+## F21 — Primer frontend y PWA
 
-- Añadir Vue, el punto de montaje y una estructura móvil mínima sin trasladar reglas de negocio al cliente visual.
+- Añadir Vue como implementación inicial, su punto de montaje y una estructura móvil mínima sin trasladar reglas de negocio al cliente visual.
+- Encapsular toda dependencia de Vue en el adaptador de presentación: componentes y estado visual consumen únicamente `TrainingOrchestrator`, DTOs serializables y la composición web.
+- No crear stores con estado de dominio duplicado ni contratos que dependan de Vue; otro frontend debe poder reemplazar esta capa sin cambiar el núcleo.
 - Configurar manifiesto, service worker y caché de recursos de aplicación para abrir sin red después de la primera carga.
 - Mostrar estados de inicialización, almacenamiento no disponible y recuperación de datos de forma comprensible.
 - Mantener la aplicación instalable sin introducir autenticación, backend ni sincronización.
