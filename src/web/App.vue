@@ -67,6 +67,7 @@ const saveLastSelection = (selection: LastRoutineSelection): void => {
 };
 
 const selectRoutine = async (routineId: RoutineId, preferredVariantId?: RoutineVariantId): Promise<void> => {
+  error.value = null;
   const routine = await props.training.getRoutine(routineId);
 
   if (!routine.ok) {
@@ -201,26 +202,26 @@ onMounted(() => {
 
     <template v-else-if="view === 'routines'">
       <section aria-labelledby="routines-title">
-      <h2 id="routines-title">Rutinas</h2>
-      <ul v-if="routines.length" class="card-list">
-        <li v-for="routine in routines" :key="routine.id">
-          <strong>{{ routine.name }}</strong>
-          <span>{{ routine.variantCount }} variantes</span>
-          <button type="button" class="secondary-action" @click="selectRoutine(routine.id)">Elegir rutina</button>
-        </li>
-      </ul>
-      <p v-else class="empty-state">No hay rutinas disponibles.</p>
-      </section>
-
-      <section v-if="selectedRoutine" aria-labelledby="selection-title">
-        <h2 id="selection-title">{{ selectedRoutine.name }}</h2>
-        <label class="field">
-          Variante
-          <select v-model="selectedVariantId">
-            <option v-for="variant in selectedRoutine.variants" :key="variant.id" :value="variant.id">{{ variant.name }}</option>
-          </select>
-        </label>
-        <button type="button" :disabled="busy || !selectedVariant" @click="startRoutine">Iniciar rutina</button>
+        <h2 id="routines-title">Rutinas</h2>
+        <section v-if="selectedRoutine" aria-labelledby="selection-title" class="active-card">
+          <p class="eyebrow">Rutina elegida</p>
+          <h3 id="selection-title">{{ selectedRoutine.name }}</h3>
+          <label class="field">
+            Variante
+            <select v-model="selectedVariantId">
+              <option v-for="variant in selectedRoutine.variants" :key="variant.id" :value="variant.id">{{ variant.name }}</option>
+            </select>
+          </label>
+          <button type="button" :disabled="busy || !selectedVariant" @click="startRoutine">Iniciar rutina</button>
+        </section>
+        <ul v-if="routines.length" class="card-list">
+          <li v-for="routine in routines" :key="routine.id">
+            <strong>{{ routine.name }}</strong>
+            <span>{{ routine.variantCount }} variantes</span>
+            <button type="button" class="secondary-action" :aria-pressed="selectedRoutine?.id === routine.id" @click="selectRoutine(routine.id)">{{ selectedRoutine?.id === routine.id ? "Rutina elegida" : "Elegir rutina" }}</button>
+          </li>
+        </ul>
+        <p v-else class="empty-state">No hay rutinas disponibles.</p>
       </section>
 
       <section aria-labelledby="empty-title">
