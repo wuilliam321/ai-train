@@ -1,0 +1,98 @@
+:root {
+  color: #172033;
+  background: #f8fafc;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #fff;
+  background: #1d4ed8;
+  font: inherit;
+  font-weight: 700;
+}
+
+.app-shell {
+  display: grid;
+  gap: 2rem;
+  width: min(100%, 42rem);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.app-header h1,
+h2,
+p {
+  margin: 0;
+}
+
+.app-header {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.app-header h1 {
+  font-size: clamp(2rem, 10vw, 3rem);
+}
+
+.eyebrow {
+  color: #1d4ed8;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.card-list,
+.exercise-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card-list li,
+.exercise-list li,
+.notice {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border: 1px solid #dbe3f0;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.card-list span,
+.exercise-list span,
+.empty-state,
+.app-header > p:not(.eyebrow) {
+  color: #526079;
+}
+
+.notice {
+  color: #9f1239;
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+
+.error-shell {
+  align-content: center;
+}

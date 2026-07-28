@@ -8,8 +8,8 @@ La aplicación web depende exclusivamente de `TrainingOrchestrator`; no importa 
 | --- | --- | --- |
 | completed | F19. Persistencia web | Adaptador local para navegador, atómico por comando y recuperable al recargar. |
 | completed | F20. Composición y carga web | Punto de entrada que crea el orquestador y carga datos base de forma idempotente. |
-| in_progress | F21. Primer frontend y PWA | Aplicación Vue inicial, instalable y sustituible, que abre y opera sin red tras la primera carga. |
-| pending | F22. Inicio de entrenamiento | Selección de rutina/variante e inicio de sesión activa en menos de cinco segundos. |
+| completed | F21. Primer frontend y PWA | Aplicación Vue inicial, instalable y sustituible, que abre y opera sin red tras la primera carga. |
+| in_progress | F22. Inicio de entrenamiento | Selección de rutina/variante e inicio de sesión activa en menos de cinco segundos. |
 | pending | F23. Ejecución de sesión | Registro de series, referencia previa inline y descanso flotante persistido. |
 | pending | F24. Recuperación y entrega del flujo | Recuperación tras recarga, navegación mínima y verificación del flujo offline completo. |
 

@@ -3,17 +3,25 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && vue-tsc --noEmit",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "verify": "pnpm run typecheck && pnpm run coverage",
-    "build": "pnpm run verify"
+    "web:build": "vite build",
+    "build": "pnpm run verify && pnpm run web:build"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
+    "@vitejs/plugin-vue": "^6.0.8",
     "@vitest/coverage-v8": "^4.1.10",
     "typescript": "^5.9.2",
-    "vitest": "^4.1.10"
+    "vite": "^8.1.5",
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^4.1.10",
+    "vue-tsc": "^3.3.8"
   },
-  "packageManager": "pnpm@10.17.0"
+  "packageManager": "pnpm@10.17.0",
+  "dependencies": {
+    "vue": "^3.5.38"
+  }
 }
