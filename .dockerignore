@@ -1,0 +1,10 @@
+.git
+.agents
+.codex
+node_modules
+coverage
+dist
+test-results
+current-routines
+*.md
+data
