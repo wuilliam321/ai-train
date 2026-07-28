@@ -7,8 +7,8 @@ Se valida la PWA como adaptador del núcleo sin introducir reglas nuevas, backen
 | Estado | Feature | Entrega verificable |
 | --- | --- | --- |
 | completed | F29. Pruebas end-to-end offline | Recorrido de instalación, entrenamiento y recuperación validado en navegador sin red. |
-| in_progress | F30. Rendimiento y tamaño | Presupuesto de arranque y distribución medido y documentado. |
-| pending | F31. Respaldo y documentación | Exportación/importación accesible, guía breve y distribución local preparada. |
+| completed | F30. Rendimiento y tamaño | Presupuesto de arranque y distribución medido y documentado. |
+| in_progress | F31. Respaldo y documentación | Exportación/importación accesible, guía breve y distribución local preparada. |
 
 ## F29 — Pruebas end-to-end offline
 
