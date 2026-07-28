@@ -8,8 +8,8 @@
 | 1. Núcleo funcional | completed | Casos de uso completos y verificables mediante adaptadores en memoria. |
 | 2. Persistencia local | completed | Adaptador JSON local atómico, recuperable y operable sin red. |
 | 3. Datos base | completed | Ejercicios y rutinas iniciales normalizados, cargables y verificados desde `current-routines`. |
-| 4. Aplicación offline | in_progress | Primer adaptador web/PWA rápido para ejecutar entrenamientos sin red. |
-| 5. Experiencia completa | pending | Gestión visual, historial, dashboard y progreso. |
+| 4. Aplicación offline | completed | PWA local instalable que inicia, ejecuta, recupera y finaliza entrenamientos sin red. |
+| 5. Experiencia completa | in_progress | Gestión visual, historial, dashboard y progreso. |
 | 6. Validación y entrega | pending | Rendimiento, respaldo, pruebas end-to-end y distribución. |
 
 `ROADMAP.md` detalla exclusivamente la fase activa. Al cerrar una fase, se actualiza esta tabla y se reemplaza el roadmap por el de la siguiente.

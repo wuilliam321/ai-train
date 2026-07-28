@@ -15,6 +15,7 @@ const selectedVariantId = ref<RoutineVariantId | null>(null);
 const activeWorkout = ref<ActiveWorkoutSession | null>(null);
 const error = ref<string | null>(null);
 const busy = ref(false);
+const view = ref<"routines" | "catalog">("routines");
 const lastSelectionKey = "train-app:last-routine";
 
 interface LastRoutineSelection {
@@ -72,18 +73,20 @@ const selectRoutine = async (routineId: RoutineId, preferredVariantId?: RoutineV
 };
 
 const loadCatalog = async (): Promise<void> => {
-  const [loadedExercises, loadedRoutines] = await Promise.all([
+  const [loadedExercises, loadedRoutines, recoveredWorkout] = await Promise.all([
     props.training.listExercises({ status: "active" }),
     props.training.listRoutines({ status: "active" }),
+    props.training.getActiveWorkout(),
   ]);
 
-  if (!loadedExercises.ok || !loadedRoutines.ok) {
+  if (!loadedExercises.ok || !loadedRoutines.ok || !recoveredWorkout.ok) {
     error.value = "No se pudo leer el catálogo local.";
     return;
   }
 
   exercises.value = loadedExercises.value;
   routines.value = loadedRoutines.value;
+  activeWorkout.value = recoveredWorkout.value;
   const lastSelection = readLastSelection();
 
   if (lastSelection !== null) {
@@ -139,6 +142,21 @@ const discardWorkout = async (): Promise<void> => {
   }
 
   activeWorkout.value = null;
+  view.value = "routines";
+};
+
+const finishWorkout = async (): Promise<void> => {
+  busy.value = true;
+  const finished = await props.training.finishWorkout();
+  busy.value = false;
+
+  if (!finished.ok) {
+    error.value = "No se pudo finalizar el entrenamiento.";
+    return;
+  }
+
+  activeWorkout.value = null;
+  view.value = "routines";
 };
 
 onMounted(() => {
@@ -156,9 +174,14 @@ onMounted(() => {
 
     <p v-if="error" class="notice" role="alert">{{ error }}</p>
 
-    <ActiveWorkout v-if="activeWorkout" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" />
+    <nav v-if="!activeWorkout" class="app-navigation" aria-label="Principal">
+      <button type="button" :class="{ 'secondary-action': view !== 'routines' }" @click="view = 'routines'">Rutinas</button>
+      <button type="button" :class="{ 'secondary-action': view !== 'catalog' }" @click="view = 'catalog'">Catálogo</button>
+    </nav>
 
-    <template v-else>
+    <ActiveWorkout v-if="activeWorkout" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" @finish="finishWorkout" />
+
+    <template v-else-if="view === 'routines'">
       <section aria-labelledby="routines-title">
       <h2 id="routines-title">Rutinas</h2>
       <ul v-if="routines.length" class="card-list">
@@ -188,7 +211,7 @@ onMounted(() => {
       </section>
     </template>
 
-    <section aria-labelledby="exercises-title">
+    <section v-if="!activeWorkout && view === 'catalog'" aria-labelledby="exercises-title">
       <h2 id="exercises-title">Ejercicios</h2>
       <ul v-if="exercises.length" class="exercise-list">
         <li v-for="exercise in exercises" :key="exercise.id">

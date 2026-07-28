@@ -1,78 +1,51 @@
-# Fase 4 — Aplicación offline
+# Fase 5 — Experiencia completa
 
 ## Regla de avance
 
-La aplicación web depende exclusivamente de `TrainingOrchestrator`; no importa servicios internos, repositorios ni el adaptador JSON de Node. Vue es solo el primer adaptador de interfaz: debe poder sustituirse por cualquier frontend sin cambiar el núcleo, sus contratos ni las reglas de negocio. Los estados propios de interfaz no se filtran a los DTOs públicos. Cada entrega conserva TypeScript estricto y `pnpm build` verde con cobertura total del núcleo y aplicación. Solo puede haber una feature `in_progress`.
+La interfaz sigue siendo un adaptador reemplazable: consume exclusivamente `TrainingOrchestrator`, DTOs serializables y la composición web. No se traslada lógica de dominio a Vue ni se duplican agregados en stores visuales. Cada entrega conserva TypeScript estricto y `pnpm build` verde con cobertura total del núcleo y aplicación. Solo puede haber una feature `in_progress`.
 
 | Estado | Feature | Entrega verificable |
 | --- | --- | --- |
-| completed | F19. Persistencia web | Adaptador local para navegador, atómico por comando y recuperable al recargar. |
-| completed | F20. Composición y carga web | Punto de entrada que crea el orquestador y carga datos base de forma idempotente. |
-| completed | F21. Primer frontend y PWA | Aplicación Vue inicial, instalable y sustituible, que abre y opera sin red tras la primera carga. |
-| completed | F22. Inicio de entrenamiento | Selección de rutina/variante e inicio de sesión activa en menos de cinco segundos. |
-| completed | F23. Ejecución de sesión | Registro de series, referencia previa inline y descanso flotante persistido. |
-| in_progress | F24. Recuperación y entrega del flujo | Recuperación tras recarga, navegación mínima y verificación del flujo offline completo. |
+| in_progress | F25. Gestión visual del catálogo | Crear, editar, archivar y restaurar ejercicios y rutinas locales desde la interfaz. |
+| pending | F26. Historial de sesiones | Consultar sesiones cerradas y su detalle con paginación local. |
+| pending | F27. Dashboard y progreso | Presentar volumen, distribución muscular y progreso por ejercicio. |
+| pending | F28. Refinamiento de experiencia | Accesibilidad ampliada, estados vacíos y navegación móvil de las capacidades completas. |
 
-## F19 — Persistencia web
+## F25 — Gestión visual del catálogo
 
-- Implementar un adaptador de navegador para los puertos de ejercicios, rutinas, sesión, historial y eventos.
-- Usar una tecnología disponible offline en navegador, sin `node:fs`, red, backend ni estado global oculto.
-- Mantener la semántica del documento JSON: cambios atómicos por comando, validación al leer y recuperación segura ante datos corruptos.
-- Definir exportación e importación local como JSON versionado sin acoplar el núcleo al formato ni a APIs del navegador.
-- Probar recuperación de sesión activa, descanso, historial y fallo de escritura con dobles de las APIs web.
+- Añadir vistas de listado y detalle para ejercicios y rutinas, separadas de la sesión activa.
+- Crear, actualizar, archivar y restaurar mediante los comandos públicos existentes.
+- Editar variantes, ejercicios prescritos, objetivos, lateralidad y descanso de rutinas sin inventar un modelo paralelo.
+- Validar la entrada antes del envío para dar feedback inmediato; el núcleo sigue siendo la autoridad de las reglas.
 
-Aceptación: al reconstruir el adaptador web se recuperan el catálogo, la sesión activa y el descanso; el núcleo no cambia.
+Aceptación: un atleta puede mantener su catálogo local completo sin abandonar la PWA ni alterar una sesión activa.
 
-## F20 — Composición y carga web
+## F26 — Historial de sesiones
 
-- Crear el punto de composición web que instancia reloj, IDs, eventos, persistencia y `TrainingOrchestrator`.
-- Ejecutar `loadBaseData()` sobre la fachada durante la inicialización, sin duplicar datos existentes.
-- Exponer al frontend únicamente el orquestador y un estado de inicialización serializable.
-- Separar el error recuperable de almacenamiento del estado de interfaz; no inventar un segundo modelo de dominio en el frontend.
+- Mostrar sesiones finalizadas paginadas mediante `listWorkoutSessions()`.
+- Navegar al detalle inmutable de una sesión con ejercicios, series y volumen registrado.
+- Ofrecer estados vacíos, errores recuperables y retorno a la sesión activa cuando exista.
 
-Aceptación: una apertura nueva deja disponibles ejercicios y rutinas base; una reapertura preserva los datos y no los duplica.
+Aceptación: el historial local permite revisar una sesión cerrada sin red y sin cargar datos de forma no acotada.
 
-## F21 — Primer frontend y PWA
+## F27 — Dashboard y progreso
 
-- Añadir Vue como implementación inicial, su punto de montaje y una estructura móvil mínima sin trasladar reglas de negocio al cliente visual.
-- Encapsular toda dependencia de Vue en el adaptador de presentación: componentes y estado visual consumen únicamente `TrainingOrchestrator`, DTOs serializables y la composición web.
-- No crear stores con estado de dominio duplicado ni contratos que dependan de Vue; otro frontend debe poder reemplazar esta capa sin cambiar el núcleo.
-- Configurar manifiesto, service worker y caché de recursos de aplicación para abrir sin red después de la primera carga.
-- Mostrar estados de inicialización, almacenamiento no disponible y recuperación de datos de forma comprensible.
-- Mantener la aplicación instalable sin introducir autenticación, backend ni sincronización.
+- Presentar el dashboard de volumen efectivo y distribución muscular para un período elegido.
+- Mostrar progreso por ejercicio con los datos que expone `getExerciseProgress()`.
+- Definir la presentación de 1RM solo si se toma una decisión de producto explícita; no inferirla de forma automática.
 
-Aceptación: la app instalada abre offline y puede consultar el catálogo local a través de la composición web.
+Aceptación: el atleta puede entender su volumen y progreso local desde los DTOs de analítica ya disponibles.
 
-## F22 — Inicio de entrenamiento
+## F28 — Refinamiento de experiencia
 
-- Mostrar rutinas activas y sus variantes con acceso directo a la última selección cuando exista.
-- Iniciar una rutina o una sesión vacía mediante `startWorkout()`.
-- Presentar el estado de sesión activa y permitir descartarla de forma explícita.
-- Medir el flujo principal para que iniciar una rutina habitual requiera como máximo dos interacciones después de abrir la app.
+- Revisar navegación móvil, foco, etiquetas, contraste, objetivos táctiles y mensajes de error accionables.
+- Completar estados de carga, vacíos y de recuperación en catálogo, historial y métricas.
+- Verificar el recorrido integrado entre sesión activa, catálogo, historial y dashboard manteniendo la recuperación offline.
 
-Aceptación: un atleta puede abrir la app e iniciar una rutina local en menos de cinco segundos sin red.
-
-## F23 — Ejecución de sesión
-
-- Representar ejercicios y series pendientes de la sesión activa con controles táctiles rápidos para peso, repeticiones, RPE/RIR y tipo de serie.
-- Completar, reabrir, añadir, mover y eliminar series o ejercicios mediante la fachada pública.
-- Consultar y mostrar la referencia histórica por ejercicio y posición de serie junto al registro.
-- Mostrar el descanso calculado desde `getRestPeriod()` y permitir ajustarlo o cancelarlo; no persistir ticks de UI.
-- Guardar cada interacción mediante los comandos existentes y mantener la sesión usable tras perder foco o conexión.
-
-Aceptación: completar una serie persiste el resultado, muestra su referencia y activa el descanso correcto sin red.
-
-## F24 — Recuperación y entrega del flujo
-
-- Recuperar sesión activa, descanso y controles de la interfaz después de recargar, cerrar o reinstanciar la aplicación.
-- Añadir navegación mínima entre entrenamiento activo, rutinas y catálogo, sin adelantar el dashboard ni el historial completo de Fase 5.
-- Probar el recorrido offline: abrir, cargar datos, iniciar rutina, registrar serie, recargar y finalizar o descartar sesión.
-- Confirmar accesibilidad básica táctil, mensajes de error accionables y `pnpm build` verde.
-
-Aceptación: el flujo completo de entrenamiento funciona offline desde una instalación web y se recupera tras una recarga.
+Aceptación: las capacidades de la aplicación son navegables y accesibles en móvil sin convertir la interfaz en una segunda capa de dominio.
 
 ## Límites
 
-- No se implementan sincronización, cuentas, backend, comunidad, wearables ni recomendaciones automáticas.
-- `suggestRoutine()` y el 1RM estimado siguen aplazados: la UI permite elegir rutinas existentes y no presenta una recomendación inexistente.
-- Gestión visual exhaustiva, historial, dashboard y progreso pertenecen a Fase 5.
+- No se añaden sincronización, cuentas, backend, comunidad, wearables ni recomendaciones automáticas.
+- `suggestRoutine()` y la fórmula de 1RM permanecen aplazados hasta una decisión explícita.
+- La entrega, medición, respaldo documentado y pruebas end-to-end de distribución pertenecen a Fase 6.

@@ -3,7 +3,7 @@ import type { WebStorage } from "../../src/adapters/web-storage";
 import { baseDataCounts } from "../../src/base-data/load";
 import { createWebTrainingApplication } from "../../src/web/training-application";
 import { SequentialIdGenerator, TestClock } from "../support/training-environment";
-import type { ISODateTime } from "../../src/core";
+import type { ISODateTime, Repetitions, WeightAmount } from "../../src/core";
 
 const now = "2026-07-28T12:00:00.000Z" as ISODateTime;
 
@@ -77,5 +77,57 @@ describe("web training application", () => {
 
     expect(application).toEqual({ initialization: { status: "storage_error" } });
     expect("training" in application).toBe(false);
+  });
+
+  it("recovers and finishes an offline workout after rebuilding the web application", async () => {
+    const storage = new MemoryWebStorage();
+    const first = await createWebTrainingApplication(options(storage));
+
+    if (!("training" in first)) {
+      throw new Error("Expected initialized training application");
+    }
+
+    const routines = await first.training.listRoutines({ status: "active" });
+
+    if (!routines.ok || routines.value[0] === undefined) {
+      throw new Error("Expected base routine");
+    }
+
+    const routine = await first.training.getRoutine(routines.value[0].id);
+
+    if (!routine.ok || routine.value.variants[0] === undefined) {
+      throw new Error("Expected base routine variant");
+    }
+
+    const active = await first.training.startWorkout({
+      source: "routine",
+      routineId: routine.value.id,
+      variantId: routine.value.variants[0].id,
+    });
+
+    if (!active.ok || active.value.exercises[0]?.sets[0] === undefined) {
+      throw new Error("Expected active workout set");
+    }
+
+    const completed = await first.training.completeWorkoutSet({
+      workoutSetId: active.value.exercises[0].sets[0].id,
+      weight: { amount: 20 as WeightAmount, unit: "kg" },
+      repetitions: 8 as Repetitions,
+    });
+
+    expect(completed).toMatchObject({ ok: true, value: { restPeriod: { sourceSetId: active.value.exercises[0].sets[0].id } } });
+
+    const reopened = await createWebTrainingApplication(options(storage));
+
+    if (!("training" in reopened)) {
+      throw new Error("Expected recovered training application");
+    }
+
+    expect(await reopened.training.getActiveWorkout()).toMatchObject({
+      ok: true,
+      value: { id: active.value.id, restPeriod: { sourceSetId: active.value.exercises[0].sets[0].id } },
+    });
+    expect(await reopened.training.finishWorkout()).toMatchObject({ ok: true, value: { status: "completed" } });
+    expect(await reopened.training.getActiveWorkout()).toEqual({ ok: true, value: null });
   });
 });

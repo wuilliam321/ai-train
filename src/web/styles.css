@@ -47,6 +47,12 @@ p {
   gap: 0.5rem;
 }
 
+.app-navigation {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
 .app-header h1 {
   font-size: clamp(2rem, 10vw, 3rem);
 }
