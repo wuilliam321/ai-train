@@ -3,7 +3,12 @@ import type { WebStorageTrainingEnvironmentOptions } from "../adapters/web-stora
 import { loadBaseData } from "../base-data/load";
 import type { BaseDataLoadResult } from "../base-data/load";
 import { TrainingOrchestrator } from "../core";
-import type { ApplicationError } from "../core";
+import type { ApplicationError, PersistenceResult } from "../core";
+
+export interface WebTrainingBackup {
+  exportData(): Promise<string>;
+  importData(serialized: string): PersistenceResult<void>;
+}
 
 export interface ReadyInitializationState {
   readonly status: "ready";
@@ -27,6 +32,7 @@ export type WebTrainingInitializationState =
 export type WebTrainingApplication =
   | {
       readonly training: TrainingOrchestrator;
+      readonly backup: WebTrainingBackup;
       readonly initialization: ReadyInitializationState;
     }
   | {
@@ -37,10 +43,15 @@ export const createWebTrainingApplication = async (
   options: WebStorageTrainingEnvironmentOptions = {},
 ): Promise<WebTrainingApplication> => {
   let training: TrainingOrchestrator;
+  let backup: WebTrainingBackup;
 
   try {
     const environment = createWebStorageTrainingEnvironment(options);
     training = new TrainingOrchestrator(environment.dependencies);
+    backup = {
+      exportData: environment.exportData,
+      importData: environment.importData,
+    };
   } catch {
     return { initialization: { status: "storage_error" } };
   }
@@ -55,6 +66,7 @@ export const createWebTrainingApplication = async (
 
   return {
     training,
+    backup,
     initialization: {
       status: "ready",
       baseData: loaded.value,

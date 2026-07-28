@@ -10,7 +10,7 @@
 | 3. Datos base | completed | Ejercicios y rutinas iniciales normalizados, cargables y verificados desde `current-routines`. |
 | 4. Aplicación offline | completed | PWA local instalable que inicia, ejecuta, recupera y finaliza entrenamientos sin red. |
 | 5. Experiencia completa | completed | Gestión visual, historial, dashboard, progreso y accesibilidad móvil. |
-| 6. Validación y entrega | in_progress | Rendimiento, respaldo, pruebas end-to-end y distribución. |
+| 6. Validación y entrega | completed | Pruebas end-to-end, rendimiento, respaldo y distribución estática documentada. |
 
 `ROADMAP.md` detalla exclusivamente la fase activa. Al cerrar una fase, se actualiza esta tabla y se reemplaza el roadmap por el de la siguiente.
 

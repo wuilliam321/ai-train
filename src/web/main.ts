@@ -13,7 +13,7 @@ const mount = async (): Promise<void> => {
   }
 
   if ("training" in application) {
-    createApp(App, { training: application.training }).mount(target);
+    createApp(App, { training: application.training, backup: application.backup }).mount(target);
     return;
   }
 
