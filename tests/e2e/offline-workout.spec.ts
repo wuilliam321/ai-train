@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 test("recovers and finishes a workout after reloading offline", async ({ page, context }) => {
   await page.goto("/");
   await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.getByRole("button", { name: "Rutinas", exact: true }).click();
   await page.getByRole("button", { name: "Elegir rutina" }).first().click();
   await page.getByRole("button", { name: "Iniciar rutina" }).click();
   await expect(page.getByText("Entrenamiento activo")).toBeVisible();

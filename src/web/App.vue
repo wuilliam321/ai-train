@@ -35,6 +35,17 @@ const selectedVariant = computed(() => selectedRoutine.value?.variants.find(
   (variant) => variant.id === selectedVariantId.value,
 ) ?? null);
 
+const selectedVariantExercises = computed(() => {
+  if (!selectedVariant.value) return [];
+  return selectedVariant.value.exercises.map((ex) => {
+    const exerciseDef = exercises.value.find((e) => e.id === ex.exerciseId);
+    return {
+      name: exerciseDef?.name ?? ex.exerciseId,
+      sets: ex.sets.length,
+    };
+  });
+});
+
 const readLastSelection = (): LastRoutineSelection | null => {
   try {
     const serialized = window.localStorage.getItem(lastSelectionKey);
@@ -212,6 +223,15 @@ onMounted(() => {
               <option v-for="variant in selectedRoutine.variants" :key="variant.id" :value="variant.id">{{ variant.name }}</option>
             </select>
           </label>
+          <div v-if="selectedVariantExercises.length">
+            <h4 class="eyebrow" style="margin-bottom: 0.5rem">Ejercicios</h4>
+            <ul class="history-sets">
+              <li v-for="(ex, index) in selectedVariantExercises" :key="index">
+                <span>{{ ex.sets }} series</span>
+                <strong>{{ ex.name }}</strong>
+              </li>
+            </ul>
+          </div>
           <button type="button" :disabled="busy || !selectedVariant" @click="startRoutine">Iniciar rutina</button>
         </section>
         <ul v-if="routines.length" class="card-list">

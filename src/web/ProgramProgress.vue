@@ -158,7 +158,16 @@ onMounted(() => { void load(); });
       <ul class="card-list">
         <li v-for="program in programs" :key="program.id">
           <strong>{{ program.name }}</strong><span>{{ program.weeks }} semanas · {{ program.sessions.length }} días por semana</span>
-          <button type="button" @click="start(program.id)">Iniciar programa</button>
+          <div style="margin-top: 0.5rem">
+            <h4 class="eyebrow" style="margin-bottom: 0.5rem">Rutinas</h4>
+            <ul class="history-sets">
+              <li v-for="(session, index) in program.sessions" :key="index">
+                <span>Día {{ index + 1 }}</span>
+                <strong>{{ routineFor(session.routineId)?.name ?? "Rutina desconocida" }}</strong>
+              </li>
+            </ul>
+          </div>
+          <button type="button" @click="start(program.id)" style="margin-top: 0.5rem">Iniciar programa</button>
         </li>
       </ul>
 

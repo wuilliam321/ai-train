@@ -16,6 +16,7 @@ test("keeps the production bundle and primary interaction within budget", async 
   expect(navigation?.domContentLoadedEventEnd).toBeLessThan(2_000);
 
   const startedAt = Date.now();
+  await page.getByRole("button", { name: "Rutinas", exact: true }).click();
   await page.getByRole("button", { name: "Elegir rutina" }).first().click();
   await page.getByRole("button", { name: "Iniciar rutina" }).click();
   await expect(page.getByText("Entrenamiento activo")).toBeVisible();
