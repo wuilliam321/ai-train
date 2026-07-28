@@ -246,6 +246,6 @@ onMounted(() => {
     <CatalogManager v-if="!activeWorkout && view === 'manage'" :training="training" @changed="loadCatalog" />
     <WorkoutHistory v-if="!activeWorkout && view === 'history'" :training="training" />
     <TrainingMetrics v-if="!activeWorkout && view === 'metrics'" :training="training" :exercises="exercises" />
-    <BackupManager v-if="!activeWorkout && view === 'backup'" :backup="backup" />
+    <BackupManager v-if="!activeWorkout && view === 'backup'" :backup="backup" :training="training" />
   </main>
 </template>

@@ -71,6 +71,10 @@ export interface ProgramRepository {
   ): PersistenceResult<void>;
 }
 
+export interface ProgressRepository {
+  clearProgress(): PersistenceResult<void>;
+}
+
 export interface WorkoutRepositoryQuery extends PageRequest {
   readonly completedFrom?: ISODateTime;
   readonly completedTo?: ISODateTime;

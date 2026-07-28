@@ -38,6 +38,23 @@ describe("program cycles", () => {
     expect(await training.startProgram(second.value.id)).toMatchObject({ ok: true, value: { status: "active" } });
   });
 
+  it("resets workouts and cycles while keeping programs", async () => {
+    const { training, draft } = await setup();
+    const program = await training.createProgram(draft);
+    if (!program.ok) throw new Error("Expected program");
+    await training.startProgram(program.value.id);
+    await training.startNextProgramWorkout();
+    expect(await training.resetProgress()).toEqual({ ok: true, value: undefined });
+    expect(await training.getActiveWorkout()).toEqual({ ok: true, value: null });
+    expect(await training.getProgramProgress()).toEqual({ ok: true, value: null });
+    expect(await training.listPrograms()).toMatchObject({ ok: true, value: [{ id: program.value.id }] });
+  });
+
+  it("reports a reset persistence failure", async () => {
+    const environment = createTrainingEnvironment(new TestClock(now));
+    expect(await new TrainingOrchestrator({ ...environment, progress: { clearProgress: async () => failure({ code: "unavailable" }) } }).resetProgress()).toMatchObject({ ok: false, error: { code: "persistence" } });
+  });
+
   it("does not abandon a program while its planned workout is active", async () => {
     const { training, draft } = await setup();
     const program = await training.createProgram(draft);

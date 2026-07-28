@@ -24,6 +24,7 @@ import type {
   Program,
   ProgramCycle,
   ProgramRepository,
+  ProgressRepository,
   ProgramId,
   ProgramCycleId,
   ActiveWorkoutSession,
@@ -115,6 +116,7 @@ class InMemoryProgramRepository implements ProgramRepository {
   async findProgramCycle(id: ProgramCycleId): PersistenceResult<ProgramCycle | null> { return success(this.cycles.get(id) ?? null); }
   async saveProgramCycle(cycle: ProgramCycle): PersistenceResult<void> { this.cycles.set(cycle.id, cycle); return success(undefined); }
   async saveCompletedWorkoutAndProgramCycle(_workout: import("../../src/core").CompletedWorkoutSession, cycle: ProgramCycle): PersistenceResult<void> { this.cycles.set(cycle.id, cycle); return success(undefined); }
+  clear(): void { this.cycles.clear(); }
 }
 
 class InMemoryWorkoutRepository implements WorkoutRepository {
@@ -144,6 +146,24 @@ class InMemoryWorkoutRepository implements WorkoutRepository {
     this.workouts.set(workout.id, workout);
     return success(undefined);
   }
+
+  clear(): void { this.workouts.clear(); }
+}
+
+class InMemoryProgressRepository implements ProgressRepository {
+  private readonly workouts: InMemoryWorkoutRepository;
+  private readonly programs: InMemoryProgramRepository;
+
+  constructor(workouts: InMemoryWorkoutRepository, programs: InMemoryProgramRepository) {
+    this.workouts = workouts;
+    this.programs = programs;
+  }
+
+  async clearProgress(): PersistenceResult<void> {
+    this.workouts.clear();
+    this.programs.clear();
+    return success(undefined);
+  }
 }
 
 class EmptyWorkoutHistoryReader implements WorkoutHistoryReader {
@@ -169,15 +189,12 @@ class InMemoryTrainingChangePublisher implements TrainingChangePublisher {
   }
 }
 
-export const createTrainingEnvironment = (
-  clock: Clock,
-): TrainingOrchestratorDependencies => ({
-  exercises: new InMemoryExerciseRepository(),
-  routines: new InMemoryRoutineRepository(),
-  programs: new InMemoryProgramRepository(),
-  workouts: new InMemoryWorkoutRepository(),
-  history: new EmptyWorkoutHistoryReader(),
-  events: new InMemoryTrainingChangePublisher(),
-  clock,
-  ids: new SequentialIdGenerator(),
-});
+export const createTrainingEnvironment = (clock: Clock): TrainingOrchestratorDependencies => {
+  const programs = new InMemoryProgramRepository();
+  const workouts = new InMemoryWorkoutRepository();
+  return {
+    exercises: new InMemoryExerciseRepository(), routines: new InMemoryRoutineRepository(), programs, workouts,
+    progress: new InMemoryProgressRepository(workouts, programs), history: new EmptyWorkoutHistoryReader(),
+    events: new InMemoryTrainingChangePublisher(), clock, ids: new SequentialIdGenerator(),
+  };
+};

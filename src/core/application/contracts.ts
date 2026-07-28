@@ -206,6 +206,10 @@ export interface TrainingEvents {
   subscribe(listener: TrainingSnapshotListener): Unsubscribe;
 }
 
+export interface ProgressManagement {
+  resetProgress(): ApplicationResult<void>;
+}
+
 export interface TrainingOrchestrator
   extends ExerciseCatalog,
     RoutineCatalog,
@@ -213,4 +217,5 @@ export interface TrainingOrchestrator
     RestManagement,
     TrainingHistory,
     ProgramManagement,
+    ProgressManagement,
     TrainingEvents {}

@@ -36,6 +36,7 @@ import { TrainingMetricsService } from "./training-metrics";
 import { ExerciseCatalogService } from "./exercise-catalog";
 import { RoutineCatalogService } from "./routine-catalog";
 import { ProgramService } from "./program-service";
+import { ProgressService } from "./progress-service";
 import type { Program, ProgramCycle, ProgramDraft, ProgramPatch, ProgramProgress } from "../domain/program";
 import type { ProgramId } from "../domain/primitives";
 
@@ -85,6 +86,7 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
   private readonly lifecycle: WorkoutLifecycleService;
   private readonly metrics: TrainingMetricsService;
   private readonly programs: ProgramService;
+  private readonly progress: ProgressService;
   private readonly events: TrainingOrchestratorDependencies["events"];
 
   constructor(dependencies: TrainingOrchestratorDependencies) {
@@ -102,6 +104,7 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
     this.lifecycle = new WorkoutLifecycleService(scopedDependencies);
     this.metrics = new TrainingMetricsService(scopedDependencies);
     this.programs = new ProgramService(scopedDependencies);
+    this.progress = new ProgressService(scopedDependencies);
     this.events = dependencies.events;
   }
 
@@ -249,6 +252,7 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
   listPrograms(): ApplicationResult<readonly Program[]> { return this.programs.listPrograms(); }
   startProgram(programId: ProgramId): ApplicationResult<ProgramCycle> { return this.programs.startProgram(programId); }
   getProgramProgress(): ApplicationResult<ProgramProgress | null> { return this.programs.progress(); }
+  resetProgress(): ApplicationResult<void> { return this.progress.reset(); }
   async abandonProgramCycle(): ApplicationResult<void> {
     const activeWorkout = await this.activeWorkouts.getActiveWorkout();
     if (!activeWorkout.ok) return activeWorkout;

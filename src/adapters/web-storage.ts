@@ -20,6 +20,7 @@ import type {
   WorkoutRepository,
   WorkoutRepositoryQuery,
   ProgramRepository,
+  ProgressRepository,
 } from "../core/ports";
 
 const documentVersion = 2;
@@ -235,7 +236,7 @@ class WebDocumentStore {
   }
 }
 
-class WebStorageRepositories implements ExerciseRepository, RoutineRepository, WorkoutRepository, WorkoutHistoryReader, ProgramRepository {
+class WebStorageRepositories implements ExerciseRepository, RoutineRepository, WorkoutRepository, WorkoutHistoryReader, ProgramRepository, ProgressRepository {
   private readonly store: WebDocumentStore;
 
   constructor(store: WebDocumentStore) {
@@ -279,6 +280,7 @@ class WebStorageRepositories implements ExerciseRepository, RoutineRepository, W
   async findProgramCycle(cycleId: import("../core").ProgramCycleId): PersistenceResult<ProgramCycle | null> { return success(this.store.current().programCycles.find((cycle) => cycle.id === cycleId) ?? null); }
   async saveProgramCycle(cycle: ProgramCycle): PersistenceResult<void> { const document = { ...this.store.current(), programCycles: replace(this.store.current().programCycles, cycle, (item) => item.id === cycle.id) }; return this.store.replace(document) ? success(undefined) : failure({ code: "unavailable" }); }
   async saveCompletedWorkoutAndProgramCycle(workout: CompletedWorkoutSession, cycle: ProgramCycle): PersistenceResult<void> { const workouts = replace(this.store.current().workouts, workout, (item) => item.id === workout.id); const document: TrainingDocument = { ...this.store.current(), workouts, history: previousSets(workouts), programCycles: replace(this.store.current().programCycles, cycle, (item) => item.id === cycle.id) }; return this.store.replace(document) ? success(undefined) : failure({ code: "unavailable" }); }
+  async clearProgress(): PersistenceResult<void> { return this.store.replace({ ...this.store.current(), workouts: [], history: [], programCycles: [] }) ? success(undefined) : failure({ code: "unavailable" }); }
 
   async findWorkout(workoutSessionId: WorkoutSessionId): PersistenceResult<WorkoutSession | null> {
     return success(this.store.current().workouts.find((workout) => workout.id === workoutSessionId) ?? null);
@@ -383,6 +385,7 @@ export const createWebStorageTrainingEnvironment = (
       exercises: repositories,
       routines: repositories,
       programs: repositories,
+      progress: repositories,
       workouts: repositories,
       history: repositories,
       events: new InMemoryTrainingChangePublisher(),
