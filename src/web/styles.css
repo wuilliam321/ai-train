@@ -49,8 +49,45 @@ p {
 
 .app-navigation {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
+}
+
+.manager,
+.editor-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.editor-card {
+  padding: 1rem;
+  border: 1px solid #dbe3f0;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid #94a3b8;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  color: inherit;
+  background: #fff;
+  font: 0.8rem ui-monospace, monospace;
+}
+
+.success {
+  padding: 1rem;
+  color: #166534;
+  border-radius: 1rem;
+  background: #f0fdf4;
+}
+
+.manager-heading {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .app-header h1 {

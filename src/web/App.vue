@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import type { TrainingOrchestrator } from "../core";
 import type { ActiveWorkoutSession, Exercise, Routine, RoutineId, RoutineSummary, RoutineVariantId } from "../core";
 import ActiveWorkout from "./ActiveWorkout.vue";
+import CatalogManager from "./CatalogManager.vue";
 
 const props = defineProps<{
   readonly training: TrainingOrchestrator;
@@ -15,7 +16,7 @@ const selectedVariantId = ref<RoutineVariantId | null>(null);
 const activeWorkout = ref<ActiveWorkoutSession | null>(null);
 const error = ref<string | null>(null);
 const busy = ref(false);
-const view = ref<"routines" | "catalog">("routines");
+const view = ref<"routines" | "catalog" | "manage">("routines");
 const lastSelectionKey = "train-app:last-routine";
 
 interface LastRoutineSelection {
@@ -177,6 +178,7 @@ onMounted(() => {
     <nav v-if="!activeWorkout" class="app-navigation" aria-label="Principal">
       <button type="button" :class="{ 'secondary-action': view !== 'routines' }" @click="view = 'routines'">Rutinas</button>
       <button type="button" :class="{ 'secondary-action': view !== 'catalog' }" @click="view = 'catalog'">Catálogo</button>
+      <button type="button" :class="{ 'secondary-action': view !== 'manage' }" @click="view = 'manage'">Gestionar</button>
     </nav>
 
     <ActiveWorkout v-if="activeWorkout" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" @finish="finishWorkout" />
@@ -221,5 +223,7 @@ onMounted(() => {
       </ul>
       <p v-else class="empty-state">No hay ejercicios disponibles.</p>
     </section>
+
+    <CatalogManager v-if="!activeWorkout && view === 'manage'" :training="training" @changed="loadCatalog" />
   </main>
 </template>
