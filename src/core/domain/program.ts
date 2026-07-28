@@ -10,6 +10,6 @@ export interface Program extends ProgramDraft { readonly id: ProgramId; readonly
 export type ProgramSessionStatus = "pending" | "started" | "completed" | "skipped";
 export interface ProgramCycleSession extends ProgramSessionDraft { readonly id: ProgramSessionId; readonly week: number; readonly position: number; readonly status: ProgramSessionStatus; }
 export interface ProgramGoalProgress extends ProgramGoalDraft { readonly baseline?: Weight; readonly recommendedWeight?: Weight; readonly achieved: boolean; }
-export type ProgramCycleStatus = "active" | "completed";
-export interface ProgramCycle { readonly id: ProgramCycleId; readonly programId: ProgramId; readonly programName: string; readonly status: ProgramCycleStatus; readonly startedAt: ISODateTime; readonly completedAt?: ISODateTime; readonly sessions: readonly ProgramCycleSession[]; readonly goals: readonly ProgramGoalProgress[]; }
+export type ProgramCycleStatus = "active" | "completed" | "abandoned";
+export interface ProgramCycle { readonly id: ProgramCycleId; readonly programId: ProgramId; readonly programName: string; readonly status: ProgramCycleStatus; readonly startedAt: ISODateTime; readonly completedAt?: ISODateTime; readonly abandonedAt?: ISODateTime; readonly sessions: readonly ProgramCycleSession[]; readonly goals: readonly ProgramGoalProgress[]; }
 export interface ProgramProgress { readonly cycle: ProgramCycle; readonly completedSessions: number; readonly skippedSessions: number; readonly plannedSessions: number; readonly adherence: number; readonly nextSession?: ProgramCycleSession; }

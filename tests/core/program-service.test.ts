@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { TrainingOrchestrator } from "../../src/core";
 import { ProgramService } from "../../src/core/application/program-service";
 import { failure, success } from "../../src/core/application/result";
-import type { EntityId, ISODateTime, ProgramDraft, ProgramRepository, Repetitions, Seconds, WeightAmount } from "../../src/core";
+import type { EntityId, ISODateTime, ProgramDraft, ProgramRepository, Repetitions, Seconds, WeightAmount, WorkoutRepository } from "../../src/core";
 import { TestClock, createTrainingEnvironment } from "../support/training-environment";
 
 const now = "2026-07-28T12:00:00.000Z" as ISODateTime;
@@ -25,6 +25,37 @@ describe("program cycles", () => {
     expect(await training.startProgram(created.value.id)).toMatchObject({ ok: true, value: { status: "active", sessions: [{ week: 1, position: 0, status: "pending" }] } });
     expect(await training.getProgramProgress()).toMatchObject({ ok: true, value: { plannedSessions: 1, completedSessions: 0, adherence: 0 } });
     expect(await training.skipNextProgramSession()).toMatchObject({ ok: true, value: { skippedSessions: 1 } });
+  });
+
+  it("abandons an active program and allows another one to start", async () => {
+    const { training, draft } = await setup();
+    const first = await training.createProgram(draft);
+    const second = await training.createProgram({ ...draft, name: "Otro programa" });
+    if (!first.ok || !second.ok) throw new Error("Expected programs");
+    await training.startProgram(first.value.id);
+    expect(await training.abandonProgramCycle()).toEqual({ ok: true, value: undefined });
+    expect(await training.getProgramProgress()).toMatchObject({ ok: true, value: { cycle: { status: "abandoned" } } });
+    expect(await training.startProgram(second.value.id)).toMatchObject({ ok: true, value: { status: "active" } });
+  });
+
+  it("does not abandon a program while its planned workout is active", async () => {
+    const { training, draft } = await setup();
+    const program = await training.createProgram(draft);
+    if (!program.ok) throw new Error("Expected program");
+    await training.startProgram(program.value.id);
+    await training.startNextProgramWorkout();
+    expect(await training.abandonProgramCycle()).toMatchObject({ ok: false, error: { code: "conflict" } });
+  });
+
+  it("returns the active-workout persistence error before abandoning", async () => {
+    const environment = createTrainingEnvironment(new TestClock(now));
+    const workouts: WorkoutRepository = {
+      findWorkout: async () => success(null),
+      findActiveWorkout: async () => failure({ code: "unavailable" }),
+      listWorkouts: async () => success({ items: [] }),
+      saveWorkout: async () => success(undefined),
+    };
+    expect(await new TrainingOrchestrator({ ...environment, workouts }).abandonProgramCycle()).toMatchObject({ ok: false, error: { code: "persistence" } });
   });
 
   it("captures a baseline, recommends the next load and completes the cycle", async () => {
@@ -50,6 +81,7 @@ describe("program cycles", () => {
     expect(await service.startProgram("missing" as never)).toMatchObject({ ok: false });
     expect(await service.progress()).toMatchObject({ ok: false });
     expect(await service.skipNext()).toMatchObject({ ok: false });
+    expect(await service.abandon()).toMatchObject({ ok: false });
     expect(await service.startNext()).toMatchObject({ ok: false });
     expect(await service.duplicate()).toMatchObject({ ok: false });
     expect(await service.createProgram({ name: "", weeks: 0, sessions: [], goals: [] })).toMatchObject({ ok: false });
@@ -142,9 +174,14 @@ describe("program cycles", () => {
     expect(await service.saveCompletion({} as never, active as never)).toMatchObject({ ok: true });
     active = { ...(active as object), sessions: [{ ...sessions[0], status: "pending" }] };
     expect(await service.release("session" as never)).toMatchObject({ ok: false, error: { code: "not_found" } });
+    active = { ...(latest as object), sessions };
+    failSaveCycle = true;
+    expect(await service.abandon()).toMatchObject({ ok: false, error: { code: "persistence" } });
+    failSaveCycle = false;
+    expect(await service.abandon()).toMatchObject({ ok: true });
     active = null as never;
     expect(await service.release("session" as never)).toMatchObject({ ok: false, error: { code: "not_found" } });
-    expect(await service.progress()).toMatchObject({ ok: true, value: { cycle: { status: "completed" } } });
+    expect(await service.progress()).toMatchObject({ ok: true, value: { cycle: { status: "abandoned" } } });
     latest = null as never;
     expect(await service.progress()).toMatchObject({ ok: true, value: null });
   });

@@ -104,6 +104,7 @@ export interface ProgramManagement {
   listPrograms(): ApplicationResult<readonly Program[]>;
   startProgram(programId: ProgramId): ApplicationResult<ProgramCycle>;
   getProgramProgress(): ApplicationResult<ProgramProgress | null>;
+  abandonProgramCycle(): ApplicationResult<void>;
   skipNextProgramSession(): ApplicationResult<ProgramProgress>;
   startNextProgramWorkout(): ApplicationResult<ActiveWorkoutSession>;
   duplicateProgramCycle(): ApplicationResult<ProgramCycle>;

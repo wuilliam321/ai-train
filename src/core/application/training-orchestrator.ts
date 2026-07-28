@@ -249,6 +249,12 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
   listPrograms(): ApplicationResult<readonly Program[]> { return this.programs.listPrograms(); }
   startProgram(programId: ProgramId): ApplicationResult<ProgramCycle> { return this.programs.startProgram(programId); }
   getProgramProgress(): ApplicationResult<ProgramProgress | null> { return this.programs.progress(); }
+  async abandonProgramCycle(): ApplicationResult<void> {
+    const activeWorkout = await this.activeWorkouts.getActiveWorkout();
+    if (!activeWorkout.ok) return activeWorkout;
+    if (activeWorkout.value?.programSessionId !== undefined) return { ok: false, error: { code: "conflict", details: { field: "activeWorkout" } } };
+    return this.programs.abandon();
+  }
   skipNextProgramSession(): ApplicationResult<ProgramProgress> { return this.programs.skipNext(); }
   duplicateProgramCycle(): ApplicationResult<ProgramCycle> { return this.programs.duplicate(); }
   async startNextProgramWorkout(): ApplicationResult<ActiveWorkoutSession> {

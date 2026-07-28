@@ -123,6 +123,17 @@ export class ProgramService {
       : failure(applicationError("persistence"));
   }
 
+  async abandon(): ApplicationResult<void> {
+    const cycle = await this.activeCycle();
+    if (!cycle.ok) return cycle;
+    const saved = await this.programs.saveProgramCycle({
+      ...cycle.value,
+      status: "abandoned",
+      abandonedAt: this.clock.now(),
+    });
+    return isPersisted(saved) ? success(undefined) : failure(applicationError("persistence"));
+  }
+
   async skipNext(): ApplicationResult<ProgramProgress> {
     const cycle = await this.activeCycle();
 
@@ -315,7 +326,9 @@ export class ProgramService {
   private asProgress(cycle: ProgramCycle): ProgramProgress {
     const completedSessions = cycle.sessions.filter((session) => session.status === "completed").length;
     const skippedSessions = cycle.sessions.filter((session) => session.status === "skipped").length;
-    const nextSession = cycle.sessions.find((session) => session.status === "pending");
+    const nextSession = cycle.status === "active"
+      ? cycle.sessions.find((session) => session.status === "pending")
+      : undefined;
 
     return {
       cycle,
