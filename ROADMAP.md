@@ -1,8 +1,8 @@
-# Roadmap activo — Núcleo funcional
+# Roadmap completado — Núcleo funcional
 
 ## Regla de avance
 
-Una feature se completa solo si funciona mediante `TrainingOrchestrator`, tiene tests legibles con adaptadores en memoria y pasa `pnpm build` con 100% de cobertura del código ejecutable. Solo puede haber una feature `in_progress`.
+Cada feature funciona mediante `TrainingOrchestrator`, tiene tests legibles con adaptadores en memoria y pasa `pnpm build` con 100% de cobertura del código ejecutable.
 
 | Estado | Feature | Entrega funcional | Dependencia |
 | --- | --- | --- | --- |
@@ -15,7 +15,7 @@ Una feature se completa solo si funciona mediante `TrainingOrchestrator`, tiene 
 | completed | F6. Descanso y referencias | Descanso persistente y referencias inline por ejercicio y posición. | F5 |
 | completed | F7. Cierre e historial | Finalizar, descartar, paginar historial y emitir snapshots. | F6 |
 | completed | F8. Métricas | Dashboard, volumen efectivo, distribución muscular y progreso. | F7 |
-| in_progress | F9. Simulación longitudinal | Dos años de entrenamiento determinista y verificación de rendimiento. | F8 |
+| completed | F9. Simulación longitudinal | Dos años de entrenamiento determinista y verificación de rendimiento. | F8 |
 
 ## F1 — Fundamentos
 

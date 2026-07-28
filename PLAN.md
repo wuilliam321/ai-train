@@ -5,7 +5,7 @@
 | Fase | Estado | Resultado |
 | --- | --- | --- |
 | 0. Contratos del núcleo | completed | Dominio, fachada `TrainingOrchestrator` y puertos independientes de infraestructura. |
-| 1. Núcleo funcional | in_progress | Casos de uso completos y verificables mediante adaptadores en memoria. |
+| 1. Núcleo funcional | completed | Casos de uso completos y verificables mediante adaptadores en memoria. |
 | 2. Persistencia local | pending | Datos locales atómicos, recuperables y operables sin red. |
 | 3. Datos base | pending | Ejercicios y rutinas iniciales normalizados desde `current-routines`. |
 | 4. Aplicación Vue offline | pending | Adaptador web/PWA rápido para ejecutar entrenamientos. |
