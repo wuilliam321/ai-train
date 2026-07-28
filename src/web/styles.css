@@ -59,6 +59,29 @@ p {
   gap: 1rem;
 }
 
+.metrics,
+.metric-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.metric-grid {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.metric-grid article {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  color: #172033;
+  background: #dbeafe;
+}
+
+.metric-grid strong {
+  font-size: 1.25rem;
+}
+
 .history-sets {
   margin: 0;
   padding: 0;
