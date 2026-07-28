@@ -1,5 +1,5 @@
 import type { MuscleGroup } from "./exercise";
-import type { SetType } from "./routine";
+import type { RepetitionTarget, SetType } from "./routine";
 import type {
   ExerciseId,
   ISODateTime,
@@ -33,6 +33,7 @@ export interface ExerciseSnapshot {
 export interface WorkoutSetBase {
   readonly id: WorkoutSetId;
   readonly type: SetType;
+  readonly target?: RepetitionTarget;
   readonly weight?: Weight;
   readonly repetitions?: Repetitions;
   readonly effort?: Effort;

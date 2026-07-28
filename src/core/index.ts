@@ -9,6 +9,7 @@ export type * from "./domain/validation";
 export type * from "./domain/workout";
 export type * from "./ports";
 export { failure, success } from "./application/result";
+export { TrainingOrchestrator } from "./application/training-orchestrator";
 export {
   asDateRange,
   asEffort,

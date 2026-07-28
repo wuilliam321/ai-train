@@ -10,8 +10,8 @@ Una feature se completa solo si funciona mediante `TrainingOrchestrator`, tiene 
 | completed | F1. Fundamentos | Dependencias del orquestador, validación y entorno determinista de pruebas. | F0 |
 | completed | F2. Ejercicios | Crear, consultar, buscar, editar, archivar y restaurar ejercicios. | F1 |
 | completed | F3. Rutinas | Crear, consultar, buscar, editar, archivar y restaurar rutinas y variantes. | F2 |
-| in_progress | F4. Sesión activa | Iniciar desde vacío o rutina y recuperarla tras reconstruir el orquestador. | F3 |
-| pending | F5. Ejecución | Editar ejercicios y series, completar y reabrir series. | F4 |
+| completed | F4. Sesión activa | Iniciar desde vacío o rutina y recuperarla tras reconstruir el orquestador. | F3 |
+| in_progress | F5. Ejecución | Editar ejercicios y series, completar y reabrir series. | F4 |
 | pending | F6. Descanso y referencias | Descanso persistente y referencias inline por ejercicio y posición. | F5 |
 | pending | F7. Cierre e historial | Finalizar, descartar, paginar historial y emitir snapshots. | F6 |
 | pending | F8. Métricas | Dashboard, volumen efectivo, distribución muscular y progreso. | F7 |
