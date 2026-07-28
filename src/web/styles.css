@@ -27,6 +27,30 @@ button:disabled {
   opacity: 0.6;
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.skip-link:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 10;
+  top: 0.5rem;
+  left: -20rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: #fff;
+  background: #172033;
+}
+
+.skip-link:focus {
+  left: 0.5rem;
+}
+
 .app-shell {
   display: grid;
   gap: 2rem;
@@ -51,6 +75,10 @@ p {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
+}
+
+.app-navigation button {
+  min-width: 0;
 }
 
 .history,
@@ -80,6 +108,12 @@ p {
 
 .metric-grid strong {
   font-size: 1.25rem;
+}
+
+@media (min-width: 42rem) {
+  .app-navigation {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 .history-sets {

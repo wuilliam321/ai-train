@@ -1,51 +1,40 @@
-# Fase 5 — Experiencia completa
+# Fase 6 — Validación y entrega
 
 ## Regla de avance
 
-La interfaz sigue siendo un adaptador reemplazable: consume exclusivamente `TrainingOrchestrator`, DTOs serializables y la composición web. No se traslada lógica de dominio a Vue ni se duplican agregados en stores visuales. Cada entrega conserva TypeScript estricto y `pnpm build` verde con cobertura total del núcleo y aplicación. Solo puede haber una feature `in_progress`.
+Se valida la PWA como adaptador del núcleo sin introducir reglas nuevas, backend ni sincronización. Toda entrega mantiene TypeScript estricto, `pnpm build` verde y cobertura total del núcleo. Solo puede haber una feature `in_progress`.
 
 | Estado | Feature | Entrega verificable |
 | --- | --- | --- |
-| completed | F25. Gestión visual del catálogo | Crear, editar, archivar y restaurar ejercicios y rutinas locales desde la interfaz. |
-| completed | F26. Historial de sesiones | Consultar sesiones cerradas y su detalle con paginación local. |
-| completed | F27. Dashboard y progreso | Presentar volumen, distribución muscular y progreso por ejercicio. |
-| in_progress | F28. Refinamiento de experiencia | Accesibilidad ampliada, estados vacíos y navegación móvil de las capacidades completas. |
+| in_progress | F29. Pruebas end-to-end offline | Recorrido de instalación, entrenamiento y recuperación validado en navegador sin red. |
+| pending | F30. Rendimiento y tamaño | Presupuesto de arranque y distribución medido y documentado. |
+| pending | F31. Respaldo y documentación | Exportación/importación accesible, guía breve y distribución local preparada. |
 
-## F25 — Gestión visual del catálogo
+## F29 — Pruebas end-to-end offline
 
-- Añadir vistas de listado y detalle para ejercicios y rutinas, separadas de la sesión activa.
-- Crear, actualizar, archivar y restaurar mediante los comandos públicos existentes.
-- Editar variantes, ejercicios prescritos, objetivos, lateralidad y descanso de rutinas sin inventar un modelo paralelo.
-- Validar la entrada antes del envío para dar feedback inmediato; el núcleo sigue siendo la autoridad de las reglas.
+- Ejecutar el recorrido de primera carga, instalación, inicio, registro de serie, descanso, recarga y cierre en un navegador real.
+- Repetirlo sin conexión tras la primera carga y comprobar que la sesión y los datos locales se conservan.
+- Probar los estados de almacenamiento no disponible y recuperación sin perder el documento válido.
 
-Aceptación: un atleta puede mantener su catálogo local completo sin abandonar la PWA ni alterar una sesión activa.
+Aceptación: el flujo principal funciona desde una PWA instalada sin red y sus datos se recuperan tras recargar.
 
-## F26 — Historial de sesiones
+## F30 — Rendimiento y tamaño
 
-- Mostrar sesiones finalizadas paginadas mediante `listWorkoutSessions()`.
-- Navegar al detalle inmutable de una sesión con ejercicios, series y volumen registrado.
-- Ofrecer estados vacíos, errores recuperables y retorno a la sesión activa cuando exista.
+- Medir tiempo de arranque, interacción inicial y tamaño del paquete de producción en un dispositivo móvil de referencia.
+- Corregir cuellos de botella demostrados sin cambiar contratos ni adelantar infraestructura.
+- Documentar presupuesto y resultados reproducibles.
 
-Aceptación: el historial local permite revisar una sesión cerrada sin red y sin cargar datos de forma no acotada.
+Aceptación: el arranque y el primer inicio de entrenamiento cumplen el objetivo de fricción mínima con métricas registradas.
 
-## F27 — Dashboard y progreso
+## F31 — Respaldo y documentación
 
-- Presentar el dashboard de volumen efectivo y distribución muscular para un período elegido.
-- Mostrar progreso por ejercicio con los datos que expone `getExerciseProgress()`.
-- Definir la presentación de 1RM solo si se toma una decisión de producto explícita; no inferirla de forma automática.
+- Exponer exportación e importación del documento versionado desde la interfaz, validando antes de reemplazar datos locales.
+- Documentar uso local, instalación, recuperación, respaldo y límites de producto.
+- Preparar la distribución estática de la PWA sin introducir servidores ni cuentas.
 
-Aceptación: el atleta puede entender su volumen y progreso local desde los DTOs de analítica ya disponibles.
-
-## F28 — Refinamiento de experiencia
-
-- Revisar navegación móvil, foco, etiquetas, contraste, objetivos táctiles y mensajes de error accionables.
-- Completar estados de carga, vacíos y de recuperación en catálogo, historial y métricas.
-- Verificar el recorrido integrado entre sesión activa, catálogo, historial y dashboard manteniendo la recuperación offline.
-
-Aceptación: las capacidades de la aplicación son navegables y accesibles en móvil sin convertir la interfaz en una segunda capa de dominio.
+Aceptación: un usuario puede instalar, respaldar, restaurar y entender la aplicación local sin asistencia externa.
 
 ## Límites
 
 - No se añaden sincronización, cuentas, backend, comunidad, wearables ni recomendaciones automáticas.
-- `suggestRoutine()` y la fórmula de 1RM permanecen aplazados hasta una decisión explícita.
-- La entrega, medición, respaldo documentado y pruebas end-to-end de distribución pertenecen a Fase 6.
+- La fórmula y presentación de 1RM siguen pendientes de una decisión explícita.

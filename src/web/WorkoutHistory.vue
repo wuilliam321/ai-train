@@ -64,7 +64,8 @@ onMounted(() => {
 
     <template v-else>
       <ul v-if="sessions.length" class="card-list"><li v-for="session in sessions" :key="session.id"><strong>{{ session.routineName ?? "Entrenamiento vacío" }}</strong><span>{{ formatDate(session.completedAt) }} · {{ session.completedSetCount }} series</span><button type="button" class="secondary-action" @click="open(session)">Ver detalle</button></li></ul>
-      <p v-else-if="!loading" class="empty-state">Aún no hay entrenamientos finalizados.</p>
+      <p v-if="loading" class="empty-state" role="status">Cargando historial…</p>
+      <p v-else-if="!sessions.length" class="empty-state">Aún no hay entrenamientos finalizados.</p>
       <button v-if="nextCursor" type="button" class="secondary-action" :disabled="loading" @click="load(nextCursor)">Cargar más</button>
     </template>
   </section>

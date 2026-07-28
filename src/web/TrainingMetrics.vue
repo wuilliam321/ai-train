@@ -17,6 +17,7 @@ const selectedExerciseId = ref<ExerciseId | "">(props.exercises[0]?.id ?? "");
 const dashboard = ref<DashboardSummary | null>(null);
 const progress = ref<ExerciseProgress | null>(null);
 const error = ref<string | null>(null);
+const loading = ref(false);
 
 const period = (): { from: ISODateTime; to: ISODateTime } | null => {
   const from = new Date(`${start.value}T00:00:00.000Z`);
@@ -38,10 +39,12 @@ const load = async (): Promise<void> => {
     return;
   }
 
+  loading.value = true;
   const dashboardResult = await props.training.getDashboard(selectedPeriod);
 
   if (!dashboardResult.ok) {
     error.value = "No se pudieron calcular las métricas locales.";
+    loading.value = false;
     return;
   }
 
@@ -50,12 +53,14 @@ const load = async (): Promise<void> => {
   error.value = null;
 
   if (selectedExerciseId.value.length === 0) {
+    loading.value = false;
     return;
   }
 
   const exerciseId = selectedExerciseId.value;
 
   if (exerciseId === "") {
+    loading.value = false;
     return;
   }
 
@@ -67,6 +72,8 @@ const load = async (): Promise<void> => {
   if (progressResult.ok) {
     progress.value = progressResult.value;
   }
+
+  loading.value = false;
 };
 
 onMounted(() => {
@@ -84,6 +91,7 @@ onMounted(() => {
       <button type="submit">Actualizar métricas</button>
     </form>
     <p v-if="error" class="notice" role="alert">{{ error }}</p>
+    <p v-if="loading" class="empty-state" role="status">Calculando métricas locales…</p>
 
     <template v-if="dashboard">
       <div class="metric-grid"><article><span>Entrenamientos</span><strong>{{ dashboard.workoutCount }}</strong></article><article><span>Series completadas</span><strong>{{ dashboard.completedSetCount }}</strong></article><article><span>Volumen efectivo</span><strong>{{ formatVolume(dashboard.volume) }}</strong></article></div>

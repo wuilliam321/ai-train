@@ -18,6 +18,7 @@ const selectedVariantId = ref<RoutineVariantId | null>(null);
 const activeWorkout = ref<ActiveWorkoutSession | null>(null);
 const error = ref<string | null>(null);
 const busy = ref(false);
+const loadingCatalog = ref(false);
 const view = ref<"routines" | "catalog" | "manage" | "history" | "metrics">("routines");
 const lastSelectionKey = "train-app:last-routine";
 
@@ -76,6 +77,7 @@ const selectRoutine = async (routineId: RoutineId, preferredVariantId?: RoutineV
 };
 
 const loadCatalog = async (): Promise<void> => {
+  loadingCatalog.value = true;
   const [loadedExercises, loadedRoutines, recoveredWorkout] = await Promise.all([
     props.training.listExercises({ status: "active" }),
     props.training.listRoutines({ status: "active" }),
@@ -84,6 +86,7 @@ const loadCatalog = async (): Promise<void> => {
 
   if (!loadedExercises.ok || !loadedRoutines.ok || !recoveredWorkout.ok) {
     error.value = "No se pudo leer el catálogo local.";
+    loadingCatalog.value = false;
     return;
   }
 
@@ -95,6 +98,8 @@ const loadCatalog = async (): Promise<void> => {
   if (lastSelection !== null) {
     await selectRoutine(lastSelection.routineId, lastSelection.variantId);
   }
+
+  loadingCatalog.value = false;
 };
 
 const startRoutine = async (): Promise<void> => {
@@ -168,21 +173,22 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="app-shell">
+  <main id="main" class="app-shell" :aria-busy="loadingCatalog">
     <header class="app-header">
       <p class="eyebrow">Bitácora offline</p>
       <h1>Entrenar</h1>
       <p>Todo se guarda en este dispositivo.</p>
     </header>
 
-    <p v-if="error" class="notice" role="alert">{{ error }}</p>
+    <div v-if="error" class="notice" role="alert"><span>{{ error }}</span><button type="button" class="secondary-action" @click="loadCatalog">Reintentar</button></div>
+    <p v-if="loadingCatalog" class="empty-state" role="status">Cargando datos locales…</p>
 
     <nav v-if="!activeWorkout" class="app-navigation" aria-label="Principal">
-      <button type="button" :class="{ 'secondary-action': view !== 'routines' }" @click="view = 'routines'">Rutinas</button>
-      <button type="button" :class="{ 'secondary-action': view !== 'catalog' }" @click="view = 'catalog'">Catálogo</button>
-      <button type="button" :class="{ 'secondary-action': view !== 'manage' }" @click="view = 'manage'">Gestionar</button>
-      <button type="button" :class="{ 'secondary-action': view !== 'history' }" @click="view = 'history'">Historial</button>
-      <button type="button" :class="{ 'secondary-action': view !== 'metrics' }" @click="view = 'metrics'">Progreso</button>
+      <button type="button" :aria-current="view === 'routines' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'routines' }" @click="view = 'routines'">Rutinas</button>
+      <button type="button" :aria-current="view === 'catalog' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'catalog' }" @click="view = 'catalog'">Catálogo</button>
+      <button type="button" :aria-current="view === 'manage' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'manage' }" @click="view = 'manage'">Gestionar</button>
+      <button type="button" :aria-current="view === 'history' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'history' }" @click="view = 'history'">Historial</button>
+      <button type="button" :aria-current="view === 'metrics' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'metrics' }" @click="view = 'metrics'">Progreso</button>
     </nav>
 
     <ActiveWorkout v-if="activeWorkout" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" @finish="finishWorkout" />
