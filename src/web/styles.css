@@ -23,6 +23,10 @@ button {
   font-weight: 700;
 }
 
+button:disabled {
+  opacity: 0.6;
+}
+
 .app-shell {
   display: grid;
   gap: 2rem;
@@ -71,13 +75,35 @@ section {
 
 .card-list li,
 .exercise-list li,
-.notice {
+.notice,
+.active-card {
   display: grid;
   gap: 0.25rem;
   padding: 1rem;
   border: 1px solid #dbe3f0;
   border-radius: 1rem;
   background: #fff;
+}
+
+.secondary-action {
+  color: #1e3a8a;
+  background: #dbeafe;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+select {
+  min-height: 44px;
+  border: 1px solid #94a3b8;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+  color: inherit;
+  background: #fff;
+  font: inherit;
 }
 
 .card-list span,
