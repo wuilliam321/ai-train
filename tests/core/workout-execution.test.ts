@@ -196,6 +196,19 @@ describe("workout execution", () => {
       throw new Error("Expected second workout set");
     }
 
+    const movedSet = await workouts.moveWorkoutSet({
+      workoutSetId: set.id,
+      position: 0,
+    });
+
+    expect(movedSet).toMatchObject({ ok: true });
+
+    if (!movedSet.ok) {
+      throw new Error("Expected moved workout set");
+    }
+
+    expect(movedSet.value.exercises[0]!.sets[0]!.id).toBe(set.id);
+
     expect(await workouts.updateWorkoutSet({
       workoutSetId: set.id,
       weight: { amount: 100 as WeightAmount, unit: "lb" },
@@ -249,6 +262,10 @@ describe("workout execution", () => {
     expect(await withoutActive.addWorkoutSet({
       workoutExerciseId: missingWorkoutExerciseId,
       type: "normal",
+    })).toEqual({ ok: false, error: { code: "no_active_workout" } });
+    expect(await withoutActive.moveWorkoutSet({
+      workoutSetId: missingWorkoutSetId,
+      position: 0,
     })).toEqual({ ok: false, error: { code: "no_active_workout" } });
     expect(await withoutActive.updateWorkoutSet({ workoutSetId: missingWorkoutSetId })).toEqual({
       ok: false,
@@ -335,6 +352,17 @@ describe("workout execution", () => {
     }
 
     const workoutSetId = addedSet.value.exercises[0]!.sets[0]!.id;
+    expect(await workouts.moveWorkoutSet({
+      workoutSetId: missingWorkoutSetId,
+      position: 0,
+    })).toEqual({
+      ok: false,
+      error: { code: "not_found", details: { workoutSetId: "missing-workout-set" } },
+    });
+    expect(await workouts.moveWorkoutSet({ workoutSetId, position: 1 })).toEqual({
+      ok: false,
+      error: { code: "validation", details: { field: "position" } },
+    });
     expect(await workouts.updateWorkoutSet({
       workoutSetId,
       type: "invalid" as never,

@@ -110,6 +110,11 @@ export interface AddWorkoutSetInput {
   readonly position?: number;
 }
 
+export interface MoveWorkoutSetInput {
+  readonly workoutSetId: WorkoutSetId;
+  readonly position: number;
+}
+
 export interface UpdateWorkoutSetInput {
   readonly workoutSetId: WorkoutSetId;
   readonly type?: SetType;
@@ -132,6 +137,7 @@ export interface WorkoutExecution {
   moveWorkoutExercise(input: MoveWorkoutExerciseInput): ApplicationResult<ActiveWorkoutSession>;
   removeWorkoutExercise(workoutExerciseId: WorkoutExerciseId): ApplicationResult<ActiveWorkoutSession>;
   addWorkoutSet(input: AddWorkoutSetInput): ApplicationResult<ActiveWorkoutSession>;
+  moveWorkoutSet(input: MoveWorkoutSetInput): ApplicationResult<ActiveWorkoutSession>;
   updateWorkoutSet(input: UpdateWorkoutSetInput): ApplicationResult<ActiveWorkoutSession>;
   removeWorkoutSet(workoutSetId: WorkoutSetId): ApplicationResult<ActiveWorkoutSession>;
   completeWorkoutSet(input: CompleteWorkoutSetInput): ApplicationResult<ActiveWorkoutSession>;

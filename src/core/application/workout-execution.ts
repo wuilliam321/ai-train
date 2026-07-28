@@ -19,6 +19,7 @@ import type {
   ApplicationResult,
   CompleteWorkoutSetInput,
   MoveWorkoutExerciseInput,
+  MoveWorkoutSetInput,
   UpdateWorkoutSetInput,
 } from "./contracts";
 import type { TrainingOrchestratorDependencies } from "./dependencies";
@@ -211,6 +212,38 @@ export class WorkoutExecutionService {
       ...active.value,
       exercises: active.value.exercises.map((candidate, index) =>
         index === exercisePosition ? updatedExercise : candidate),
+    });
+  }
+
+  async moveWorkoutSet(input: MoveWorkoutSetInput): ApplicationResult<ActiveWorkoutSession> {
+    const active = await this.findActiveWorkout();
+
+    if (!active.ok) {
+      return active;
+    }
+
+    const location = this.findSet(active.value, input.workoutSetId);
+
+    if (location === null) {
+      return failure(notFoundError("workoutSetId", input.workoutSetId));
+    }
+
+    const exercise = active.value.exercises[location.exercisePosition]!;
+
+    if (!isPosition(input.position, exercise.sets.length, false)) {
+      return failure(validationError("position"));
+    }
+
+    const set = exercise.sets[location.setPosition]!;
+    const updatedExercise: WorkoutExercise = {
+      ...exercise,
+      sets: insertAt(removeAt(exercise.sets, location.setPosition), set, input.position),
+    };
+
+    return this.save({
+      ...active.value,
+      exercises: active.value.exercises.map((candidate, index) =>
+        index === location.exercisePosition ? updatedExercise : candidate),
     });
   }
 

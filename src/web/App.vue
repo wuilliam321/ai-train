@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import type { TrainingOrchestrator } from "../core";
 import type { ActiveWorkoutSession, Exercise, Routine, RoutineId, RoutineSummary, RoutineVariantId } from "../core";
+import ActiveWorkout from "./ActiveWorkout.vue";
 
 const props = defineProps<{
   readonly training: TrainingOrchestrator;
@@ -155,14 +156,7 @@ onMounted(() => {
 
     <p v-if="error" class="notice" role="alert">{{ error }}</p>
 
-    <section v-if="activeWorkout" aria-labelledby="active-title">
-      <h2 id="active-title">Entrenamiento activo</h2>
-      <div class="active-card">
-        <strong>{{ activeWorkout.routine?.name ?? "Entrenamiento vacío" }}</strong>
-        <span>{{ activeWorkout.exercises.length }} ejercicios</span>
-        <button type="button" class="secondary-action" :disabled="busy" @click="discardWorkout">Descartar entrenamiento</button>
-      </div>
-    </section>
+    <ActiveWorkout v-if="activeWorkout" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" />
 
     <template v-else>
       <section aria-labelledby="routines-title">

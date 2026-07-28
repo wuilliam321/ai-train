@@ -10,6 +10,7 @@ import type {
   ListRoutinesQuery,
   ListWorkoutSessionsQuery,
   MoveWorkoutExerciseInput,
+  MoveWorkoutSetInput,
   PreviousSetReferencesQuery,
   RoutineCatalog,
   SetRestDurationInput,
@@ -173,6 +174,10 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
 
   addWorkoutSet(input: AddWorkoutSetInput): ApplicationResult<ActiveWorkoutSession> {
     return this.execution.addWorkoutSet(input);
+  }
+
+  moveWorkoutSet(input: MoveWorkoutSetInput): ApplicationResult<ActiveWorkoutSession> {
+    return this.execution.moveWorkoutSet(input);
   }
 
   updateWorkoutSet(input: UpdateWorkoutSetInput): ApplicationResult<ActiveWorkoutSession> {

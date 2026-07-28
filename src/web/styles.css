@@ -90,6 +90,79 @@ section {
   background: #dbeafe;
 }
 
+.workout-session,
+.exercise-card,
+.add-exercise,
+.rest-timer {
+  display: grid;
+  gap: 1rem;
+}
+
+.exercise-card,
+.rest-timer,
+.add-exercise {
+  padding: 1rem;
+  border: 1px solid #dbe3f0;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.session-header,
+.exercise-header,
+.inline-actions,
+.set-fields {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.set-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+.set-heading {
+  display: grid;
+  gap: 0.25rem;
+  color: #526079;
+  font-size: 0.9rem;
+}
+
+.set-heading strong {
+  color: #172033;
+}
+
+.compact-field {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 4.5rem;
+  color: #526079;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+input {
+  min-height: 40px;
+  width: 100%;
+  border: 1px solid #94a3b8;
+  border-radius: 0.5rem;
+  padding: 0.4rem;
+  color: inherit;
+  background: #fff;
+  font: inherit;
+}
+
+.icon-action {
+  min-width: 2.75rem;
+  padding: 0.5rem;
+  color: #1e3a8a;
+  background: #dbeafe;
+}
+
 .field {
   display: grid;
   gap: 0.5rem;
