@@ -1,0 +1,18 @@
+{
+  "name": "train-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "verify": "pnpm run typecheck && pnpm run coverage",
+    "build": "pnpm run verify"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.10",
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.10"
+  },
+  "packageManager": "pnpm@10.17.0"
+}
