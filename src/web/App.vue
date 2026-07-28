@@ -7,6 +7,7 @@ import CatalogManager from "./CatalogManager.vue";
 import WorkoutHistory from "./WorkoutHistory.vue";
 import TrainingMetrics from "./TrainingMetrics.vue";
 import BackupManager from "./BackupManager.vue";
+import ProgramProgress from "./ProgramProgress.vue";
 import type { WebTrainingBackup } from "./training-application";
 
 const props = defineProps<{
@@ -22,7 +23,7 @@ const activeWorkout = ref<ActiveWorkoutSession | null>(null);
 const error = ref<string | null>(null);
 const busy = ref(false);
 const loadingCatalog = ref(false);
-const view = ref<"routines" | "catalog" | "manage" | "history" | "metrics" | "backup">("routines");
+const view = ref<"routines" | "program" | "catalog" | "manage" | "history" | "metrics" | "backup">("program");
 const lastSelectionKey = "train-app:last-routine";
 
 interface LastRoutineSelection {
@@ -187,6 +188,7 @@ onMounted(() => {
     <p v-if="loadingCatalog" class="empty-state" role="status">Cargando datos locales…</p>
 
     <nav v-if="!activeWorkout" class="app-navigation" aria-label="Principal">
+      <button type="button" :aria-current="view === 'program' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'program' }" @click="view = 'program'">Programa</button>
       <button type="button" :aria-current="view === 'routines' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'routines' }" @click="view = 'routines'">Rutinas</button>
       <button type="button" :aria-current="view === 'catalog' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'catalog' }" @click="view = 'catalog'">Catálogo</button>
       <button type="button" :aria-current="view === 'manage' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'manage' }" @click="view = 'manage'">Gestionar</button>
@@ -226,6 +228,8 @@ onMounted(() => {
         <button type="button" class="secondary-action" :disabled="busy" @click="startEmptyWorkout">Iniciar entrenamiento vacío</button>
       </section>
     </template>
+
+    <ProgramProgress v-if="!activeWorkout && view === 'program'" :training="training" @started="activeWorkout = $event" />
 
     <section v-if="!activeWorkout && view === 'catalog'" aria-labelledby="exercises-title">
       <h2 id="exercises-title">Ejercicios</h2>

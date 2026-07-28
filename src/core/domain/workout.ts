@@ -10,6 +10,7 @@ import type {
   WorkoutExerciseId,
   WorkoutSessionId,
   WorkoutSetId,
+  ProgramSessionId,
   Weight,
 } from "./primitives";
 
@@ -72,6 +73,7 @@ export interface WorkoutSessionBase {
   readonly routine?: RoutineSnapshot;
   readonly exercises: readonly WorkoutExercise[];
   readonly startedAt: ISODateTime;
+  readonly programSessionId?: ProgramSessionId;
 }
 
 export interface ActiveWorkoutSession extends WorkoutSessionBase {

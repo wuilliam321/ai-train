@@ -48,6 +48,7 @@ describe("web training application", () => {
           createdExercises: baseDataCounts.exercises,
           restoredExercises: 0,
           createdRoutines: baseDataCounts.routines,
+          createdPrograms: baseDataCounts.programs,
         },
       },
     });
@@ -63,12 +64,12 @@ describe("web training application", () => {
     expect(reopened).toMatchObject({
       initialization: {
         status: "ready",
-        baseData: { createdExercises: 0, restoredExercises: 0, createdRoutines: 0 },
+        baseData: { createdExercises: 0, restoredExercises: 0, createdRoutines: 0, createdPrograms: 0 },
       },
     });
     expect(JSON.stringify(reopened.initialization)).toBe(JSON.stringify({
       status: "ready",
-      baseData: { createdExercises: 0, restoredExercises: 0, createdRoutines: 0 },
+      baseData: { createdExercises: 0, restoredExercises: 0, createdRoutines: 0, createdPrograms: 0 },
     }));
   });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TrainingOrchestrator } from "../../src/core";
+import { WorkoutLifecycleService } from "../../src/core/application/workout-lifecycle";
 import { ExerciseCatalogService } from "../../src/core/application/exercise-catalog";
 import { failure, success } from "../../src/core/application/result";
 import type {
@@ -125,6 +126,7 @@ describe("workout lifecycle", () => {
   it("returns typed lifecycle and history errors", async () => {
     const environment = createTrainingEnvironment(new TestClock(startedAt));
     const workouts = new TrainingOrchestrator(environment);
+    expect(await new WorkoutLifecycleService({ workouts: unavailableWorkouts(), clock: new TestClock(startedAt) }).finishWorkout()).toMatchObject({ ok: false, error: { code: "persistence" } });
 
     expect(await workouts.finishWorkout()).toEqual({ ok: false, error: { code: "no_active_workout" } });
     expect(await workouts.discardWorkout()).toEqual({ ok: false, error: { code: "no_active_workout" } });

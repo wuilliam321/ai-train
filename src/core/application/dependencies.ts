@@ -3,6 +3,7 @@ import type {
   ExerciseRepository,
   IdGenerator,
   RoutineRepository,
+  ProgramRepository,
   TrainingChangePublisher,
   WorkoutHistoryReader,
   WorkoutRepository,
@@ -11,6 +12,7 @@ import type {
 export interface TrainingOrchestratorDependencies {
   readonly exercises: ExerciseRepository;
   readonly routines: RoutineRepository;
+  readonly programs: ProgramRepository;
   readonly workouts: WorkoutRepository;
   readonly history: WorkoutHistoryReader;
   readonly events: TrainingChangePublisher;

@@ -16,6 +16,7 @@ describe("base data loader", () => {
         createdExercises: baseDataCounts.exercises,
         restoredExercises: 0,
         createdRoutines: baseDataCounts.routines,
+        createdPrograms: baseDataCounts.programs,
       },
     });
 
@@ -31,6 +32,7 @@ describe("base data loader", () => {
         createdExercises: 0,
         restoredExercises: 0,
         createdRoutines: 0,
+        createdPrograms: 0,
       },
     });
   });

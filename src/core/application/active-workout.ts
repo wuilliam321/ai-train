@@ -97,6 +97,9 @@ export class ActiveWorkoutService {
       ...content.value,
       status: "active",
       startedAt: this.clock.now(),
+      ...(input.source === "routine" && input.programSessionId !== undefined
+        ? { programSessionId: input.programSessionId }
+        : {}),
     };
 
     const saved = await this.workouts.saveWorkout(workout);

@@ -28,20 +28,19 @@ export class WorkoutLifecycleService {
   }
 
   async finishWorkout(): ApplicationResult<CompletedWorkoutSession> {
+    const completed = await this.prepareFinishedWorkout();
+
+    if (!completed.ok) return completed;
+
+    const saved = await this.workouts.saveWorkout(completed.value);
+    return isPersisted(saved) ? completed : failure(persistenceError(saved.error.code));
+  }
+
+  async prepareFinishedWorkout(): ApplicationResult<CompletedWorkoutSession> {
     const active = await this.findActiveWorkout();
-
-    if (!active.ok) {
-      return active;
-    }
-
+    if (!active.ok) return active;
     const { restPeriod: _restPeriod, ...workout } = active.value;
-    const completed: CompletedWorkoutSession = {
-      ...workout,
-      status: "completed",
-      completedAt: this.clock.now(),
-    };
-    const saved = await this.workouts.saveWorkout(completed);
-    return isPersisted(saved) ? success(completed) : failure(persistenceError(saved.error.code));
+    return success({ ...workout, status: "completed", completedAt: this.clock.now() });
   }
 
   async discardWorkout(): ApplicationResult<void> {

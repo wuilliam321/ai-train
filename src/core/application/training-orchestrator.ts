@@ -35,6 +35,9 @@ import { WorkoutLifecycleService } from "./workout-lifecycle";
 import { TrainingMetricsService } from "./training-metrics";
 import { ExerciseCatalogService } from "./exercise-catalog";
 import { RoutineCatalogService } from "./routine-catalog";
+import { ProgramService } from "./program-service";
+import type { Program, ProgramCycle, ProgramDraft, ProgramPatch, ProgramProgress } from "../domain/program";
+import type { ProgramId } from "../domain/primitives";
 
 class PublishingWorkoutRepository implements WorkoutRepository {
   private readonly workouts: WorkoutRepository;
@@ -81,6 +84,7 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
   private readonly history: TrainingHistoryService;
   private readonly lifecycle: WorkoutLifecycleService;
   private readonly metrics: TrainingMetricsService;
+  private readonly programs: ProgramService;
   private readonly events: TrainingOrchestratorDependencies["events"];
 
   constructor(dependencies: TrainingOrchestratorDependencies) {
@@ -97,6 +101,7 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
     this.history = new TrainingHistoryService(scopedDependencies);
     this.lifecycle = new WorkoutLifecycleService(scopedDependencies);
     this.metrics = new TrainingMetricsService(scopedDependencies);
+    this.programs = new ProgramService(scopedDependencies);
     this.events = dependencies.events;
   }
 
@@ -197,7 +202,7 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
   }
 
   finishWorkout(): ApplicationResult<CompletedWorkoutSession> {
-    return this.lifecycle.finishWorkout();
+    return this.finishAndAdvanceProgram();
   }
 
   discardWorkout(): ApplicationResult<void> {
@@ -236,6 +241,38 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
 
   getExerciseProgress(query: ExerciseProgressQuery): ApplicationResult<ExerciseProgress> {
     return this.metrics.getExerciseProgress(query);
+  }
+
+  createProgram(draft: ProgramDraft): ApplicationResult<Program> { return this.programs.createProgram(draft); }
+  getProgram(programId: ProgramId): ApplicationResult<Program> { return this.programs.getProgram(programId); }
+  updateProgram(input: { readonly programId: ProgramId; readonly patch: ProgramPatch }): ApplicationResult<Program> { return this.programs.updateProgram(input.programId, input.patch); }
+  listPrograms(): ApplicationResult<readonly Program[]> { return this.programs.listPrograms(); }
+  startProgram(programId: ProgramId): ApplicationResult<ProgramCycle> { return this.programs.startProgram(programId); }
+  getProgramProgress(): ApplicationResult<ProgramProgress | null> { return this.programs.progress(); }
+  skipNextProgramSession(): ApplicationResult<ProgramProgress> { return this.programs.skipNext(); }
+  duplicateProgramCycle(): ApplicationResult<ProgramCycle> { return this.programs.duplicate(); }
+  async startNextProgramWorkout(): ApplicationResult<ActiveWorkoutSession> {
+    const next = await this.programs.startNext();
+    if (!next.ok) return next;
+    const workout = await this.activeWorkouts.startWorkout({ source: "routine", routineId: next.value.routineId as Parameters<RoutineCatalog["getRoutine"]>[0], variantId: next.value.variantId as import("../domain/primitives").RoutineVariantId, programSessionId: next.value.programSessionId });
+    if (workout.ok) return workout;
+    const released = await this.programs.release(next.value.programSessionId);
+    return released.ok ? workout : released;
+  }
+  private async finishAndAdvanceProgram(): ApplicationResult<CompletedWorkoutSession> {
+    const completed = await this.lifecycle.prepareFinishedWorkout();
+
+    if (!completed.ok) {
+      return completed;
+    }
+
+    if (completed.value.programSessionId === undefined) return this.lifecycle.finishWorkout();
+    const cycle = await this.programs.completionCycle(completed.value);
+    if (!cycle.ok) return cycle;
+    const saved = await this.programs.saveCompletion(completed.value, cycle.value as ProgramCycle);
+    if (!saved.ok) return saved;
+    this.events.publish({ activeWorkout: null, restPeriod: null });
+    return completed;
   }
 
   subscribe(listener: (snapshot: { readonly activeWorkout: ActiveWorkoutSession | null; readonly restPeriod: RestPeriod | null }) => void): () => void {

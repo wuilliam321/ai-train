@@ -21,6 +21,11 @@ import type {
   WorkoutSessionId,
   TrainingChangePublisher,
   TrainingChangeSnapshot,
+  Program,
+  ProgramCycle,
+  ProgramRepository,
+  ProgramId,
+  ProgramCycleId,
   ActiveWorkoutSession,
   PreviousSetReference,
   PreviousSetQuery,
@@ -99,6 +104,19 @@ class InMemoryRoutineRepository implements RoutineRepository {
   }
 }
 
+class InMemoryProgramRepository implements ProgramRepository {
+  private readonly programs = new Map<ProgramId, Program>();
+  private readonly cycles = new Map<ProgramCycleId, ProgramCycle>();
+  async findProgram(id: ProgramId): PersistenceResult<Program | null> { return success(this.programs.get(id) ?? null); }
+  async listPrograms(): PersistenceResult<readonly Program[]> { return success([...this.programs.values()]); }
+  async saveProgram(program: Program): PersistenceResult<void> { this.programs.set(program.id, program); return success(undefined); }
+  async findActiveProgramCycle(): PersistenceResult<ProgramCycle | null> { return success([...this.cycles.values()].find((cycle) => cycle.status === "active") ?? null); }
+  async findLatestProgramCycle(): PersistenceResult<ProgramCycle | null> { return success([...this.cycles.values()].at(-1) ?? null); }
+  async findProgramCycle(id: ProgramCycleId): PersistenceResult<ProgramCycle | null> { return success(this.cycles.get(id) ?? null); }
+  async saveProgramCycle(cycle: ProgramCycle): PersistenceResult<void> { this.cycles.set(cycle.id, cycle); return success(undefined); }
+  async saveCompletedWorkoutAndProgramCycle(_workout: import("../../src/core").CompletedWorkoutSession, cycle: ProgramCycle): PersistenceResult<void> { this.cycles.set(cycle.id, cycle); return success(undefined); }
+}
+
 class InMemoryWorkoutRepository implements WorkoutRepository {
   private readonly workouts = new Map<WorkoutSessionId, WorkoutSession>();
 
@@ -156,6 +174,7 @@ export const createTrainingEnvironment = (
 ): TrainingOrchestratorDependencies => ({
   exercises: new InMemoryExerciseRepository(),
   routines: new InMemoryRoutineRepository(),
+  programs: new InMemoryProgramRepository(),
   workouts: new InMemoryWorkoutRepository(),
   history: new EmptyWorkoutHistoryReader(),
   events: new InMemoryTrainingChangePublisher(),

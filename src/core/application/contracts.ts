@@ -40,6 +40,8 @@ import type {
   WorkoutSession,
 } from "../domain/workout";
 import type { ApplicationError, Result } from "./result";
+import type { Program, ProgramCycle, ProgramDraft, ProgramPatch, ProgramProgress } from "../domain/program";
+import type { ProgramId } from "../domain/primitives";
 
 export type ApplicationResult<Value> = Promise<
   Result<Value, ApplicationError>
@@ -92,7 +94,20 @@ export type StartWorkoutInput =
       readonly source: "routine";
       readonly routineId: RoutineId;
       readonly variantId: RoutineVariantId;
+      readonly programSessionId?: import("../domain/primitives").ProgramSessionId;
     };
+
+export interface ProgramManagement {
+  createProgram(draft: ProgramDraft): ApplicationResult<Program>;
+  getProgram(programId: ProgramId): ApplicationResult<Program>;
+  updateProgram(input: { readonly programId: ProgramId; readonly patch: ProgramPatch }): ApplicationResult<Program>;
+  listPrograms(): ApplicationResult<readonly Program[]>;
+  startProgram(programId: ProgramId): ApplicationResult<ProgramCycle>;
+  getProgramProgress(): ApplicationResult<ProgramProgress | null>;
+  skipNextProgramSession(): ApplicationResult<ProgramProgress>;
+  startNextProgramWorkout(): ApplicationResult<ActiveWorkoutSession>;
+  duplicateProgramCycle(): ApplicationResult<ProgramCycle>;
+}
 
 export interface AddWorkoutExerciseInput {
   readonly exerciseId: ExerciseId;
@@ -196,4 +211,5 @@ export interface TrainingOrchestrator
     WorkoutExecution,
     RestManagement,
     TrainingHistory,
+    ProgramManagement,
     TrainingEvents {}

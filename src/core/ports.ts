@@ -1,6 +1,7 @@
 import type { Exercise, ExerciseStatus } from "./domain/exercise";
 import type {
   ActiveWorkoutSession,
+  CompletedWorkoutSession,
   PreviousSetReference,
   RestPeriod,
   WorkoutSession,
@@ -16,6 +17,8 @@ import type {
   WorkoutSessionId,
 } from "./domain/primitives";
 import type { Routine, RoutineStatus } from "./domain/routine";
+import type { Program, ProgramCycle } from "./domain/program";
+import type { ProgramCycleId, ProgramId } from "./domain/primitives";
 import type { Result } from "./application/result";
 
 export type PersistenceErrorCode =
@@ -52,6 +55,20 @@ export interface RoutineRepository {
   findRoutine(routineId: RoutineId): PersistenceResult<Routine | null>;
   listRoutines(query?: RoutineRepositoryQuery): PersistenceResult<readonly Routine[]>;
   saveRoutine(routine: Routine): PersistenceResult<void>;
+}
+
+export interface ProgramRepository {
+  findProgram(programId: ProgramId): PersistenceResult<Program | null>;
+  listPrograms(): PersistenceResult<readonly Program[]>;
+  saveProgram(program: Program): PersistenceResult<void>;
+  findActiveProgramCycle(): PersistenceResult<ProgramCycle | null>;
+  findLatestProgramCycle(): PersistenceResult<ProgramCycle | null>;
+  findProgramCycle(programCycleId: ProgramCycleId): PersistenceResult<ProgramCycle | null>;
+  saveProgramCycle(cycle: ProgramCycle): PersistenceResult<void>;
+  saveCompletedWorkoutAndProgramCycle(
+    workout: CompletedWorkoutSession,
+    cycle: ProgramCycle,
+  ): PersistenceResult<void>;
 }
 
 export interface WorkoutRepositoryQuery extends PageRequest {

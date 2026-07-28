@@ -1,11 +1,13 @@
 import type { ApplicationError, ExerciseId, Result, TrainingOrchestrator } from "../core";
 import { baseExercises } from "./exercises";
 import { baseRoutines, resolveBaseRoutines } from "./routines";
+import { resolveBasePrograms } from "./programs";
 
 export interface BaseDataLoadResult {
   readonly createdExercises: number;
   readonly restoredExercises: number;
   readonly createdRoutines: number;
+  readonly createdPrograms: number;
 }
 
 const normalizedName = (name: string): string => name.trim().toLocaleLowerCase();
@@ -83,12 +85,27 @@ export const loadBaseData = async (
     createdRoutines += 1;
   }
 
+  const availableRoutines = await training.listRoutines({ status: "active" });
+  if (!availableRoutines.ok) return asFailure(availableRoutines.error);
+  const fullRoutines = await Promise.all(availableRoutines.value.map((routine) => training.getRoutine(routine.id)));
+  if (fullRoutines.some((routine) => !routine.ok)) return asFailure({ code: "persistence" });
+  const programs = await training.listPrograms();
+  if (!programs.ok) return asFailure(programs.error);
+  let createdPrograms = 0;
+  for (const program of resolveBasePrograms(fullRoutines.filter((routine): routine is { readonly ok: true; readonly value: import("../core").Routine } => routine.ok).map((routine) => routine.value))) {
+    if (findByName(programs.value, program.name) !== undefined) continue;
+    const created = await training.createProgram(program);
+    if (!created.ok) return asFailure(created.error);
+    createdPrograms += 1;
+  }
+
   return {
     ok: true,
     value: {
       createdExercises,
       restoredExercises,
       createdRoutines,
+      createdPrograms,
     },
   };
 };
@@ -96,4 +113,5 @@ export const loadBaseData = async (
 export const baseDataCounts = {
   exercises: baseExercises.length,
   routines: baseRoutines.length,
+  programs: 3,
 } as const;

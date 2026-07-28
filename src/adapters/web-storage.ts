@@ -3,7 +3,8 @@ import type { TrainingOrchestratorDependencies } from "../core/application/depen
 import type { Exercise } from "../core/domain/exercise";
 import type { EntityId, ExerciseId, ISODateTime, Page, RoutineId, WorkoutSessionId } from "../core/domain/primitives";
 import type { Routine } from "../core/domain/routine";
-import type { ActiveWorkoutSession, PreviousSetReference, WorkoutSession } from "../core/domain/workout";
+import type { Program, ProgramCycle } from "../core/domain/program";
+import type { ActiveWorkoutSession, CompletedWorkoutSession, PreviousSetReference, WorkoutSession } from "../core/domain/workout";
 import type {
   Clock,
   ExerciseRepository,
@@ -18,9 +19,10 @@ import type {
   WorkoutHistoryReader,
   WorkoutRepository,
   WorkoutRepositoryQuery,
+  ProgramRepository,
 } from "../core/ports";
 
-const documentVersion = 1;
+const documentVersion = 2;
 const defaultKey = "train-app";
 
 interface TrainingDocument {
@@ -29,6 +31,8 @@ interface TrainingDocument {
   readonly routines: readonly Routine[];
   readonly workouts: readonly WorkoutSession[];
   readonly history: readonly PreviousSetReference[];
+  readonly programs: readonly Program[];
+  readonly programCycles: readonly ProgramCycle[];
 }
 
 export interface WebStorage {
@@ -55,6 +59,8 @@ const emptyDocument = (): TrainingDocument => ({
   routines: [],
   workouts: [],
   history: [],
+  programs: [],
+  programCycles: [],
 });
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -66,7 +72,9 @@ const isDateTime = (value: unknown): value is string =>
   typeof value === "string" && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
 const isSeconds = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
 const isRepetitions = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 1;
-const isWeight = (value: unknown): boolean => isRecord(value) &&
+const isPositiveInteger = (value: unknown): boolean => typeof value === "number" && Number.isInteger(value) && value >= 1;
+const isPosition = (value: unknown): boolean => typeof value === "number" && Number.isInteger(value) && value >= 0;
+const isWeight = (value: unknown): value is { readonly amount: number; readonly unit: "kg" | "lb" } => isRecord(value) &&
   typeof value.amount === "number" && Number.isFinite(value.amount) && value.amount >= 0 &&
   (value.unit === "kg" || value.unit === "lb");
 const isEffort = (value: unknown): boolean => isRecord(value) &&
@@ -111,6 +119,7 @@ const isRestPeriod = (value: unknown): boolean => isRecord(value) && isIdentifie
   isDateTime(value.startedAt) && isDateTime(value.endsAt) && value.startedAt <= value.endsAt;
 const isWorkout = (value: unknown): boolean => isRecord(value) && isIdentifier(value.id) &&
   Array.isArray(value.exercises) && value.exercises.every(isWorkoutExercise) && isDateTime(value.startedAt) &&
+  isOptional(value, "programSessionId", isIdentifier) &&
   isOptional(value, "routine", (routine) => isRecord(routine) && isIdentifier(routine.id) && typeof routine.name === "string" &&
     isIdentifier(routine.variantId) && typeof routine.variantName === "string") &&
   ((value.status === "active" && isOptional(value, "restPeriod", isRestPeriod)) ||
@@ -121,15 +130,22 @@ const isReference = (value: unknown): boolean => isRecord(value) && isIdentifier
   isSetType(value.type) && isWeight(value.weight) && isRepetitions(value.repetitions) && isDateTime(value.completedAt) &&
   isOptional(value, "effort", isEffort);
 
-const isDocument = (value: unknown): value is TrainingDocument => isRecord(value) &&
-  value.version === documentVersion && Array.isArray(value.exercises) && Array.isArray(value.routines) &&
-  Array.isArray(value.workouts) && Array.isArray(value.history) && value.exercises.every(isExercise) &&
-  value.routines.every(isRoutine) && value.workouts.every(isWorkout) && value.history.every(isReference);
+const isProgramSession = (value: unknown): boolean => isRecord(value) && isIdentifier(value.routineId) && isIdentifier(value.variantId);
+const isProgramGoal = (value: unknown): boolean => isRecord(value) && isIdentifier(value.exerciseId) && isTarget(value.repetitions) && isWeight(value.targetWeight) && isWeight(value.increment) && value.targetWeight.unit === value.increment.unit && value.targetWeight.amount > 0 && value.increment.amount > 0;
+const isProgram = (value: unknown): value is Program => isRecord(value) && isIdentifier(value.id) && typeof value.name === "string" && value.name.trim().length > 0 && isPositiveInteger(value.weeks) && Array.isArray(value.sessions) && value.sessions.length > 0 && value.sessions.every(isProgramSession) && Array.isArray(value.goals) && value.goals.every(isProgramGoal) && isDateTime(value.createdAt) && isDateTime(value.updatedAt);
+const isCycleSession = (value: unknown): boolean => isProgramSession(value) && isRecord(value) && isIdentifier(value.id) && isPositiveInteger(value.week) && isPosition(value.position) && (value.status === "pending" || value.status === "started" || value.status === "completed" || value.status === "skipped");
+const isCycleGoal = (value: unknown): boolean => isProgramGoal(value) && isRecord(value) && typeof value.achieved === "boolean" && isOptional(value, "baseline", isWeight) && isOptional(value, "recommendedWeight", isWeight);
+const isProgramCycle = (value: unknown): value is ProgramCycle => isRecord(value) && isIdentifier(value.id) && isIdentifier(value.programId) && typeof value.programName === "string" && (value.status === "active" || value.status === "completed") && isDateTime(value.startedAt) && isOptional(value, "completedAt", isDateTime) && Array.isArray(value.sessions) && value.sessions.every(isCycleSession) && Array.isArray(value.goals) && value.goals.every(isCycleGoal);
+const validCollections = (value: Record<string, unknown>): boolean => Array.isArray(value.exercises) && Array.isArray(value.routines) && Array.isArray(value.workouts) && Array.isArray(value.history) && value.exercises.every(isExercise) && value.routines.every(isRoutine) && value.workouts.every(isWorkout) && value.history.every(isReference);
+const validProgramState = (programs: readonly Program[], cycles: readonly ProgramCycle[]): boolean => new Set(programs.map((program) => program.id)).size === programs.length && new Set(cycles.map((cycle) => cycle.id)).size === cycles.length && cycles.filter((cycle) => cycle.status === "active").length <= 1 && cycles.every((cycle) => programs.some((program) => program.id === cycle.programId));
+const isDocument = (value: unknown): value is TrainingDocument => isRecord(value) && value.version === documentVersion && validCollections(value) && Array.isArray(value.programs) && Array.isArray(value.programCycles) && value.programs.every(isProgram) && value.programCycles.every(isProgramCycle) && validProgramState(value.programs, value.programCycles);
 
 const decodeDocument = (serialized: string): TrainingDocument | null => {
   try {
     const parsed: unknown = JSON.parse(serialized);
-    return isDocument(parsed) ? parsed : null;
+    if (isDocument(parsed)) return parsed;
+    if (isRecord(parsed) && parsed.version === 1 && validCollections(parsed)) return { exercises: parsed.exercises as Exercise[], routines: parsed.routines as Routine[], workouts: parsed.workouts as WorkoutSession[], history: parsed.history as PreviousSetReference[], version: documentVersion, programs: [], programCycles: [] };
+    return null;
   } catch {
     return null;
   }
@@ -219,7 +235,7 @@ class WebDocumentStore {
   }
 }
 
-class WebStorageRepositories implements ExerciseRepository, RoutineRepository, WorkoutRepository, WorkoutHistoryReader {
+class WebStorageRepositories implements ExerciseRepository, RoutineRepository, WorkoutRepository, WorkoutHistoryReader, ProgramRepository {
   private readonly store: WebDocumentStore;
 
   constructor(store: WebDocumentStore) {
@@ -255,6 +271,14 @@ class WebStorageRepositories implements ExerciseRepository, RoutineRepository, W
   async saveRoutine(routine: Routine): PersistenceResult<void> {
     return this.saveCollection("routines", routine, (item) => item.id === routine.id);
   }
+  async findProgram(programId: import("../core").ProgramId): PersistenceResult<Program | null> { return success(this.store.current().programs.find((program) => program.id === programId) ?? null); }
+  async listPrograms(): PersistenceResult<readonly Program[]> { return success(this.store.current().programs); }
+  async saveProgram(program: Program): PersistenceResult<void> { const document = { ...this.store.current(), programs: replace(this.store.current().programs, program, (item) => item.id === program.id) }; return this.store.replace(document) ? success(undefined) : failure({ code: "unavailable" }); }
+  async findActiveProgramCycle(): PersistenceResult<ProgramCycle | null> { return success(this.store.current().programCycles.find((cycle) => cycle.status === "active") ?? null); }
+  async findLatestProgramCycle(): PersistenceResult<ProgramCycle | null> { return success(this.store.current().programCycles.at(-1) ?? null); }
+  async findProgramCycle(cycleId: import("../core").ProgramCycleId): PersistenceResult<ProgramCycle | null> { return success(this.store.current().programCycles.find((cycle) => cycle.id === cycleId) ?? null); }
+  async saveProgramCycle(cycle: ProgramCycle): PersistenceResult<void> { const document = { ...this.store.current(), programCycles: replace(this.store.current().programCycles, cycle, (item) => item.id === cycle.id) }; return this.store.replace(document) ? success(undefined) : failure({ code: "unavailable" }); }
+  async saveCompletedWorkoutAndProgramCycle(workout: CompletedWorkoutSession, cycle: ProgramCycle): PersistenceResult<void> { const workouts = replace(this.store.current().workouts, workout, (item) => item.id === workout.id); const document: TrainingDocument = { ...this.store.current(), workouts, history: previousSets(workouts), programCycles: replace(this.store.current().programCycles, cycle, (item) => item.id === cycle.id) }; return this.store.replace(document) ? success(undefined) : failure({ code: "unavailable" }); }
 
   async findWorkout(workoutSessionId: WorkoutSessionId): PersistenceResult<WorkoutSession | null> {
     return success(this.store.current().workouts.find((workout) => workout.id === workoutSessionId) ?? null);
@@ -358,6 +382,7 @@ export const createWebStorageTrainingEnvironment = (
     dependencies: {
       exercises: repositories,
       routines: repositories,
+      programs: repositories,
       workouts: repositories,
       history: repositories,
       events: new InMemoryTrainingChangePublisher(),

@@ -19,6 +19,9 @@ export type RoutineExerciseId = Brand<string, "RoutineExerciseId">;
 export type WorkoutSessionId = Brand<string, "WorkoutSessionId">;
 export type WorkoutExerciseId = Brand<string, "WorkoutExerciseId">;
 export type WorkoutSetId = Brand<string, "WorkoutSetId">;
+export type ProgramId = Brand<string, "ProgramId">;
+export type ProgramCycleId = Brand<string, "ProgramCycleId">;
+export type ProgramSessionId = Brand<string, "ProgramSessionId">;
 export type EntityId =
   | ExerciseId
   | RoutineId
@@ -26,7 +29,10 @@ export type EntityId =
   | RoutineExerciseId
   | WorkoutSessionId
   | WorkoutExerciseId
-  | WorkoutSetId;
+  | WorkoutSetId
+  | ProgramId
+  | ProgramCycleId
+  | ProgramSessionId;
 
 export type ISODateTime = Brand<string, "ISODateTime">;
 export type Seconds = Brand<number, "Seconds">;
