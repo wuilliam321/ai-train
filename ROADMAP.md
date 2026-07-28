@@ -7,8 +7,8 @@ La interfaz sigue siendo un adaptador reemplazable: consume exclusivamente `Trai
 | Estado | Feature | Entrega verificable |
 | --- | --- | --- |
 | completed | F25. Gestión visual del catálogo | Crear, editar, archivar y restaurar ejercicios y rutinas locales desde la interfaz. |
-| in_progress | F26. Historial de sesiones | Consultar sesiones cerradas y su detalle con paginación local. |
-| pending | F27. Dashboard y progreso | Presentar volumen, distribución muscular y progreso por ejercicio. |
+| completed | F26. Historial de sesiones | Consultar sesiones cerradas y su detalle con paginación local. |
+| in_progress | F27. Dashboard y progreso | Presentar volumen, distribución muscular y progreso por ejercicio. |
 | pending | F28. Refinamiento de experiencia | Accesibilidad ampliada, estados vacíos y navegación móvil de las capacidades completas. |
 
 ## F25 — Gestión visual del catálogo
