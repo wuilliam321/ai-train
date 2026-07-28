@@ -6,8 +6,8 @@
 | --- | --- | --- |
 | 0. Contratos del núcleo | completed | Dominio, fachada `TrainingOrchestrator` y puertos independientes de infraestructura. |
 | 1. Núcleo funcional | completed | Casos de uso completos y verificables mediante adaptadores en memoria. |
-| 2. Persistencia local | pending | Datos locales atómicos, recuperables y operables sin red. |
-| 3. Datos base | pending | Ejercicios y rutinas iniciales normalizados desde `current-routines`. |
+| 2. Persistencia local | completed | Adaptador JSON local atómico, recuperable y operable sin red. |
+| 3. Datos base | in_progress | Ejercicios y rutinas iniciales normalizados desde `current-routines`; se desarrolla en paralelo. |
 | 4. Aplicación Vue offline | pending | Adaptador web/PWA rápido para ejecutar entrenamientos. |
 | 5. Experiencia completa | pending | Gestión visual, historial, dashboard y progreso. |
 | 6. Validación y entrega | pending | Rendimiento, respaldo, pruebas end-to-end y distribución. |
@@ -41,11 +41,12 @@ La secuencia, aceptación y estado de estas entregas viven en `ROADMAP.md`.
 
 Objetivo: sustituir los adaptadores en memoria por almacenamiento local sin cambiar el núcleo ni sus contratos públicos.
 
-- Elegir el adaptador local según restricciones del runtime Vue/PWA.
-- Persistir atómicamente catálogo, rutinas, sesión activa, descanso e historial.
-- Recuperar datos y sesión activa después de reiniciar la aplicación.
-- Gestionar datos corruptos, respaldo y restauración local.
-- Medir la ruta crítica offline.
+- Implementar un adaptador de desarrollo configurable que usa `data/train-app.json` por defecto.
+- Mantener un único documento versionado con catálogo, rutinas, sesiones e índice de historial.
+- Persistir atómicamente mediante temporal en el mismo directorio y renombrado.
+- Validar, recuperar y respaldar archivos corruptos al arrancar.
+- Exportar e importar copias del documento versionado sin alterar datos ante una importación inválida.
+- Verificar recuperación, atomicidad, corrupción, importación/exportación y simulación longitudinal con `pnpm build`.
 
 ## Fase 3 — Datos base
 
@@ -65,6 +66,8 @@ Objetivo: ofrecer los flujos del núcleo en una PWA móvil, sin conexión y con 
 - Configurar instalación PWA y disponibilidad offline.
 - Permitir iniciar una rutina y registrar una serie en menos de cinco segundos.
 - Mostrar referencias inline y descanso flotante durante la ejecución.
+
+Precondiciones: `TrainingOrchestrator` debe ser la fachada pública completa, los datos base deben poder cargarse mediante esa fachada y debe existir persistencia local apta para navegador. La implementación detallada se habilita al cerrar Fase 3.
 
 ## Fase 5 — Experiencia completa
 

@@ -1,20 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { TrainingOrchestrator, success } from "../../src/core";
+import { mkdtemp } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { TrainingOrchestrator } from "../../src/core";
 import type {
-  ActiveWorkoutSession,
   CompletedWorkoutSession,
   ISODateTime,
-  Page,
-  PersistenceResult,
-  PreviousSetQuery,
   PreviousSetReference,
-  WorkoutHistoryReader,
-  WorkoutRepository,
-  WorkoutRepositoryQuery,
-  WorkoutSession,
-  WorkoutSessionId,
 } from "../../src/core";
-import { createTrainingEnvironment, TestClock } from "../support/training-environment";
+import { createJsonFileTrainingEnvironment } from "../../src/adapters/json-file";
+import { SequentialIdGenerator, TestClock } from "../support/training-environment";
 
 const weeks = 104;
 const workoutsPerWeek = 5;
@@ -25,84 +20,6 @@ const primaryMuscles = ["quadriceps", "back", "chest", "hamstrings", "shoulders"
 
 const timestamp = (offsetDays: number): ISODateTime =>
   new Date(firstWorkoutAt + offsetDays * 86_400_000).toISOString() as ISODateTime;
-
-class SimulationWorkouts implements WorkoutRepository {
-  private readonly workouts = new Map<WorkoutSessionId, WorkoutSession>();
-
-  constructor(workouts: readonly WorkoutSession[]) {
-    for (const workout of workouts) {
-      this.workouts.set(workout.id, workout);
-    }
-  }
-
-  async findWorkout(workoutSessionId: WorkoutSessionId): PersistenceResult<WorkoutSession | null> {
-    return success(this.workouts.get(workoutSessionId) ?? null);
-  }
-
-  async findActiveWorkout(): PersistenceResult<ActiveWorkoutSession | null> {
-    const active = [...this.workouts.values()].find(
-      (workout): workout is ActiveWorkoutSession => workout.status === "active",
-    );
-    return success(active ?? null);
-  }
-
-  async listWorkouts(query: WorkoutRepositoryQuery): PersistenceResult<Page<WorkoutSession>> {
-    const completed = [...this.workouts.values()].filter((workout) =>
-      workout.status === "completed" &&
-      (query.completedFrom === undefined || workout.completedAt >= query.completedFrom) &&
-      (query.completedTo === undefined || workout.completedAt < query.completedTo),
-    );
-    const start = query.cursor === undefined ? 0 : Number(query.cursor);
-    const items = completed.slice(start, start + query.limit);
-    const next = start + items.length;
-
-    return success({
-      items,
-      ...(next < completed.length ? { nextCursor: String(next) } : {}),
-    });
-  }
-
-  async saveWorkout(workout: WorkoutSession): PersistenceResult<void> {
-    this.workouts.set(workout.id, workout);
-    return success(undefined);
-  }
-
-  completed(): readonly CompletedWorkoutSession[] {
-    return [...this.workouts.values()].filter(
-      (workout): workout is CompletedWorkoutSession => workout.status === "completed",
-    );
-  }
-}
-
-class SimulationHistory implements WorkoutHistoryReader {
-  private readonly workouts: SimulationWorkouts;
-
-  constructor(workouts: SimulationWorkouts) {
-    this.workouts = workouts;
-  }
-
-  async findPreviousSets(query: PreviousSetQuery): PersistenceResult<readonly PreviousSetReference[]> {
-    const references = this.workouts.completed()
-      .filter((workout) => workout.completedAt < query.before)
-      .flatMap((workout) => workout.exercises.flatMap((exercise) => exercise.sets.flatMap((set, setPosition) =>
-        set.status !== "completed" || exercise.exercise.id !== query.exerciseId ? [] : [{
-          sessionId: workout.id,
-          setId: set.id,
-          exerciseId: exercise.exercise.id,
-          setPosition,
-          type: set.type,
-          weight: set.weight,
-          repetitions: set.repetitions,
-          ...(set.effort === undefined ? {} : { effort: set.effort }),
-          completedAt: set.completedAt,
-        }],
-      )))
-      .sort((left, right) => right.completedAt.localeCompare(left.completedAt))
-      .slice(0, query.limit);
-
-    return success(references);
-  }
-}
 
 const createWorkouts = (): readonly CompletedWorkoutSession[] =>
   Array.from({ length: weeks * workoutsPerWeek }, (_, workoutIndex) => {
@@ -136,16 +53,38 @@ const createWorkouts = (): readonly CompletedWorkoutSession[] =>
     };
   });
 
+const createReferences = (workouts: readonly CompletedWorkoutSession[]): readonly PreviousSetReference[] =>
+  workouts.flatMap((workout) => workout.exercises.flatMap((exercise) => exercise.sets.flatMap((set, setPosition) =>
+    set.status !== "completed" ? [] : [{
+    sessionId: workout.id,
+    setId: set.id,
+    exerciseId: exercise.exercise.id,
+    setPosition,
+    type: set.type,
+    weight: set.weight,
+    repetitions: set.repetitions,
+    completedAt: set.completedAt,
+    }],
+  )));
+
 describe("longitudinal simulation", () => {
   it("keeps two years of offline training recoverable, pageable and measurable in under 500 ms", async () => {
     const started = performance.now();
-    const repository = new SimulationWorkouts(createWorkouts());
-    const environment = createTrainingEnvironment(new TestClock(timestamp(weeks * workoutsPerWeek)));
-    const workouts = new TrainingOrchestrator({
-      ...environment,
-      workouts: repository,
-      history: new SimulationHistory(repository),
+    const completed = createWorkouts();
+    const path = join(await mkdtemp(join(tmpdir(), "train-app-simulation-")), "train-app.json");
+    const environment = await createJsonFileTrainingEnvironment({
+      path,
+      clock: new TestClock(timestamp(weeks * workoutsPerWeek)),
+      ids: new SequentialIdGenerator(),
     });
+    expect(await environment.importData(JSON.stringify({
+      version: 1,
+      exercises: [],
+      routines: [],
+      workouts: completed,
+      history: createReferences(completed),
+    }))).toEqual({ ok: true, value: undefined });
+    const workouts = new TrainingOrchestrator(environment.dependencies);
     const period = { from: timestamp(0), to: timestamp(weeks * workoutsPerWeek) };
     const dashboard = await workouts.getDashboard(period);
     const progress = await workouts.getExerciseProgress({ exerciseId: "exercise-0" as never, period });
@@ -160,19 +99,12 @@ describe("longitudinal simulation", () => {
       cursor: firstPage.value.nextCursor,
       period,
     });
-    const active: ActiveWorkoutSession = {
-      id: "active" as never,
-      status: "active",
-      startedAt: timestamp(weeks * workoutsPerWeek),
-      exercises: [],
-    };
-
-    await repository.saveWorkout(active);
-    const recovered = await new TrainingOrchestrator({
-      ...environment,
-      workouts: repository,
-      history: new SimulationHistory(repository),
-    }).getActiveWorkout();
+    const active = await workouts.startWorkout({ source: "empty" });
+    if (!active.ok) {
+      throw new Error("Expected active workout");
+    }
+    const recoveredEnvironment = await createJsonFileTrainingEnvironment({ path });
+    const recovered = await new TrainingOrchestrator(recoveredEnvironment.dependencies).getActiveWorkout();
     const references = await workouts.getPreviousSetReferences({
       exerciseId: "exercise-0" as never,
       limit: 1,
@@ -219,7 +151,7 @@ describe("longitudinal simulation", () => {
     }
 
     expect(secondPage.value.items).toHaveLength(50);
-    expect(recovered).toEqual({ ok: true, value: active });
+    expect(recovered).toEqual(active);
     expect(references).toEqual({
       ok: true,
       value: [{

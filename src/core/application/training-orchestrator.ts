@@ -4,18 +4,27 @@ import type {
   AddWorkoutSetInput,
   ApplicationResult,
   CompleteWorkoutSetInput,
+  ExerciseCatalog,
   ExerciseProgressQuery,
+  ListExercisesQuery,
+  ListRoutinesQuery,
   ListWorkoutSessionsQuery,
   MoveWorkoutExerciseInput,
   PreviousSetReferencesQuery,
+  RoutineCatalog,
   SetRestDurationInput,
   StartWorkoutInput,
+  TrainingOrchestrator as TrainingOrchestratorContract,
+  UpdateExerciseInput,
   UpdateWorkoutSetInput,
+  UpdateRoutineInput,
 } from "./contracts";
-import type { Page, WorkoutExerciseId, WorkoutSessionId, WorkoutSetId } from "../domain/primitives";
+import type { Page, ExerciseId, WorkoutExerciseId, WorkoutSessionId, WorkoutSetId } from "../domain/primitives";
 import type { WorkoutRepository } from "../ports";
 import type { DashboardSummary, ExerciseProgress, WorkoutSummary } from "../domain/insights";
 import type { DateRange } from "../domain/primitives";
+import type { Exercise, ExerciseDraft } from "../domain/exercise";
+import type { Routine, RoutineDraft, RoutineSummary } from "../domain/routine";
 import type { TrainingOrchestratorDependencies } from "./dependencies";
 import { ActiveWorkoutService } from "./active-workout";
 import { WorkoutExecutionService } from "./workout-execution";
@@ -23,6 +32,8 @@ import { RestManagementService } from "./rest-management";
 import { TrainingHistoryService } from "./training-history";
 import { WorkoutLifecycleService } from "./workout-lifecycle";
 import { TrainingMetricsService } from "./training-metrics";
+import { ExerciseCatalogService } from "./exercise-catalog";
+import { RoutineCatalogService } from "./routine-catalog";
 
 class PublishingWorkoutRepository implements WorkoutRepository {
   private readonly workouts: WorkoutRepository;
@@ -60,7 +71,9 @@ class PublishingWorkoutRepository implements WorkoutRepository {
   }
 }
 
-export class TrainingOrchestrator {
+export class TrainingOrchestrator implements TrainingOrchestratorContract {
+  private readonly exercises: ExerciseCatalog;
+  private readonly routines: RoutineCatalog;
   private readonly activeWorkouts: ActiveWorkoutService;
   private readonly execution: WorkoutExecutionService;
   private readonly rests: RestManagementService;
@@ -75,6 +88,8 @@ export class TrainingOrchestrator {
       workouts: new PublishingWorkoutRepository(dependencies.workouts, dependencies.events),
     };
 
+    this.exercises = new ExerciseCatalogService(scopedDependencies);
+    this.routines = new RoutineCatalogService(scopedDependencies);
     this.activeWorkouts = new ActiveWorkoutService(scopedDependencies);
     this.execution = new WorkoutExecutionService(scopedDependencies);
     this.rests = new RestManagementService(scopedDependencies);
@@ -82,6 +97,58 @@ export class TrainingOrchestrator {
     this.lifecycle = new WorkoutLifecycleService(scopedDependencies);
     this.metrics = new TrainingMetricsService(scopedDependencies);
     this.events = dependencies.events;
+  }
+
+  createExercise(draft: ExerciseDraft): ApplicationResult<Exercise> {
+    return this.exercises.createExercise(draft);
+  }
+
+  getExercise(exerciseId: ExerciseId): ApplicationResult<Exercise> {
+    return this.exercises.getExercise(exerciseId);
+  }
+
+  updateExercise(input: UpdateExerciseInput): ApplicationResult<Exercise> {
+    return this.exercises.updateExercise(input);
+  }
+
+  archiveExercise(exerciseId: ExerciseId): ApplicationResult<Exercise> {
+    return this.exercises.archiveExercise(exerciseId);
+  }
+
+  restoreExercise(exerciseId: ExerciseId): ApplicationResult<Exercise> {
+    return this.exercises.restoreExercise(exerciseId);
+  }
+
+  listExercises(query?: ListExercisesQuery): ApplicationResult<readonly Exercise[]> {
+    return this.exercises.listExercises(query);
+  }
+
+  createRoutine(draft: RoutineDraft): ApplicationResult<Routine> {
+    return this.routines.createRoutine(draft);
+  }
+
+  getRoutine(routineId: Parameters<RoutineCatalog["getRoutine"]>[0]): ApplicationResult<Routine> {
+    return this.routines.getRoutine(routineId);
+  }
+
+  updateRoutine(input: UpdateRoutineInput): ApplicationResult<Routine> {
+    return this.routines.updateRoutine(input);
+  }
+
+  archiveRoutine(routineId: Parameters<RoutineCatalog["archiveRoutine"]>[0]): ApplicationResult<Routine> {
+    return this.routines.archiveRoutine(routineId);
+  }
+
+  restoreRoutine(routineId: Parameters<RoutineCatalog["restoreRoutine"]>[0]): ApplicationResult<Routine> {
+    return this.routines.restoreRoutine(routineId);
+  }
+
+  listRoutines(query?: ListRoutinesQuery): ApplicationResult<readonly RoutineSummary[]> {
+    return this.routines.listRoutines(query);
+  }
+
+  suggestRoutine(): ApplicationResult<RoutineSummary | null> {
+    return this.routines.suggestRoutine();
   }
 
   startWorkout(input: StartWorkoutInput): ApplicationResult<ActiveWorkoutSession> {
