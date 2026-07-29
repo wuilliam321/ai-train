@@ -153,16 +153,18 @@ export class ProgramService {
     return isPersisted(saved) ? success(this.asProgress(complete)) : failure(applicationError("persistence"));
   }
 
-  async startNext(): ApplicationResult<{ readonly routineId: string; readonly variantId: string; readonly programSessionId: ProgramSessionId }> {
+  async startNext(sessionId?: ProgramSessionId): ApplicationResult<{ readonly routineId: string; readonly variantId: string; readonly programSessionId: ProgramSessionId }> {
     const cycle = await this.activeCycle();
 
     if (!cycle.ok) {
       return cycle;
     }
 
-    const next = cycle.value.sessions.find((session) => session.status === "pending");
+    const next = sessionId === undefined
+      ? cycle.value.sessions.find((session) => session.status === "pending")
+      : cycle.value.sessions.find((session) => session.id === sessionId);
 
-    if (next === undefined) {
+    if (next === undefined || next.status !== "pending") {
       return failure(applicationError("validation", "nextSession"));
     }
 

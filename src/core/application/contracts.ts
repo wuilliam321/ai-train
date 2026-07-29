@@ -106,7 +106,7 @@ export interface ProgramManagement {
   getProgramProgress(): ApplicationResult<ProgramProgress | null>;
   abandonProgramCycle(): ApplicationResult<void>;
   skipNextProgramSession(): ApplicationResult<ProgramProgress>;
-  startNextProgramWorkout(): ApplicationResult<ActiveWorkoutSession>;
+  startNextProgramWorkout(sessionId?: import("../domain/primitives").ProgramSessionId): ApplicationResult<ActiveWorkoutSession>;
   duplicateProgramCycle(): ApplicationResult<ProgramCycle>;
 }
 

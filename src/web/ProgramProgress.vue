@@ -76,10 +76,10 @@ const start = async (id: Program["id"]): Promise<void> => {
   await load();
 };
 
-const next = async (): Promise<void> => {
-  const result = await props.training.startNextProgramWorkout();
+const startSession = async (sessionId?: string): Promise<void> => {
+  const result = await props.training.startNextProgramWorkout(sessionId as import("../core").ProgramSessionId | undefined);
   if (!result.ok) {
-    error.value = "No se pudo iniciar la próxima sesión.";
+    error.value = "No se pudo iniciar la sesión.";
     return;
   }
   emit("started", result.value);
@@ -135,15 +135,33 @@ onMounted(() => { void load(); });
 
     <template v-if="progress">
       <p>{{ progress.cycle.programName }} · {{ progress.completedSessions }}/{{ progress.plannedSessions }} sesiones · adherencia {{ Math.round(progress.adherence * 100) }}%</p>
-      <p v-if="progress.nextSession">Semana {{ progress.nextSession.week }}, sesión {{ progress.nextSession.position + 1 }}</p>
-      <p v-else-if="progress.cycle.status === 'abandoned'">Ciclo abandonado. Puedes iniciar otro programa sin perder el historial registrado.</p>
-      <p v-else>Informe final · {{ progress.cycle.goals.filter((goal) => goal.achieved).length }}/{{ progress.cycle.goals.length }} metas alcanzadas.</p>
-      <div v-if="progress.nextSession" class="inline-actions">
-        <button type="button" @click="next">Iniciar próxima sesión</button>
-        <button type="button" class="secondary-action" @click="skip">Omitir sesión</button>
-        <button type="button" class="secondary-action" @click="abandon">Cambiar programa</button>
-      </div>
-      <button v-if="!progress.nextSession && progress.cycle.status === 'completed'" type="button" @click="duplicate">Repetir ciclo</button>
+      <template v-if="progress.cycle.status === 'abandoned'">
+        <p>Ciclo abandonado. Puedes iniciar otro programa sin perder el historial registrado.</p>
+      </template>
+      <template v-else-if="progress.cycle.status === 'completed'">
+        <p>Informe final · {{ progress.cycle.goals.filter((goal) => goal.achieved).length }}/{{ progress.cycle.goals.length }} metas alcanzadas.</p>
+        <button type="button" @click="duplicate">Repetir ciclo</button>
+      </template>
+      <template v-else>
+        <p v-if="progress.nextSession">Próxima: Semana {{ progress.nextSession.week }}, sesión {{ progress.nextSession.position + 1 }}</p>
+        
+        <div class="inline-actions" style="margin-top: 1rem; margin-bottom: 1rem">
+          <button v-if="progress.nextSession" type="button" @click="startSession()">Iniciar próxima</button>
+          <button v-if="progress.nextSession" type="button" class="secondary-action" @click="skip">Omitir</button>
+          <button type="button" class="secondary-action" @click="abandon">Cambiar programa</button>
+        </div>
+
+        <h3 class="eyebrow" style="margin-bottom: 0.5rem">Sesiones</h3>
+        <ul class="card-list" style="margin-bottom: 1rem">
+          <li v-for="session in progress.cycle.sessions" :key="session.id">
+            <strong>Semana {{ session.week }}, Día {{ session.position + 1 }}</strong>
+            <span>{{ routineFor(session.routineId)?.name ?? "Rutina" }} ({{ session.status }})</span>
+            <div v-if="session.status === 'pending'" style="margin-top: 0.5rem">
+              <button type="button" @click="startSession(session.id)">Iniciar esta sesión</button>
+            </div>
+          </li>
+        </ul>
+      </template>
       <ul class="card-list">
         <li v-for="goal in progress.cycle.goals" :key="goal.exerciseId">
           <strong>{{ goal.exerciseId }}</strong><span>{{ goal.achieved ? "Meta alcanzada" : "En progreso" }}</span>

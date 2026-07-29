@@ -27,6 +27,20 @@ describe("program cycles", () => {
     expect(await training.skipNextProgramSession()).toMatchObject({ ok: true, value: { skippedSessions: 1 } });
   });
 
+  it("starts a specific program session by id", async () => {
+    const { training, draft } = await setup();
+    const created = await training.createProgram({...draft, sessions: [draft.sessions[0]!, draft.sessions[0]!]});
+    if (!created.ok) throw new Error("Expected program");
+    const started = await training.startProgram(created.value.id);
+    if (!started.ok) throw new Error("Expected cycle");
+    const targetSessionId = started.value.sessions[1]!.id;
+    expect(await training.startNextProgramWorkout(targetSessionId)).toMatchObject({ ok: true });
+    expect(await training.getProgramProgress()).toMatchObject({ ok: true, value: { cycle: { sessions: [
+      { position: 0, status: "pending" },
+      { position: 1, status: "started" }
+    ] } } });
+  });
+
   it("abandons an active program and allows another one to start", async () => {
     const { training, draft } = await setup();
     const first = await training.createProgram(draft);

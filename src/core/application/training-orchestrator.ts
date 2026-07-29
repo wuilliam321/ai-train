@@ -261,8 +261,8 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
   }
   skipNextProgramSession(): ApplicationResult<ProgramProgress> { return this.programs.skipNext(); }
   duplicateProgramCycle(): ApplicationResult<ProgramCycle> { return this.programs.duplicate(); }
-  async startNextProgramWorkout(): ApplicationResult<ActiveWorkoutSession> {
-    const next = await this.programs.startNext();
+  async startNextProgramWorkout(sessionId?: import("../domain/primitives").ProgramSessionId): ApplicationResult<ActiveWorkoutSession> {
+    const next = await this.programs.startNext(sessionId);
     if (!next.ok) return next;
     const workout = await this.activeWorkouts.startWorkout({ source: "routine", routineId: next.value.routineId as Parameters<RoutineCatalog["getRoutine"]>[0], variantId: next.value.variantId as import("../domain/primitives").RoutineVariantId, programSessionId: next.value.programSessionId });
     if (workout.ok) return workout;

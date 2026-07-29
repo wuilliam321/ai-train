@@ -23,7 +23,7 @@ const activeWorkout = ref<ActiveWorkoutSession | null>(null);
 const error = ref<string | null>(null);
 const busy = ref(false);
 const loadingCatalog = ref(false);
-const view = ref<"routines" | "program" | "catalog" | "manage" | "history" | "metrics" | "backup">("program");
+const view = ref<"routines" | "program" | "catalog" | "manage" | "history" | "metrics" | "backup" | "workout">("program");
 const lastSelectionKey = "train-app:last-routine";
 
 interface LastRoutineSelection {
@@ -109,6 +109,7 @@ const loadCatalog = async (): Promise<void> => {
   exercises.value = loadedExercises.value;
   routines.value = loadedRoutines.value;
   activeWorkout.value = recoveredWorkout.value;
+  if (activeWorkout.value) view.value = "workout";
   const lastSelection = readLastSelection();
 
   if (lastSelection !== null) {
@@ -139,6 +140,7 @@ const startRoutine = async (): Promise<void> => {
 
   saveLastSelection({ routineId: selectedRoutine.value.id, variantId: selectedVariant.value.id });
   activeWorkout.value = workout.value;
+  view.value = "workout";
 };
 
 const startEmptyWorkout = async (): Promise<void> => {
@@ -153,6 +155,7 @@ const startEmptyWorkout = async (): Promise<void> => {
   }
 
   activeWorkout.value = workout.value;
+  view.value = "workout";
 };
 
 const discardWorkout = async (): Promise<void> => {
@@ -199,7 +202,8 @@ onMounted(() => {
     <div v-if="error" class="notice" role="alert"><span>{{ error }}</span><button type="button" class="secondary-action" @click="loadCatalog">Reintentar</button></div>
     <p v-if="loadingCatalog" class="empty-state" role="status">Cargando datos locales…</p>
 
-    <nav v-if="!activeWorkout" class="app-navigation" aria-label="Principal">
+    <nav class="app-navigation" aria-label="Principal">
+      <button v-if="activeWorkout" type="button" :aria-current="view === 'workout' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'workout' }" @click="view = 'workout'">En curso</button>
       <button type="button" :aria-current="view === 'program' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'program' }" @click="view = 'program'">Programa</button>
       <button type="button" :aria-current="view === 'routines' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'routines' }" @click="view = 'routines'">Rutinas</button>
       <button type="button" :aria-current="view === 'catalog' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'catalog' }" @click="view = 'catalog'">Catálogo</button>
@@ -209,7 +213,7 @@ onMounted(() => {
       <button type="button" :aria-current="view === 'backup' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'backup' }" @click="view = 'backup'">Respaldo</button>
     </nav>
 
-    <ActiveWorkout v-if="activeWorkout" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" @finish="finishWorkout" />
+    <ActiveWorkout v-if="activeWorkout && view === 'workout'" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" @finish="finishWorkout" />
 
     <template v-else-if="view === 'routines'">
       <section aria-labelledby="routines-title">
@@ -250,9 +254,9 @@ onMounted(() => {
       </section>
     </template>
 
-    <ProgramProgress v-if="!activeWorkout && view === 'program'" :training="training" @started="activeWorkout = $event" />
+    <ProgramProgress v-if="view === 'program'" :training="training" @started="activeWorkout = $event; view = 'workout'" />
 
-    <section v-if="!activeWorkout && view === 'catalog'" aria-labelledby="exercises-title">
+    <section v-if="view === 'catalog'" aria-labelledby="exercises-title">
       <h2 id="exercises-title">Ejercicios</h2>
       <ul v-if="exercises.length" class="exercise-list">
         <li v-for="exercise in exercises" :key="exercise.id">
@@ -263,9 +267,9 @@ onMounted(() => {
       <p v-else class="empty-state">No hay ejercicios disponibles.</p>
     </section>
 
-    <CatalogManager v-if="!activeWorkout && view === 'manage'" :training="training" @changed="loadCatalog" />
-    <WorkoutHistory v-if="!activeWorkout && view === 'history'" :training="training" />
-    <TrainingMetrics v-if="!activeWorkout && view === 'metrics'" :training="training" :exercises="exercises" />
-    <BackupManager v-if="!activeWorkout && view === 'backup'" :backup="backup" :training="training" />
+    <CatalogManager v-if="view === 'manage'" :training="training" @changed="loadCatalog" />
+    <WorkoutHistory v-if="view === 'history'" :training="training" />
+    <TrainingMetrics v-if="view === 'metrics'" :training="training" :exercises="exercises" />
+    <BackupManager v-if="view === 'backup'" :backup="backup" :training="training" />
   </main>
 </template>
