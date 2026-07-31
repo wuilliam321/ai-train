@@ -316,3 +316,97 @@ select {
 .error-shell {
   align-content: center;
 }
+
+.rest-timer-fixed {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #172033;
+  color: #fff;
+  z-index: 100;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rest-timer-progress {
+  height: 4px;
+  background: #3b82f6;
+  transition: width 1s linear;
+}
+.rest-timer-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+}
+.rest-timer-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.rest-timer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.rest-timer-actions .icon-action {
+  background: transparent;
+  color: #fff;
+  font-size: 1.25rem;
+  padding: 0.5rem;
+  min-width: 0;
+}
+.rest-timer-settings {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #1e293b;
+}
+.stepper-row {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+.stepper-row > label {
+  flex: 1;
+}
+.stepper-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+.stepper-label {
+  color: #526079;
+  font-size: 0.8rem;
+  font-weight: 700;
+  width: 2rem;
+}
+.stepper-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+}
+.stepper-controls button {
+  flex: 1;
+  padding: 0.5rem 0;
+  min-width: 0;
+  min-height: 44px;
+  background: #e2e8f0;
+  color: #1e293b;
+  font-size: 0.9rem;
+  border-radius: 0.5rem;
+}
+.stepper-controls input {
+  flex: 2;
+  min-width: 0;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  height: 44px;
+}
+.complete-action {
+  flex: 1;
+  background: #16a34a;
+}

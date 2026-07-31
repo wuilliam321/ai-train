@@ -44,6 +44,50 @@ const exerciseToAdd = ref(props.availableExercises[0]?.id ?? "");
 const error = ref<string | null>(null);
 const busy = ref(false);
 
+const maxRestSeconds = ref(60);
+const showRestSettings = ref(false);
+
+const remainingSeconds = computed(() => rest.value === null ? 0 : Math.max(0, Math.ceil((Date.parse(rest.value.endsAt) - now.value) / 1000)));
+
+watch(rest, (newRest, oldRest) => {
+  if (newRest && (!oldRest || newRest.endsAt !== oldRest.endsAt)) {
+    maxRestSeconds.value = Math.max(1, Math.ceil((Date.parse(newRest.endsAt) - Date.now()) / 1000));
+    showRestSettings.value = false;
+  }
+});
+
+const visualExercises = computed(() => {
+  return props.workout.exercises.map((exercise, index) => ({ exercise, index })).sort((a, b) => {
+    const aCompleted = a.exercise.sets.length > 0 && a.exercise.sets.every(s => s.status !== 'pending');
+    const bCompleted = b.exercise.sets.length > 0 && b.exercise.sets.every(s => s.status !== 'pending');
+    if (aCompleted && !bCompleted) return 1;
+    if (!aCompleted && bCompleted) return -1;
+    return a.index - b.index;
+  });
+});
+
+const visualSets = (exercise: any) => {
+  return exercise.sets.map((set: any, index: number) => ({ set, index })).sort((a: any, b: any) => {
+    const aCompleted = a.set.status !== 'pending';
+    const bCompleted = b.set.status !== 'pending';
+    if (aCompleted && !bCompleted) return 1;
+    if (!aCompleted && bCompleted) return -1;
+    return a.index - b.index;
+  });
+};
+
+const adjustValue = (set: WorkoutSet, field: 'weight' | 'repetitions', amount: number) => {
+  const entry = entryFor(set);
+  const current = Number(entry[field]) || 0;
+  let newValue = current + amount;
+  if (field === 'repetitions') {
+    newValue = Math.max(1, Math.round(newValue));
+  } else {
+    newValue = Math.max(0, newValue);
+  }
+  entry[field] = newValue.toString();
+};
+
 const target = (set: WorkoutSet): string => {
   if (set.target === undefined) {
     return "Sin objetivo";
@@ -169,8 +213,6 @@ const removeExercise = async (workoutExerciseId: string): Promise<void> => {
   await update(props.training.removeWorkoutExercise(workoutExerciseId as never));
 };
 
-const remainingSeconds = computed(() => rest.value === null ? 0 : Math.max(0, Math.ceil((Date.parse(rest.value.endsAt) - now.value) / 1000)));
-
 const adjustRest = async (): Promise<void> => {
   const duration = Number(restDuration.value);
 
@@ -187,6 +229,7 @@ const adjustRest = async (): Promise<void> => {
   }
 
   rest.value = result.value;
+  showRestSettings.value = false;
 };
 
 const cancelRest = async (): Promise<void> => {
@@ -198,6 +241,7 @@ const cancelRest = async (): Promise<void> => {
   }
 
   rest.value = null;
+  showRestSettings.value = false;
 };
 
 let timer: number | undefined;
@@ -234,47 +278,104 @@ onUnmounted(() => {
 
     <p v-if="error" class="notice" role="alert">{{ error }}</p>
 
-    <aside v-if="rest" class="rest-timer" aria-live="polite">
-      <strong>Descanso: {{ remainingSeconds }} s</strong>
-      <label class="compact-field">Segundos <input v-model="restDuration" inputmode="numeric" type="number" min="0" /></label>
-      <div class="inline-actions">
+    <aside v-if="rest" class="rest-timer-fixed" aria-live="polite">
+      <div class="rest-timer-progress" :style="{ width: `${Math.min(100, (remainingSeconds / maxRestSeconds) * 100)}%` }"></div>
+      <div class="rest-timer-content">
+        <strong class="rest-timer-text">Descanso: {{ remainingSeconds }} s</strong>
+        <div class="rest-timer-actions">
+          <button type="button" class="icon-action" @click="showRestSettings = !showRestSettings">⚙️</button>
+          <button type="button" class="icon-action" @click="cancelRest">❌</button>
+        </div>
+      </div>
+      <div v-if="showRestSettings" class="rest-timer-settings">
+        <label class="compact-field">Segundos <input v-model="restDuration" inputmode="numeric" type="number" min="0" /></label>
         <button type="button" class="secondary-action" @click="adjustRest">Ajustar</button>
-        <button type="button" class="secondary-action" @click="cancelRest">Cancelar</button>
       </div>
     </aside>
 
-    <article v-for="(exercise, exercisePosition) in workout.exercises" :key="exercise.id" class="exercise-card">
+    <article v-for="exItem in visualExercises" :key="exItem.exercise.id" class="exercise-card">
       <header class="exercise-header">
         <div>
-          <h3>{{ exercise.exercise.name }}</h3>
-          <span>{{ exercise.restSeconds }} s de descanso</span>
+          <h3>{{ exItem.exercise.exercise.name }}</h3>
+          <span>{{ exItem.exercise.restSeconds }} s de descanso</span>
         </div>
         <div class="inline-actions">
-          <button type="button" class="icon-action" :disabled="exercisePosition === 0" @click="moveExercise(exercise.id, exercisePosition - 1)">↑</button>
-          <button type="button" class="icon-action" :disabled="exercisePosition === workout.exercises.length - 1" @click="moveExercise(exercise.id, exercisePosition + 1)">↓</button>
-          <button type="button" class="icon-action" @click="removeExercise(exercise.id)">×</button>
+          <button type="button" class="icon-action" :disabled="exItem.index === 0" @click="moveExercise(exItem.exercise.id, exItem.index - 1)">↑</button>
+          <button type="button" class="icon-action" :disabled="exItem.index === workout.exercises.length - 1" @click="moveExercise(exItem.exercise.id, exItem.index + 1)">↓</button>
+          <button type="button" class="icon-action" @click="removeExercise(exItem.exercise.id)">×</button>
         </div>
       </header>
 
-      <div v-for="(set, setPosition) in exercise.sets" :key="set.id" class="set-card">
+      <div v-for="setItem in visualSets(exItem.exercise)" :key="setItem.set.id" class="set-card">
         <div class="set-heading">
-          <div class="inline-actions"><strong>Serie {{ setPosition + 1 }}</strong><button type="button" class="icon-action" :disabled="setPosition === 0" @click="moveSet(set.id, setPosition - 1)">↑</button><button type="button" class="icon-action" :disabled="setPosition === exercise.sets.length - 1" @click="moveSet(set.id, setPosition + 1)">↓</button></div>
-          <span>{{ target(set) }}</span>
-          <span>{{ formatReference(referenceFor(exercise.exercise.id, setPosition)) }}</span>
-        </div>
-        <template v-if="set.status === 'pending'">
-          <div class="set-fields">
-            <label class="compact-field">Tipo <select v-model="entryFor(set).type" @change="saveSetType(set)"><option value="warmup">Calentamiento</option><option value="normal">Normal</option><option value="drop">Descendente</option><option value="failure">Fallo</option></select></label>
-            <label class="compact-field">kg <input v-model="entryFor(set).weight" inputmode="decimal" type="number" min="0" step="0.5" /></label>
-            <label class="compact-field">Reps <input v-model="entryFor(set).repetitions" inputmode="numeric" type="number" min="1" step="1" /></label>
-            <label class="compact-field">Esfuerzo <select v-model="entryFor(set).effortKind"><option value="none">—</option><option value="rpe">RPE</option><option value="rir">RIR</option></select></label>
-            <label v-if="entryFor(set).effortKind !== 'none'" class="compact-field">Valor <input v-model="entryFor(set).effortValue" inputmode="decimal" type="number" min="0" max="10" step="1" /></label>
+          <div class="inline-actions">
+            <strong>Serie {{ setItem.index + 1 }}</strong>
+            <button type="button" class="icon-action" :disabled="setItem.index === 0" @click="moveSet(setItem.set.id, setItem.index - 1)">↑</button>
+            <button type="button" class="icon-action" :disabled="setItem.index === exItem.exercise.sets.length - 1" @click="moveSet(setItem.set.id, setItem.index + 1)">↓</button>
           </div>
-          <div class="inline-actions"><button type="button" :disabled="busy" @click="completeSet(set)">Completar</button><button type="button" class="secondary-action" @click="removeSet(set)">Eliminar</button></div>
+          <span>{{ target(setItem.set) }}</span>
+          <span>{{ formatReference(referenceFor(exItem.exercise.exercise.id, setItem.index)) }}</span>
+        </div>
+        
+        <template v-if="setItem.set.status === 'pending'">
+          <div class="set-fields">
+            <div class="stepper-row">
+              <label class="compact-field">
+                Tipo
+                <select v-model="entryFor(setItem.set).type" @change="saveSetType(setItem.set)">
+                  <option value="warmup">Calentamiento</option>
+                  <option value="normal">Normal</option>
+                  <option value="drop">Descendente</option>
+                  <option value="failure">Fallo</option>
+                </select>
+              </label>
+              <label class="compact-field">
+                Esfuerzo
+                <select v-model="entryFor(setItem.set).effortKind">
+                  <option value="none">—</option>
+                  <option value="rpe">RPE</option>
+                  <option value="rir">RIR</option>
+                </select>
+              </label>
+              <label v-if="entryFor(setItem.set).effortKind !== 'none'" class="compact-field">
+                Valor
+                <input v-model="entryFor(setItem.set).effortValue" inputmode="decimal" type="number" min="0" max="10" step="1" />
+              </label>
+            </div>
+            
+            <div class="stepper-group">
+              <span class="stepper-label">kg</span>
+              <div class="stepper-controls">
+                <button type="button" @click="adjustValue(setItem.set, 'weight', -5)">-5</button>
+                <button type="button" @click="adjustValue(setItem.set, 'weight', -1)">-1</button>
+                <input v-model="entryFor(setItem.set).weight" inputmode="decimal" type="number" min="0" step="0.5" />
+                <button type="button" @click="adjustValue(setItem.set, 'weight', 1)">+1</button>
+                <button type="button" @click="adjustValue(setItem.set, 'weight', 5)">+5</button>
+              </div>
+            </div>
+
+            <div class="stepper-group">
+              <span class="stepper-label">Reps</span>
+              <div class="stepper-controls">
+                <button type="button" @click="adjustValue(setItem.set, 'repetitions', -5)">-5</button>
+                <button type="button" @click="adjustValue(setItem.set, 'repetitions', -1)">-1</button>
+                <input v-model="entryFor(setItem.set).repetitions" inputmode="numeric" type="number" min="1" step="1" />
+                <button type="button" @click="adjustValue(setItem.set, 'repetitions', 1)">+1</button>
+                <button type="button" @click="adjustValue(setItem.set, 'repetitions', 5)">+5</button>
+              </div>
+            </div>
+          </div>
+          <div class="inline-actions">
+            <button type="button" class="complete-action" :disabled="busy" @click="completeSet(setItem.set)">Completar</button>
+            <button type="button" class="secondary-action" @click="removeSet(setItem.set)">Eliminar</button>
+          </div>
         </template>
-        <div v-else class="inline-actions"><strong>Completada: {{ set.weight.amount }} {{ set.weight.unit }} × {{ set.repetitions }}</strong><button type="button" class="secondary-action" @click="reopenSet(set)">Reabrir</button></div>
+        <div v-else class="inline-actions">
+          <strong>Completada: {{ setItem.set.weight.amount }} {{ setItem.set.weight.unit }} × {{ setItem.set.repetitions }}</strong>
+          <button type="button" class="secondary-action" @click="reopenSet(setItem.set)">Reabrir</button>
+        </div>
       </div>
-      <button type="button" class="secondary-action" @click="addSet(exercise.id)">Añadir serie</button>
+      <button type="button" class="secondary-action" @click="addSet(exItem.exercise.id)">Añadir serie</button>
     </article>
 
     <section class="add-exercise" aria-labelledby="add-exercise-title">
