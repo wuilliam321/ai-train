@@ -119,6 +119,24 @@ const refreshReferences = async (workout: ActiveWorkoutSession): Promise<void> =
     await props.training.getPreviousSetReferences({ exerciseId, limit: 20 }),
   ] as const));
   references.value = Object.fromEntries(loaded.flatMap(([exerciseId, result]) => result.ok ? [[exerciseId, result.value]] : []));
+
+  for (const exercise of workout.exercises) {
+    exercise.sets.forEach((set, setPosition) => {
+      if (set.status === "pending") {
+        const entry = setEntries[set.id];
+        const refList = references.value[exercise.exercise.id];
+        const ref = refList?.find((r) => r.setPosition === setPosition);
+        if (entry && ref) {
+          if (!entry.weight || entry.weight === "0") {
+            entry.weight = ref.weight.amount.toString();
+          }
+          if (!entry.repetitions || entry.repetitions === "0") {
+            entry.repetitions = ref.repetitions.toString();
+          }
+        }
+      }
+    });
+  }
 };
 
 const refreshRest = async (): Promise<void> => {
