@@ -24,12 +24,22 @@ const error = ref<string | null>(null);
 const busy = ref(false);
 const loadingCatalog = ref(false);
 const view = ref<"routines" | "program" | "catalog" | "manage" | "history" | "metrics" | "backup" | "workout">("program");
+const isMenuOpen = ref(false);
 const lastSelectionKey = "train-app:last-routine";
 
 interface LastRoutineSelection {
   readonly routineId: RoutineId;
   readonly variantId: RoutineVariantId;
 }
+
+const changeView = (newView: typeof view.value) => {
+  view.value = newView;
+  isMenuOpen.value = false;
+};
+
+const toggleMenu = () => {
+  isMenuOpen.value = !isMenuOpen.value;
+};
 
 const selectedVariant = computed(() => selectedRoutine.value?.variants.find(
   (variant) => variant.id === selectedVariantId.value,
@@ -193,25 +203,33 @@ onMounted(() => {
 
 <template>
   <main id="main" class="app-shell" :aria-busy="loadingCatalog">
-    <header class="app-header">
-      <p class="eyebrow">Bitácora offline</p>
-      <h1>Entrenar</h1>
-      <p>Todo se guarda en este dispositivo.</p>
-    </header>
+    <div class="mobile-top-bar">
+      <button type="button" class="hamburger-btn" @click="toggleMenu" aria-label="Menú">☰</button>
+      <span v-if="activeWorkout && view === 'workout'" class="mobile-title">Entrenando</span>
+      <span v-else class="mobile-title">Bitácora offline</span>
+    </div>
+
+    <div :class="['app-header-nav', { 'is-open': isMenuOpen }]">
+      <header class="app-header">
+        <p class="eyebrow">Bitácora offline</p>
+        <h1>Entrenar</h1>
+        <p>Todo se guarda en este dispositivo.</p>
+      </header>
+
+      <nav class="app-navigation" aria-label="Principal">
+        <button v-if="activeWorkout" type="button" :aria-current="view === 'workout' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'workout' }" @click="changeView('workout')">En curso</button>
+        <button type="button" :aria-current="view === 'program' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'program' }" @click="changeView('program')">Programa</button>
+        <button type="button" :aria-current="view === 'routines' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'routines' }" @click="changeView('routines')">Rutinas</button>
+        <button type="button" :aria-current="view === 'catalog' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'catalog' }" @click="changeView('catalog')">Catálogo</button>
+        <button type="button" :aria-current="view === 'manage' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'manage' }" @click="changeView('manage')">Gestionar</button>
+        <button type="button" :aria-current="view === 'history' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'history' }" @click="changeView('history')">Historial</button>
+        <button type="button" :aria-current="view === 'metrics' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'metrics' }" @click="changeView('metrics')">Progreso</button>
+        <button type="button" :aria-current="view === 'backup' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'backup' }" @click="changeView('backup')">Respaldo</button>
+      </nav>
+    </div>
 
     <div v-if="error" class="notice" role="alert"><span>{{ error }}</span><button type="button" class="secondary-action" @click="loadCatalog">Reintentar</button></div>
     <p v-if="loadingCatalog" class="empty-state" role="status">Cargando datos locales…</p>
-
-    <nav class="app-navigation" aria-label="Principal">
-      <button v-if="activeWorkout" type="button" :aria-current="view === 'workout' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'workout' }" @click="view = 'workout'">En curso</button>
-      <button type="button" :aria-current="view === 'program' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'program' }" @click="view = 'program'">Programa</button>
-      <button type="button" :aria-current="view === 'routines' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'routines' }" @click="view = 'routines'">Rutinas</button>
-      <button type="button" :aria-current="view === 'catalog' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'catalog' }" @click="view = 'catalog'">Catálogo</button>
-      <button type="button" :aria-current="view === 'manage' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'manage' }" @click="view = 'manage'">Gestionar</button>
-      <button type="button" :aria-current="view === 'history' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'history' }" @click="view = 'history'">Historial</button>
-      <button type="button" :aria-current="view === 'metrics' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'metrics' }" @click="view = 'metrics'">Progreso</button>
-      <button type="button" :aria-current="view === 'backup' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'backup' }" @click="view = 'backup'">Respaldo</button>
-    </nav>
 
     <ActiveWorkout v-if="activeWorkout && view === 'workout'" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" @finish="finishWorkout" />
 

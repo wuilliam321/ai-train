@@ -410,3 +410,37 @@ select {
   flex: 1;
   background: #16a34a;
 }
+
+.mobile-top-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.hamburger-btn {
+  background: transparent;
+  color: #1d4ed8;
+  font-size: 1.5rem;
+  padding: 0.5rem;
+  min-height: auto;
+}
+.mobile-title {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #172033;
+}
+.app-header-nav {
+  display: none;
+  gap: 2rem;
+}
+.app-header-nav.is-open {
+  display: grid;
+}
+
+@media (min-width: 42rem) {
+  .mobile-top-bar {
+    display: none;
+  }
+  .app-header-nav {
+    display: grid;
+  }
+}
