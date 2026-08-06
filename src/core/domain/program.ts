@@ -8,7 +8,7 @@ export interface ProgramDraft { readonly name: string; readonly weeks: number; r
 export type ProgramPatch = Partial<ProgramDraft>;
 export interface Program extends ProgramDraft { readonly id: ProgramId; readonly createdAt: ISODateTime; readonly updatedAt: ISODateTime; }
 export type ProgramSessionStatus = "pending" | "started" | "completed" | "skipped";
-export interface ProgramCycleSession extends ProgramSessionDraft { readonly id: ProgramSessionId; readonly week: number; readonly position: number; readonly status: ProgramSessionStatus; }
+export interface ProgramCycleSession extends ProgramSessionDraft { readonly id: ProgramSessionId; readonly week: number; readonly position: number; readonly status: ProgramSessionStatus; readonly completedAt?: ISODateTime; }
 export interface ProgramGoalProgress extends ProgramGoalDraft { readonly baseline?: Weight; readonly recommendedWeight?: Weight; readonly achieved: boolean; }
 export type ProgramCycleStatus = "active" | "completed" | "abandoned";
 export interface ProgramCycle { readonly id: ProgramCycleId; readonly programId: ProgramId; readonly programName: string; readonly status: ProgramCycleStatus; readonly startedAt: ISODateTime; readonly completedAt?: ISODateTime; readonly abandonedAt?: ISODateTime; readonly sessions: readonly ProgramCycleSession[]; readonly goals: readonly ProgramGoalProgress[]; }

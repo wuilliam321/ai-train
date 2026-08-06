@@ -23,8 +23,9 @@ const activeWorkout = ref<ActiveWorkoutSession | null>(null);
 const error = ref<string | null>(null);
 const busy = ref(false);
 const loadingCatalog = ref(false);
-const view = ref<"routines" | "program" | "catalog" | "manage" | "history" | "metrics" | "backup" | "workout">("program");
+const view = ref<"routines" | "program" | "manage" | "history" | "metrics" | "backup" | "workout">("program");
 const isMenuOpen = ref(false);
+const routineToEdit = ref<RoutineId | null>(null);
 const lastSelectionKey = "train-app:last-routine";
 
 interface LastRoutineSelection {
@@ -39,6 +40,11 @@ const changeView = (newView: typeof view.value) => {
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
+};
+
+const editRoutine = (routineId: RoutineId): void => {
+  routineToEdit.value = routineId;
+  changeView("manage");
 };
 
 const selectedVariant = computed(() => selectedRoutine.value?.variants.find(
@@ -220,7 +226,6 @@ onMounted(() => {
         <button v-if="activeWorkout" type="button" :aria-current="view === 'workout' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'workout' }" @click="changeView('workout')">En curso</button>
         <button type="button" :aria-current="view === 'program' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'program' }" @click="changeView('program')">Programa</button>
         <button type="button" :aria-current="view === 'routines' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'routines' }" @click="changeView('routines')">Rutinas</button>
-        <button type="button" :aria-current="view === 'catalog' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'catalog' }" @click="changeView('catalog')">Catálogo</button>
         <button type="button" :aria-current="view === 'manage' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'manage' }" @click="changeView('manage')">Gestionar</button>
         <button type="button" :aria-current="view === 'history' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'history' }" @click="changeView('history')">Historial</button>
         <button type="button" :aria-current="view === 'metrics' ? 'page' : undefined" :class="{ 'secondary-action': view !== 'metrics' }" @click="changeView('metrics')">Progreso</button>
@@ -255,6 +260,7 @@ onMounted(() => {
             </ul>
           </div>
           <button type="button" :disabled="busy || !selectedVariant" @click="startRoutine">Iniciar rutina</button>
+          <button type="button" class="secondary-action" @click="editRoutine(selectedRoutine.id)">Editar rutina</button>
         </section>
         <ul v-if="routines.length" class="card-list">
           <li v-for="routine in routines" :key="routine.id">
@@ -272,20 +278,9 @@ onMounted(() => {
       </section>
     </template>
 
-    <ProgramProgress v-if="view === 'program'" :training="training" @started="activeWorkout = $event; view = 'workout'" />
+    <ProgramProgress v-if="view === 'program'" :training="training" @started="activeWorkout = $event; view = 'workout'" @edit-routine="editRoutine" />
 
-    <section v-if="view === 'catalog'" aria-labelledby="exercises-title">
-      <h2 id="exercises-title">Ejercicios</h2>
-      <ul v-if="exercises.length" class="exercise-list">
-        <li v-for="exercise in exercises" :key="exercise.id">
-          <strong>{{ exercise.name }}</strong>
-          <span>{{ exercise.primaryMuscles.join(", ") }}</span>
-        </li>
-      </ul>
-      <p v-else class="empty-state">No hay ejercicios disponibles.</p>
-    </section>
-
-    <CatalogManager v-if="view === 'manage'" :training="training" @changed="loadCatalog" />
+    <CatalogManager v-if="view === 'manage'" :training="training" :routine-to-edit="routineToEdit" @changed="loadCatalog" />
     <WorkoutHistory v-if="view === 'history'" :training="training" />
     <TrainingMetrics v-if="view === 'metrics'" :training="training" :exercises="exercises" />
     <BackupManager v-if="view === 'backup'" :backup="backup" :training="training" />

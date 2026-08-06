@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { nextTick, onMounted, ref, watch } from "vue";
 import type { Exercise, ExerciseId, MuscleGroup, Routine, RoutineDraft, RoutineId, RoutineSummary, Seconds, TrainingOrchestrator } from "../core";
 
 const props = defineProps<{
   readonly training: TrainingOrchestrator;
+  readonly routineToEdit?: RoutineId | null;
 }>();
 
 const emit = defineEmits<{
@@ -24,6 +25,7 @@ const primaryMuscles = ref("");
 const secondaryMuscles = ref("");
 const restSeconds = ref("90");
 const notes = ref("");
+const exerciseEditor = ref<HTMLElement | null>(null);
 
 const asMuscles = (value: string): readonly MuscleGroup[] => value.split(",")
   .map((muscle) => muscle.trim())
@@ -45,6 +47,7 @@ const exerciseForm = (exercise: Exercise): void => {
   secondaryMuscles.value = exercise.secondaryMuscles.join(", ");
   restSeconds.value = exercise.defaultRestSeconds.toString();
   notes.value = exercise.notes ?? "";
+  void nextTick(() => exerciseEditor.value?.scrollIntoView({ behavior: "smooth", block: "start" }));
 };
 
 const load = async (): Promise<void> => {
@@ -195,6 +198,10 @@ const changeRoutineStatus = async (routineId: RoutineId, archive: boolean): Prom
 onMounted(() => {
   void load();
 });
+
+watch(() => props.routineToEdit, (routineId) => {
+  if (routineId !== null && routineId !== undefined) void startRoutine(routineId);
+}, { immediate: true });
 </script>
 
 <template>
@@ -203,7 +210,7 @@ onMounted(() => {
     <p v-if="error" class="notice" role="alert">{{ error }}</p>
     <p v-if="message" class="success" role="status">{{ message }}</p>
 
-    <form class="editor-card" @submit.prevent="saveExercise">
+    <form ref="exerciseEditor" class="editor-card" @submit.prevent="saveExercise">
       <h3>{{ editingExercise ? "Editar ejercicio" : "Nuevo ejercicio" }}</h3>
       <label class="field">Nombre <input v-model="exerciseName" required /></label>
       <label class="field">Músculos principales <input v-model="primaryMuscles" placeholder="chest, triceps" required /></label>

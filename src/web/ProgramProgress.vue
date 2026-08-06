@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import type { Program, ProgramProgress, Routine, RoutineId, RoutineVariantId, TrainingOrchestrator } from "../core";
+import { computed, onMounted, ref } from "vue";
+import type { Exercise, Program, ProgramCycleSession, ProgramProgress, Routine, RoutineId, RoutineVariantId, TrainingOrchestrator } from "../core";
 
 interface PlannedDay {
   readonly routineId: RoutineId;
@@ -8,17 +8,50 @@ interface PlannedDay {
 }
 
 const props = defineProps<{ readonly training: TrainingOrchestrator }>();
-const emit = defineEmits<{ readonly started: [workout: import("../core").ActiveWorkoutSession] }>();
+const emit = defineEmits<{
+  readonly started: [workout: import("../core").ActiveWorkoutSession];
+  readonly editRoutine: [routineId: RoutineId];
+}>();
 const programs = ref<readonly Program[]>([]);
 const routines = ref<readonly Routine[]>([]);
+const exercises = ref<readonly Exercise[]>([]);
 const progress = ref<ProgramProgress | null>(null);
 const error = ref<string | null>(null);
 const programName = ref("");
 const weeks = ref(8);
 const plannedDays = ref<readonly PlannedDay[]>([]);
+const selectedSessionId = ref<string | null>(null);
 
 const routineFor = (routineId: RoutineId): Routine | undefined =>
   routines.value.find((routine) => routine.id === routineId);
+
+const selectedSession = computed(() => progress.value?.cycle.sessions.find((session) => session.id === selectedSessionId.value));
+
+const selectedVariant = computed(() => {
+  const session = selectedSession.value;
+  return session === undefined ? undefined : routineFor(session.routineId)?.variants.find((variant) => variant.id === session.variantId);
+});
+
+const selectedExercises = computed(() => selectedVariant.value?.exercises.map((entry) => ({
+  name: exercises.value.find((exercise) => exercise.id === entry.exerciseId)?.name ?? entry.exerciseId,
+  sets: entry.sets.length,
+})) ?? []);
+
+const orderedSessions = computed<readonly ProgramCycleSession[]>(() => {
+  if (progress.value === null) return [];
+  const pending = progress.value.cycle.sessions.filter((session) => session.status !== "completed");
+  const completed = progress.value.cycle.sessions
+    .filter((session) => session.status === "completed")
+    .sort((left, right) => (left.completedAt ?? "").localeCompare(right.completedAt ?? "") || left.week - right.week || left.position - right.position);
+  return [...pending, ...completed];
+});
+
+const statusLabel = (status: ProgramCycleSession["status"]): string => ({
+  pending: "pendiente",
+  started: "en curso",
+  completed: "completada",
+  skipped: "omitida",
+})[status];
 
 const addDay = (): void => {
   const routine = routines.value[0];
@@ -47,12 +80,13 @@ const removeDay = (index: number): void => {
 };
 
 const load = async (): Promise<void> => {
-  const [listed, current, available] = await Promise.all([
+  const [listed, current, available, availableExercises] = await Promise.all([
     props.training.listPrograms(),
     props.training.getProgramProgress(),
     props.training.listRoutines({ status: "active" }),
+    props.training.listExercises({ status: "active" }),
   ]);
-  if (!listed.ok || !current.ok || !available.ok) {
+  if (!listed.ok || !current.ok || !available.ok || !availableExercises.ok) {
     error.value = "No se pudieron leer los programas locales.";
     return;
   }
@@ -64,6 +98,10 @@ const load = async (): Promise<void> => {
   programs.value = listed.value;
   progress.value = current.value;
   routines.value = details.filter((routine): routine is { readonly ok: true; readonly value: Routine } => routine.ok).map((routine) => routine.value);
+  exercises.value = availableExercises.value;
+  if (selectedSessionId.value !== null && !current.value?.cycle.sessions.some((session) => session.id === selectedSessionId.value)) {
+    selectedSessionId.value = null;
+  }
   if (plannedDays.value.length === 0) addDay();
 };
 
@@ -83,6 +121,10 @@ const startSession = async (sessionId?: string): Promise<void> => {
     return;
   }
   emit("started", result.value);
+};
+
+const selectSession = (session: ProgramCycleSession): void => {
+  selectedSessionId.value = session.id;
 };
 
 const skip = async (): Promise<void> => {
@@ -151,17 +193,33 @@ onMounted(() => { void load(); });
           <button type="button" class="secondary-action" @click="abandon">Cambiar programa</button>
         </div>
 
-        <h3 class="eyebrow" style="margin-bottom: 0.5rem">Sesiones</h3>
+      </template>
+
+      <section aria-labelledby="program-sessions-title">
+        <h3 id="program-sessions-title" class="eyebrow" style="margin-bottom: 0.5rem">Sesiones</h3>
         <ul class="card-list" style="margin-bottom: 1rem">
-          <li v-for="session in progress.cycle.sessions" :key="session.id">
+          <li v-for="session in orderedSessions" :key="session.id">
             <strong>Semana {{ session.week }}, Día {{ session.position + 1 }}</strong>
-            <span>{{ routineFor(session.routineId)?.name ?? "Rutina" }} ({{ session.status }})</span>
-            <div v-if="session.status === 'pending'" style="margin-top: 0.5rem">
-              <button type="button" @click="startSession(session.id)">Iniciar esta sesión</button>
+            <span>{{ routineFor(session.routineId)?.name ?? "Rutina" }} · {{ statusLabel(session.status) }}</span>
+            <div class="inline-actions" style="margin-top: 0.5rem">
+              <button type="button" class="secondary-action" @click="selectSession(session)">Ver contenido</button>
+              <button v-if="session.status === 'pending'" type="button" @click="startSession(session.id)">Iniciar esta sesión</button>
             </div>
           </li>
         </ul>
-      </template>
+
+        <section v-if="selectedSession && selectedVariant" class="active-card" aria-labelledby="session-content-title">
+          <p class="eyebrow">Contenido de la sesión</p>
+          <h3 id="session-content-title">{{ routineFor(selectedSession.routineId)?.name }} · {{ selectedVariant.name }}</h3>
+          <ul class="history-sets">
+            <li v-for="(exercise, index) in selectedExercises" :key="index"><span>{{ exercise.sets }} series</span><strong>{{ exercise.name }}</strong></li>
+          </ul>
+          <div class="inline-actions">
+            <button v-if="selectedSession.status === 'pending'" type="button" @click="startSession(selectedSession.id)">Iniciar esta sesión</button>
+            <button type="button" class="secondary-action" @click="emit('editRoutine', selectedSession.routineId)">Editar rutina</button>
+          </div>
+        </section>
+      </section>
       <ul class="card-list">
         <li v-for="goal in progress.cycle.goals" :key="goal.exerciseId">
           <strong>{{ goal.exerciseId }}</strong><span>{{ goal.achieved ? "Meta alcanzada" : "En progreso" }}</span>

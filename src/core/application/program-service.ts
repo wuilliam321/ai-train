@@ -199,7 +199,7 @@ export class ProgramService {
     }
 
     const completed = this.completeIfFinished({
-      ...this.withSessionStatus(cycle.value, session.id, "completed"),
+      ...this.withCompletedSession(cycle.value, session.id, workout.completedAt),
       goals: cycle.value.goals.map((goal) => this.advanceGoal(goal, workout)),
     });
     return success(completed);
@@ -271,6 +271,13 @@ export class ProgramService {
     return {
       ...cycle,
       sessions: cycle.sessions.map((session) => session.id === sessionId ? { ...session, status } : session),
+    };
+  }
+
+  private withCompletedSession(cycle: ProgramCycle, sessionId: ProgramSessionId, completedAt: import("../domain/primitives").ISODateTime): ProgramCycle {
+    return {
+      ...cycle,
+      sessions: cycle.sessions.map((session) => session.id === sessionId ? { ...session, status: "completed", completedAt } : session),
     };
   }
 

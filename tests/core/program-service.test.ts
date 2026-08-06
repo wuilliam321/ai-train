@@ -99,7 +99,7 @@ describe("program cycles", () => {
     const set = workout.value.exercises[0]!.sets[0]!;
     await training.completeWorkoutSet({ workoutSetId: set.id, weight: { amount: 100 as WeightAmount, unit: "kg" }, repetitions: 10 as Repetitions });
     expect(await training.finishWorkout()).toMatchObject({ ok: true, value: { status: "completed" } });
-    expect(await training.getProgramProgress()).toMatchObject({ ok: true, value: { cycle: { status: "completed", goals: [{ baseline: { amount: 100 }, recommendedWeight: { amount: 105 } }] } } });
+    expect(await training.getProgramProgress()).toMatchObject({ ok: true, value: { cycle: { status: "completed", sessions: [{ status: "completed", completedAt: now }], goals: [{ baseline: { amount: 100 }, recommendedWeight: { amount: 105 } }] } } });
     expect(await training.duplicateProgramCycle()).toMatchObject({ ok: true, value: { status: "active" } });
   });
 
@@ -120,7 +120,7 @@ describe("program cycles", () => {
     expect(await service.updateProgram("missing" as never, {})).toMatchObject({ ok: false });
     expect(await service.complete({ programSessionId: "session" } as never)).toMatchObject({ ok: false });
     expect(await service.complete({} as never)).toMatchObject({ ok: true });
-    const privateService = service as unknown as { advanceGoal: (goal: never, workout: never) => unknown; asProgress: (cycle: never) => unknown; completeIfFinished: (cycle: never) => unknown; withSessionStatus: (cycle: never, sessionId: never, status: never) => unknown };
+    const privateService = service as unknown as { advanceGoal: (goal: never, workout: never) => unknown; asProgress: (cycle: never) => unknown; completeIfFinished: (cycle: never) => unknown; withSessionStatus: (cycle: never, sessionId: never, status: never) => unknown; withCompletedSession: (cycle: never, sessionId: never, completedAt: never) => unknown };
     const goal = { exerciseId: "e", repetitions: { kind: "exact", repetitions: 1 }, targetWeight: { amount: 10, unit: "kg" }, increment: { amount: 1, unit: "kg" }, achieved: false };
     expect(privateService.advanceGoal(goal as never, { exercises: [] } as never)).toEqual(goal);
     const workout = (amount: number, repetitions: number) => ({ exercises: [{ exercise: { id: "e" }, sets: [{ status: "completed", type: "normal", weight: { amount, unit: "kg" }, repetitions }] }] });
@@ -132,6 +132,7 @@ describe("program cycles", () => {
     expect(privateService.completeIfFinished({ sessions: [{ status: "skipped" }] } as never)).toMatchObject({ status: "completed" });
     expect(privateService.completeIfFinished({ sessions: [{ status: "started" }] } as never)).toMatchObject({ sessions: [{ status: "started" }] });
     expect(privateService.withSessionStatus({ sessions: [{ id: "first" }, { id: "second" }] } as never, "first" as never, "started" as never)).toMatchObject({ sessions: [{ status: "started" }, { id: "second" }] });
+    expect(privateService.withCompletedSession({ sessions: [{ id: "first" }, { id: "second" }] } as never, "first" as never, now as never)).toMatchObject({ sessions: [{ status: "completed", completedAt: now }, { id: "second" }] });
   });
 
   it("validates program edits and reports all program lifecycle errors", async () => {
