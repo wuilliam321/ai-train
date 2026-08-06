@@ -35,6 +35,7 @@ interface LastRoutineSelection {
 
 const changeView = (newView: typeof view.value) => {
   view.value = newView;
+  if (newView !== "routines") routineToEdit.value = null;
   isMenuOpen.value = false;
 };
 
@@ -238,6 +239,8 @@ onMounted(() => {
 
     <ActiveWorkout v-if="activeWorkout && view === 'workout'" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" @finish="finishWorkout" />
 
+    <CatalogManager v-else-if="view === 'routines' && routineToEdit" :training="training" :routine-to-edit="routineToEdit" routines-only @changed="routineToEdit = null; loadCatalog" @close-routine-editor="routineToEdit = null" />
+
     <template v-else-if="view === 'routines'">
       <section aria-labelledby="routines-title">
         <h2 id="routines-title">Rutinas</h2>
@@ -280,7 +283,7 @@ onMounted(() => {
 
     <ProgramProgress v-if="view === 'program'" :training="training" @started="activeWorkout = $event; view = 'workout'" @edit-routine="editRoutine" />
 
-    <CatalogManager v-if="view === 'manage'" :training="training" :routine-to-edit="routineToEdit" @changed="loadCatalog" />
+    <CatalogManager v-if="view === 'manage'" :training="training" @changed="loadCatalog" />
     <WorkoutHistory v-if="view === 'history'" :training="training" />
     <TrainingMetrics v-if="view === 'metrics'" :training="training" :exercises="exercises" />
     <BackupManager v-if="view === 'backup'" :backup="backup" :training="training" />

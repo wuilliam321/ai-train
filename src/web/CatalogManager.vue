@@ -5,10 +5,12 @@ import type { Exercise, ExerciseId, MuscleGroup, Routine, RoutineDraft, RoutineI
 const props = defineProps<{
   readonly training: TrainingOrchestrator;
   readonly routineToEdit?: RoutineId | null;
+  readonly routinesOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
   changed: [];
+  closeRoutineEditor: [];
 }>();
 
 const activeExercises = ref<readonly Exercise[]>([]);
@@ -26,6 +28,7 @@ const secondaryMuscles = ref("");
 const restSeconds = ref("90");
 const notes = ref("");
 const exerciseEditor = ref<HTMLElement | null>(null);
+const routineEditor = ref<HTMLElement | null>(null);
 
 const asMuscles = (value: string): readonly MuscleGroup[] => value.split(",")
   .map((muscle) => muscle.trim())
@@ -154,6 +157,8 @@ const startRoutine = async (routineId?: RoutineId): Promise<void> => {
   } : draftFromRoutine(routine.value);
   editingRoutineId.value = routineId ?? null;
   routineText.value = JSON.stringify(draft, null, 2);
+  await nextTick();
+  routineEditor.value?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
 const saveRoutine = async (): Promise<void> => {
@@ -195,6 +200,12 @@ const changeRoutineStatus = async (routineId: RoutineId, archive: boolean): Prom
   emit("changed");
 };
 
+const cancelRoutine = (): void => {
+  routineText.value = "";
+  editingRoutineId.value = null;
+  if (props.routinesOnly) emit("closeRoutineEditor");
+};
+
 onMounted(() => {
   void load();
 });
@@ -206,10 +217,11 @@ watch(() => props.routineToEdit, (routineId) => {
 
 <template>
   <section class="manager" aria-labelledby="manager-title">
-    <header><p class="eyebrow">Configuración local</p><h2 id="manager-title">Catálogo y rutinas</h2></header>
+    <header><p class="eyebrow">{{ routinesOnly ? "Rutinas locales" : "Configuración local" }}</p><h2 id="manager-title">{{ routinesOnly ? "Rutinas" : "Catálogo y rutinas" }}</h2></header>
     <p v-if="error" class="notice" role="alert">{{ error }}</p>
     <p v-if="message" class="success" role="status">{{ message }}</p>
 
+    <template v-if="!routinesOnly">
     <form ref="exerciseEditor" class="editor-card" @submit.prevent="saveExercise">
       <h3>{{ editingExercise ? "Editar ejercicio" : "Nuevo ejercicio" }}</h3>
       <label class="field">Nombre <input v-model="exerciseName" required /></label>
@@ -222,16 +234,17 @@ watch(() => props.routineToEdit, (routineId) => {
 
     <section><h3>Ejercicios activos</h3><ul class="card-list"><li v-for="exercise in activeExercises" :key="exercise.id"><strong>{{ exercise.name }}</strong><span>{{ exercise.primaryMuscles.join(", ") }}</span><div class="inline-actions"><button type="button" class="secondary-action" @click="exerciseForm(exercise)">Editar</button><button type="button" class="secondary-action" @click="changeExerciseStatus(exercise.id, true)">Archivar</button></div></li></ul></section>
     <section v-if="archivedExercises.length"><h3>Ejercicios archivados</h3><ul class="card-list"><li v-for="exercise in archivedExercises" :key="exercise.id"><strong>{{ exercise.name }}</strong><button type="button" class="secondary-action" @click="changeExerciseStatus(exercise.id, false)">Restaurar</button></li></ul></section>
+    </template>
 
     <section class="manager-heading"><h3>Rutinas</h3><button type="button" @click="startRoutine()">Nueva rutina</button></section>
     <ul class="card-list"><li v-for="routine in activeRoutines" :key="routine.id"><strong>{{ routine.name }}</strong><span>{{ routine.variantCount }} variantes</span><div class="inline-actions"><button type="button" class="secondary-action" @click="startRoutine(routine.id)">Editar estructura</button><button type="button" class="secondary-action" @click="changeRoutineStatus(routine.id, true)">Archivar</button></div></li></ul>
     <section v-if="archivedRoutines.length"><h3>Rutinas archivadas</h3><ul class="card-list"><li v-for="routine in archivedRoutines" :key="routine.id"><strong>{{ routine.name }}</strong><button type="button" class="secondary-action" @click="changeRoutineStatus(routine.id, false)">Restaurar</button></li></ul></section>
 
-    <form v-if="routineText" class="editor-card" @submit.prevent="saveRoutine">
+    <form v-if="routineText" ref="routineEditor" class="editor-card" @submit.prevent="saveRoutine">
       <h3>{{ editingRoutineId ? "Editar rutina" : "Nueva rutina" }}</h3>
       <p>La estructura contiene variantes, ejercicios, series, objetivo de repeticiones, lateralidad, descanso y notas.</p>
       <textarea v-model="routineText" rows="20" spellcheck="false" aria-label="Estructura de rutina" />
-      <div class="inline-actions"><button type="submit">Guardar rutina</button><button type="button" class="secondary-action" @click="routineText = ''; editingRoutineId = null">Cancelar</button></div>
+      <div class="inline-actions"><button type="submit">Guardar rutina</button><button type="button" class="secondary-action" @click="cancelRoutine">Cancelar</button></div>
     </form>
   </section>
 </template>

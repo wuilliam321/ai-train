@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 import type { Exercise, Program, ProgramCycleSession, ProgramProgress, Routine, RoutineId, RoutineVariantId, TrainingOrchestrator } from "../core";
 
 interface PlannedDay {
@@ -21,6 +21,7 @@ const programName = ref("");
 const weeks = ref(8);
 const plannedDays = ref<readonly PlannedDay[]>([]);
 const selectedSessionId = ref<string | null>(null);
+const sessionContent = ref<HTMLElement | null>(null);
 
 const routineFor = (routineId: RoutineId): Routine | undefined =>
   routines.value.find((routine) => routine.id === routineId);
@@ -80,17 +81,18 @@ const removeDay = (index: number): void => {
 };
 
 const load = async (): Promise<void> => {
-  const [listed, current, available, availableExercises] = await Promise.all([
+  const [listed, current, activeRoutines, archivedRoutines, availableExercises] = await Promise.all([
     props.training.listPrograms(),
     props.training.getProgramProgress(),
     props.training.listRoutines({ status: "active" }),
+    props.training.listRoutines({ status: "archived" }),
     props.training.listExercises({ status: "active" }),
   ]);
-  if (!listed.ok || !current.ok || !available.ok || !availableExercises.ok) {
+  if (!listed.ok || !current.ok || !activeRoutines.ok || !archivedRoutines.ok || !availableExercises.ok) {
     error.value = "No se pudieron leer los programas locales.";
     return;
   }
-  const details = await Promise.all(available.value.map((routine) => props.training.getRoutine(routine.id)));
+  const details = await Promise.all([...activeRoutines.value, ...archivedRoutines.value].map((routine) => props.training.getRoutine(routine.id)));
   if (details.some((routine) => !routine.ok)) {
     error.value = "No se pudieron abrir las rutinas locales.";
     return;
@@ -125,6 +127,7 @@ const startSession = async (sessionId?: string): Promise<void> => {
 
 const selectSession = (session: ProgramCycleSession): void => {
   selectedSessionId.value = session.id;
+  void nextTick(() => sessionContent.value?.scrollIntoView({ behavior: "smooth", block: "start" }));
 };
 
 const skip = async (): Promise<void> => {
@@ -208,15 +211,16 @@ onMounted(() => { void load(); });
           </li>
         </ul>
 
-        <section v-if="selectedSession && selectedVariant" class="active-card" aria-labelledby="session-content-title">
+        <section v-if="selectedSession" ref="sessionContent" class="active-card" aria-labelledby="session-content-title">
           <p class="eyebrow">Contenido de la sesión</p>
-          <h3 id="session-content-title">{{ routineFor(selectedSession.routineId)?.name }} · {{ selectedVariant.name }}</h3>
-          <ul class="history-sets">
+          <h3 id="session-content-title">{{ routineFor(selectedSession.routineId)?.name ?? "Rutina no disponible" }}<template v-if="selectedVariant"> · {{ selectedVariant.name }}</template></h3>
+          <ul v-if="selectedVariant" class="history-sets">
             <li v-for="(exercise, index) in selectedExercises" :key="index"><span>{{ exercise.sets }} series</span><strong>{{ exercise.name }}</strong></li>
           </ul>
+          <p v-else class="empty-state">La estructura de esta rutina ya no está disponible.</p>
           <div class="inline-actions">
             <button v-if="selectedSession.status === 'pending'" type="button" @click="startSession(selectedSession.id)">Iniciar esta sesión</button>
-            <button type="button" class="secondary-action" @click="emit('editRoutine', selectedSession.routineId)">Editar rutina</button>
+            <button v-if="selectedVariant" type="button" class="secondary-action" @click="emit('editRoutine', selectedSession.routineId)">Editar rutina</button>
           </div>
         </section>
       </section>
