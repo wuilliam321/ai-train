@@ -22,3 +22,32 @@ test("keeps the production bundle and primary interaction within budget", async 
   await expect(page.getByText("Entrenamiento activo")).toBeVisible();
   expect(Date.now() - startedAt).toBeLessThan(1_000);
 });
+
+test("navigates without browser errors", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+
+  await page.goto("/");
+
+  for (const name of ["Programa", "Rutinas"]) {
+    await page.getByRole("button", { name, exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Elegir rutina" }).first().click();
+  await page.getByRole("button", { name: "Editar rutina" }).click();
+  await expect(page.locator("#manager-title")).toHaveText("Editar rutina");
+  await page.getByRole("button", { name: "Cancelar" }).click();
+
+  await page.getByRole("button", { name: "Gestionar", exact: true }).click();
+  await page.getByRole("button", { name: "Editar" }).first().click();
+  await expect(page.getByRole("heading", { name: "Editar ejercicio" })).toBeVisible();
+  await page.getByRole("button", { name: "Cancelar" }).click();
+
+  for (const name of ["Historial", "Progreso", "Respaldo"]) {
+    await page.getByRole("button", { name, exact: true }).click();
+  }
+
+  expect(errors).toEqual([]);
+});
