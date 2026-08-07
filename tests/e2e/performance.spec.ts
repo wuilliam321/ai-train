@@ -51,3 +51,26 @@ test("navigates without browser errors", async ({ page }) => {
 
   expect(errors).toEqual([]);
 });
+
+test("keeps the mobile training flow visible and easy to tap", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const navigationButtons = page.locator(".app-navigation button");
+  const count = await navigationButtons.count();
+  expect(count).toBeGreaterThanOrEqual(6);
+
+  for (let index = 0; index < count; index += 1) {
+    const box = await navigationButtons.nth(index).boundingBox();
+    expect(box).not.toBeNull();
+    if (box === null) throw new Error("El control de navegación no tiene tamaño");
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(844);
+  }
+
+  await page.getByRole("button", { name: "Rutinas", exact: true }).click();
+  await page.getByRole("button", { name: "Elegir rutina" }).first().click();
+  await expect(page.getByRole("button", { name: "Iniciar rutina" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("mobile-routines.png"), fullPage: true });
+});
