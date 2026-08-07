@@ -26,6 +26,7 @@ const loadingCatalog = ref(false);
 const view = ref<"routines" | "program" | "manage" | "history" | "metrics" | "backup" | "workout">("program");
 const isMenuOpen = ref(false);
 const routineToEdit = ref<RoutineId | null>(null);
+const routineEditorOpen = ref(false);
 const lastSelectionKey = "train-app:last-routine";
 
 interface LastRoutineSelection {
@@ -35,7 +36,10 @@ interface LastRoutineSelection {
 
 const changeView = (newView: typeof view.value) => {
   view.value = newView;
-  if (newView !== "routines") routineToEdit.value = null;
+  if (newView !== "routines") {
+    routineToEdit.value = null;
+    routineEditorOpen.value = false;
+  }
   isMenuOpen.value = false;
 };
 
@@ -45,7 +49,14 @@ const toggleMenu = () => {
 
 const editRoutine = (routineId: RoutineId): void => {
   routineToEdit.value = routineId;
-  changeView("manage");
+  routineEditorOpen.value = true;
+  changeView("routines");
+};
+
+const createRoutine = (): void => {
+  routineToEdit.value = null;
+  routineEditorOpen.value = true;
+  changeView("routines");
 };
 
 const selectedVariant = computed(() => selectedRoutine.value?.variants.find(
@@ -239,11 +250,11 @@ onMounted(() => {
 
     <ActiveWorkout v-if="activeWorkout && view === 'workout'" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" @finish="finishWorkout" />
 
-    <CatalogManager v-else-if="view === 'routines' && routineToEdit" :training="training" :routine-to-edit="routineToEdit" routines-only @changed="routineToEdit = null; loadCatalog" @close-routine-editor="routineToEdit = null" />
+    <CatalogManager v-else-if="view === 'routines' && routineEditorOpen" :training="training" :routine-to-edit="routineToEdit" :create-routine="routineToEdit === null" routines-only @changed="routineEditorOpen = false; routineToEdit = null; loadCatalog" @close-routine-editor="routineEditorOpen = false; routineToEdit = null" />
 
     <template v-else-if="view === 'routines'">
       <section aria-labelledby="routines-title">
-        <h2 id="routines-title">Rutinas</h2>
+        <div class="manager-heading"><h2 id="routines-title">Rutinas</h2><button type="button" @click="createRoutine">Nueva rutina</button></div>
         <section v-if="selectedRoutine" aria-labelledby="selection-title" class="active-card">
           <p class="eyebrow">Rutina elegida</p>
           <h3 id="selection-title">{{ selectedRoutine.name }}</h3>

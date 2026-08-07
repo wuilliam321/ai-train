@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from "vue";
-import type { Exercise, ExerciseId, Laterality, MuscleGroup, Repetitions, Routine, RoutineDraft, RoutineId, RoutineSummary, Seconds, SetType, TrainingOrchestrator } from "../core";
+import { nextTick, onMounted, ref } from "vue";
+import type { Exercise, ExerciseId, Laterality, MuscleGroup, Repetitions, Routine, RoutineDraft, RoutineId, Seconds, SetType, TrainingOrchestrator } from "../core";
 
 const props = defineProps<{
   readonly training: TrainingOrchestrator;
   readonly routineToEdit?: RoutineId | null;
+  readonly createRoutine?: boolean;
   readonly routinesOnly?: boolean;
 }>();
 
@@ -15,8 +16,6 @@ const emit = defineEmits<{
 
 const activeExercises = ref<readonly Exercise[]>([]);
 const archivedExercises = ref<readonly Exercise[]>([]);
-const activeRoutines = ref<readonly RoutineSummary[]>([]);
-const archivedRoutines = ref<readonly RoutineSummary[]>([]);
 const editingExercise = ref<Exercise | null>(null);
 const editingRoutineId = ref<RoutineId | null>(null);
 const error = ref<string | null>(null);
@@ -28,6 +27,8 @@ const restSeconds = ref("90");
 const notes = ref("");
 const exerciseEditor = ref<HTMLElement | null>(null);
 const routineEditor = ref<HTMLElement | null>(null);
+const exerciseNameInput = ref<HTMLInputElement | null>(null);
+const routineNameInput = ref<HTMLInputElement | null>(null);
 const routineName = ref("");
 const routineVariants = ref<EditableVariant[]>([]);
 
@@ -72,26 +73,25 @@ const exerciseForm = (exercise: Exercise): void => {
   secondaryMuscles.value = exercise.secondaryMuscles.join(", ");
   restSeconds.value = exercise.defaultRestSeconds.toString();
   notes.value = exercise.notes ?? "";
-  void nextTick(() => exerciseEditor.value?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  void nextTick(() => {
+    exerciseEditor.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+    exerciseNameInput.value?.focus();
+  });
 };
 
 const load = async (): Promise<void> => {
-  const [activeExerciseResult, archivedExerciseResult, activeRoutineResult, archivedRoutineResult] = await Promise.all([
+  const [activeExerciseResult, archivedExerciseResult] = await Promise.all([
     props.training.listExercises({ status: "active" }),
     props.training.listExercises({ status: "archived" }),
-    props.training.listRoutines({ status: "active" }),
-    props.training.listRoutines({ status: "archived" }),
   ]);
 
-  if (!activeExerciseResult.ok || !archivedExerciseResult.ok || !activeRoutineResult.ok || !archivedRoutineResult.ok) {
+  if (!activeExerciseResult.ok || !archivedExerciseResult.ok) {
     error.value = "No se pudo leer el catálogo local.";
     return;
   }
 
   activeExercises.value = activeExerciseResult.value;
   archivedExercises.value = archivedExerciseResult.value;
-  activeRoutines.value = activeRoutineResult.value;
-  archivedRoutines.value = archivedRoutineResult.value;
 };
 
 const saveExercise = async (): Promise<void> => {
@@ -218,6 +218,7 @@ const startRoutine = async (routineId?: RoutineId): Promise<void> => {
   editingRoutineId.value = routineId ?? null;
   await nextTick();
   routineEditor.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+  routineNameInput.value?.focus();
 };
 
 const saveRoutine = async (): Promise<void> => {
@@ -237,18 +238,6 @@ const saveRoutine = async (): Promise<void> => {
   editingRoutineId.value = null;
   routineName.value = "";
   routineVariants.value = [];
-  await load();
-  emit("changed");
-};
-
-const changeRoutineStatus = async (routineId: RoutineId, archive: boolean): Promise<void> => {
-  const result = archive ? await props.training.archiveRoutine(routineId) : await props.training.restoreRoutine(routineId);
-
-  if (!result.ok) {
-    error.value = "No se pudo cambiar el estado de la rutina.";
-    return;
-  }
-
   await load();
   emit("changed");
 };
@@ -287,24 +276,23 @@ const removeSet = (exercise: EditableExercise, index: number): void => {
 };
 
 onMounted(() => {
-  void load();
+  void load().then(async () => {
+    if (props.routineToEdit !== null && props.routineToEdit !== undefined) await startRoutine(props.routineToEdit);
+    else if (props.createRoutine) await startRoutine();
+  });
 });
-
-watch(() => props.routineToEdit, (routineId) => {
-  if (routineId !== null && routineId !== undefined) void startRoutine(routineId);
-}, { immediate: true });
 </script>
 
 <template>
   <section class="manager" aria-labelledby="manager-title">
-    <header><p class="eyebrow">{{ routinesOnly ? "Rutinas locales" : "Configuración local" }}</p><h2 id="manager-title">{{ routinesOnly ? "Rutinas" : "Catálogo y rutinas" }}</h2></header>
+    <header><p class="eyebrow">{{ routinesOnly ? "Rutinas locales" : "Configuración local" }}</p><h2 id="manager-title">{{ routinesOnly ? "Editar rutina" : "Ejercicios" }}</h2></header>
     <p v-if="error" class="notice" role="alert">{{ error }}</p>
     <p v-if="message" class="success" role="status">{{ message }}</p>
 
     <template v-if="!routinesOnly">
     <form ref="exerciseEditor" class="editor-card" @submit.prevent="saveExercise">
       <h3>{{ editingExercise ? "Editar ejercicio" : "Nuevo ejercicio" }}</h3>
-      <label class="field">Nombre <input v-model="exerciseName" required /></label>
+      <label class="field">Nombre <input ref="exerciseNameInput" v-model="exerciseName" required /></label>
       <label class="field">Músculos principales <input v-model="primaryMuscles" placeholder="chest, triceps" required /></label>
       <label class="field">Músculos secundarios <input v-model="secondaryMuscles" placeholder="shoulders" /></label>
       <label class="field">Descanso (s) <input v-model="restSeconds" type="number" min="0" required /></label>
@@ -316,17 +304,13 @@ watch(() => props.routineToEdit, (routineId) => {
     <section v-if="archivedExercises.length"><h3>Ejercicios archivados</h3><ul class="card-list"><li v-for="exercise in archivedExercises" :key="exercise.id"><strong>{{ exercise.name }}</strong><button type="button" class="secondary-action" @click="changeExerciseStatus(exercise.id, false)">Restaurar</button></li></ul></section>
     </template>
 
-    <section class="manager-heading"><h3>Rutinas</h3><button type="button" @click="startRoutine()">Nueva rutina</button></section>
-    <ul class="card-list"><li v-for="routine in activeRoutines" :key="routine.id"><strong>{{ routine.name }}</strong><span>{{ routine.variantCount }} variantes</span><div class="inline-actions"><button type="button" class="secondary-action" @click="startRoutine(routine.id)">Editar estructura</button><button type="button" class="secondary-action" @click="changeRoutineStatus(routine.id, true)">Archivar</button></div></li></ul>
-    <section v-if="archivedRoutines.length"><h3>Rutinas archivadas</h3><ul class="card-list"><li v-for="routine in archivedRoutines" :key="routine.id"><strong>{{ routine.name }}</strong><button type="button" class="secondary-action" @click="changeRoutineStatus(routine.id, false)">Restaurar</button></li></ul></section>
-
-    <form v-if="editingRoutineId !== null || routineVariants.length" ref="routineEditor" class="editor-card" @submit.prevent="saveRoutine">
+    <form v-if="routinesOnly && (editingRoutineId !== null || routineVariants.length)" ref="routineEditor" class="routine-editor" @submit.prevent="saveRoutine">
       <h3>{{ editingRoutineId ? "Editar rutina" : "Nueva rutina" }}</h3>
-      <label class="field">Nombre <input v-model="routineName" required /></label>
-      <fieldset v-for="(variant, variantIndex) in routineVariants" :key="variantIndex" class="editor-card">
+      <label class="field">Nombre <input ref="routineNameInput" v-model="routineName" required /></label>
+      <fieldset v-for="(variant, variantIndex) in routineVariants" :key="variantIndex" class="routine-variant">
         <legend>Variante {{ variantIndex + 1 }}</legend>
         <label class="field">Nombre de variante <input v-model="variant.name" required /></label>
-        <fieldset v-for="(exercise, exerciseIndex) in variant.exercises" :key="exerciseIndex" class="editor-card">
+        <fieldset v-for="(exercise, exerciseIndex) in variant.exercises" :key="exerciseIndex" class="routine-exercise">
           <legend>Ejercicio {{ exerciseIndex + 1 }}</legend>
           <label class="field">Ejercicio
             <select v-model="exercise.exerciseId" required>
@@ -338,7 +322,7 @@ watch(() => props.routineToEdit, (routineId) => {
           </label>
           <label class="field">Descanso (s, opcional) <input v-model="exercise.restSeconds" type="number" min="0" step="1" /></label>
           <label class="field">Notas <input v-model="exercise.notes" /></label>
-          <fieldset v-for="(set, setIndex) in exercise.sets" :key="setIndex" class="editor-card">
+          <fieldset v-for="(set, setIndex) in exercise.sets" :key="setIndex" class="routine-set">
             <legend>Serie {{ setIndex + 1 }}</legend>
             <label class="field">Tipo <select v-model="set.type"><option value="warmup">Calentamiento</option><option value="normal">Normal</option><option value="drop">Descendente</option><option value="failure">Fallo</option></select></label>
             <label class="field">Objetivo <select v-model="set.targetKind"><option value="exact">Repeticiones exactas</option><option value="range">Rango</option></select></label>
