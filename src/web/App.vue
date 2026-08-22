@@ -186,6 +186,10 @@ const startEmptyWorkout = async (): Promise<void> => {
   view.value = "workout";
 };
 
+const closeWorkout = (): void => {
+  view.value = "routines";
+};
+
 const discardWorkout = async (): Promise<void> => {
   busy.value = true;
   const discarded = await props.training.discardWorkout();
@@ -248,7 +252,7 @@ onMounted(() => {
     <div v-if="error" class="notice" role="alert"><span>{{ error }}</span><button type="button" class="secondary-action" @click="loadCatalog">Reintentar</button></div>
     <p v-if="loadingCatalog" class="empty-state" role="status">Cargando datos locales…</p>
 
-    <ActiveWorkout v-if="activeWorkout && view === 'workout'" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @discard="discardWorkout" @finish="finishWorkout" />
+    <ActiveWorkout v-if="activeWorkout && view === 'workout'" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @close="closeWorkout" @discard="discardWorkout" @finish="finishWorkout" />
 
     <CatalogManager v-else-if="view === 'routines' && routineEditorOpen" :training="training" :routine-to-edit="routineToEdit" :create-routine="routineToEdit === null" routines-only @changed="routineEditorOpen = false; routineToEdit = null; loadCatalog" @close-routine-editor="routineEditorOpen = false; routineToEdit = null" />
 
@@ -292,7 +296,7 @@ onMounted(() => {
       </section>
     </template>
 
-    <ProgramProgress v-if="view === 'program'" :training="training" @started="activeWorkout = $event; view = 'workout'" @edit-routine="editRoutine" />
+    <ProgramProgress v-if="view === 'program'" :training="training" @started="activeWorkout = $event; view = 'workout'" @continue-workout="view = 'workout'" @edit-routine="editRoutine" />
 
     <CatalogManager v-if="view === 'manage'" :training="training" @changed="loadCatalog" />
     <WorkoutHistory v-if="view === 'history'" :training="training" />

@@ -23,6 +23,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   updated: [workout: ActiveWorkoutSession];
+  close: [];
   discard: [];
   finish: [];
 }>();
@@ -291,7 +292,7 @@ onUnmounted(() => {
         <p class="eyebrow">Entrenamiento activo</p>
         <h2 id="active-title">{{ workout.routine?.name ?? "Entrenamiento vacío" }}</h2>
       </div>
-      <div class="inline-actions"><button type="button" class="secondary-action" :disabled="busy" @click="emit('discard')">Descartar</button><button type="button" :disabled="busy" @click="emit('finish')">Finalizar</button></div>
+      <div class="inline-actions"><button type="button" class="secondary-action" :disabled="busy" @click="emit('close')">Cerrar</button><button type="button" class="secondary-action" :disabled="busy" @click="emit('discard')">Descartar</button><button type="button" :disabled="busy" @click="emit('finish')">Finalizar</button></div>
     </header>
 
     <p v-if="error" class="notice" role="alert">{{ error }}</p>

@@ -23,3 +23,15 @@ test("recovers and finishes a workout after reloading offline", async ({ page, c
   await page.getByRole("button", { name: "Finalizar" }).click();
   await expect(page.getByRole("button", { name: "Rutinas" })).toBeVisible();
 });
+
+test("closes and continues an active program session", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Programa", exact: true }).click();
+  await page.getByRole("button", { name: "Iniciar programa" }).first().click();
+  await page.getByRole("button", { name: "Iniciar próxima" }).click();
+  await page.getByRole("button", { name: "Cerrar", exact: true }).click();
+
+  await page.getByRole("button", { name: "Programa", exact: true }).click();
+  await page.getByRole("button", { name: "Continuar sesión" }).first().click();
+  await expect(page.getByText("Entrenamiento activo")).toBeVisible();
+});

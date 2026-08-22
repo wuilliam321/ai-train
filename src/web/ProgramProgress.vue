@@ -10,6 +10,7 @@ interface PlannedDay {
 const props = defineProps<{ readonly training: TrainingOrchestrator }>();
 const emit = defineEmits<{
   readonly started: [workout: import("../core").ActiveWorkoutSession];
+  readonly continueWorkout: [];
   readonly editRoutine: [routineId: RoutineId];
 }>();
 const programs = ref<readonly Program[]>([]);
@@ -207,6 +208,7 @@ onMounted(() => { void load(); });
             <div class="inline-actions" style="margin-top: 0.5rem">
               <button type="button" class="secondary-action" @click="selectSession(session)">Ver contenido</button>
               <button v-if="session.status === 'pending'" type="button" @click="startSession(session.id)">Iniciar esta sesión</button>
+              <button v-if="session.status === 'started'" type="button" @click="emit('continueWorkout')">Continuar sesión</button>
             </div>
           </li>
         </ul>
@@ -220,6 +222,7 @@ onMounted(() => { void load(); });
           <p v-else class="empty-state">La estructura de esta rutina ya no está disponible.</p>
           <div class="inline-actions">
             <button v-if="selectedSession.status === 'pending'" type="button" @click="startSession(selectedSession.id)">Iniciar esta sesión</button>
+            <button v-if="selectedSession.status === 'started'" type="button" @click="emit('continueWorkout')">Continuar sesión</button>
             <button v-if="selectedVariant" type="button" class="secondary-action" @click="emit('editRoutine', selectedSession.routineId)">Editar rutina</button>
           </div>
         </section>
