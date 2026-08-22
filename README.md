@@ -41,4 +41,4 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-Copia las claves generadas en `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY` de `.env`, y usa una dirección válida en `VAPID_SUBJECT`. El volumen Docker `push-data` conserva las suscripciones y los descansos pendientes. En el iPhone, instala la PWA en Home Screen y toca la campana durante un descanso para conceder permiso.
+Copia las claves generadas en `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY` de `.env`, y usa una dirección válida en `VAPID_SUBJECT`. Conserva `PUSH_ORIGIN=https://cm.wlacruz.com.ve` si publicas la aplicación en ese dominio. El volumen Docker `push-data` conserva las suscripciones y los descansos pendientes. En el iPhone, instala la PWA en Home Screen y toca la campana durante un descanso para conceder permiso.

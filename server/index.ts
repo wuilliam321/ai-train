@@ -27,9 +27,10 @@ const databasePath = process.env.PUSH_DATABASE ?? "/data/push.sqlite";
 const vapidSubject = process.env.VAPID_SUBJECT;
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+const pushOrigin = process.env.PUSH_ORIGIN;
 
-if (vapidSubject === undefined || vapidPublicKey === undefined || vapidPrivateKey === undefined) {
-  throw new Error("Missing VAPID configuration");
+if (vapidSubject === undefined || vapidPublicKey === undefined || vapidPrivateKey === undefined || pushOrigin === undefined) {
+  throw new Error("Missing Push configuration");
 }
 
 webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
@@ -86,9 +87,7 @@ const isRest = (value: unknown): value is RestInput => {
 
 const sameOrigin = (request: IncomingMessage): boolean => {
   const origin = request.headers.origin;
-  const host = request.headers.host;
-  const protocol = request.headers["x-forwarded-proto"] ?? "http";
-  return typeof origin === "string" && typeof host === "string" && origin === `${protocol}://${host}`;
+  return origin === pushOrigin;
 };
 
 const saveSubscription = (subscription: SubscriptionInput): void => {
