@@ -14,6 +14,7 @@ import type {
   WeightAmount,
   WorkoutSet,
 } from "../core";
+import { cancelRestNotification, enablePushNotifications, getPushNotificationState, scheduleRestNotification, type PushNotificationState } from "./push-notifications";
 
 const props = defineProps<{
   readonly training: TrainingOrchestrator;
@@ -44,6 +45,8 @@ const restDuration = ref("60");
 const exerciseToAdd = ref(props.availableExercises[0]?.id ?? "");
 const error = ref<string | null>(null);
 const busy = ref(false);
+const pushState = ref<PushNotificationState>("unavailable");
+const scheduledRestEnd = ref<string | null>(null);
 
 const maxRestSeconds = ref(60);
 const showRestSettings = ref(false);
@@ -54,6 +57,10 @@ watch(rest, (newRest, oldRest) => {
   if (newRest && (!oldRest || newRest.endsAt !== oldRest.endsAt)) {
     maxRestSeconds.value = Math.max(1, Math.ceil((Date.parse(newRest.endsAt) - Date.now()) / 1000));
     showRestSettings.value = false;
+  }
+  if (newRest !== null && newRest.endsAt !== scheduledRestEnd.value && pushState.value === "enabled") {
+    scheduledRestEnd.value = newRest.endsAt;
+    void scheduleRestNotification(newRest);
   }
 });
 
@@ -260,7 +267,27 @@ const cancelRest = async (): Promise<void> => {
   }
 
   rest.value = null;
+  scheduledRestEnd.value = null;
+  void cancelRestNotification();
   showRestSettings.value = false;
+};
+
+const enableNotifications = async (): Promise<void> => {
+  pushState.value = await enablePushNotifications();
+  if (pushState.value === "enabled" && rest.value !== null) {
+    scheduledRestEnd.value = rest.value.endsAt;
+    await scheduleRestNotification(rest.value);
+  }
+};
+
+const discardWorkout = (): void => {
+  void cancelRestNotification();
+  emit("discard");
+};
+
+const finishWorkout = (): void => {
+  void cancelRestNotification();
+  emit("finish");
 };
 
 let timer: number | undefined;
@@ -272,6 +299,13 @@ watch(() => props.workout, (workout) => {
 }, { immediate: true });
 
 onMounted(() => {
+  void getPushNotificationState().then(async (state) => {
+    pushState.value = state;
+    if (state === "enabled" && rest.value !== null) {
+      scheduledRestEnd.value = rest.value.endsAt;
+      await scheduleRestNotification(rest.value);
+    }
+  });
   timer = window.setInterval(() => {
     now.value = Date.now();
     void refreshRest();
@@ -292,7 +326,7 @@ onUnmounted(() => {
         <p class="eyebrow">Entrenamiento activo</p>
         <h2 id="active-title">{{ workout.routine?.name ?? "Entrenamiento vacío" }}</h2>
       </div>
-      <div class="inline-actions"><button type="button" class="secondary-action" :disabled="busy" @click="emit('close')">Cerrar</button><button type="button" class="secondary-action" :disabled="busy" @click="emit('discard')">Descartar</button><button type="button" :disabled="busy" @click="emit('finish')">Finalizar</button></div>
+      <div class="inline-actions"><button type="button" class="secondary-action" :disabled="busy" @click="emit('close')">Cerrar</button><button type="button" class="secondary-action" :disabled="busy" @click="discardWorkout">Descartar</button><button type="button" :disabled="busy" @click="finishWorkout">Finalizar</button></div>
     </header>
 
     <p v-if="error" class="notice" role="alert">{{ error }}</p>
@@ -302,10 +336,13 @@ onUnmounted(() => {
       <div class="rest-timer-content">
         <strong class="rest-timer-text">Descanso: {{ remainingSeconds }} s</strong>
         <div class="rest-timer-actions">
+          <button v-if="pushState === 'permission_required' || pushState === 'unavailable'" type="button" class="icon-action" aria-label="Activar avisos" @click="enableNotifications">🔔</button>
           <button type="button" class="icon-action" @click="showRestSettings = !showRestSettings">⚙️</button>
           <button type="button" class="icon-action" @click="cancelRest">❌</button>
         </div>
       </div>
+      <p v-if="pushState === 'denied'" class="rest-timer-text">Los avisos están bloqueados.</p>
+      <p v-else-if="pushState === 'unsupported'" class="rest-timer-text">Este navegador no admite avisos Push.</p>
       <div v-if="showRestSettings" class="rest-timer-settings">
         <label class="compact-field">Segundos <input v-model="restDuration" inputmode="numeric" type="number" min="0" /></label>
         <button type="button" class="secondary-action" @click="adjustRest">Ajustar</button>

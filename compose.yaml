@@ -15,3 +15,32 @@ services:
       - /tmp
       - /var/cache/nginx
       - /var/run
+    depends_on:
+      push-service:
+        condition: service_healthy
+  push-service:
+    build:
+      context: .
+      dockerfile: push.Dockerfile
+    env_file: ${PUSH_ENV_FILE:-.env}
+    environment:
+      PUSH_DATABASE: /data/push.sqlite
+      PUSH_PORT: 3000
+    volumes:
+      - push-data:/data
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+volumes:
+  push-data:

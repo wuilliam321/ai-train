@@ -3,3 +3,7 @@ coverage
 dist
 playwright-report
 test-results
+.env
+.env.*
+!.env.example
+server-dist
