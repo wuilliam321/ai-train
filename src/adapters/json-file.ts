@@ -7,7 +7,7 @@ import type { Exercise } from "../core/domain/exercise";
 import type { EntityId, ExerciseId, ISODateTime, Page, RoutineId, WorkoutSessionId } from "../core/domain/primitives";
 import type { Routine } from "../core/domain/routine";
 import type { Program, ProgramCycle } from "../core/domain/program";
-import type { ActiveWorkoutSession, CompletedWorkoutSession, PreviousSetReference, WorkoutSession } from "../core/domain/workout";
+import type { ActiveWorkoutSession, PreviousSetReference, WorkoutSession } from "../core/domain/workout";
 import type {
   Clock,
   ExerciseRepository,
@@ -305,7 +305,7 @@ class JsonFileRepositories implements ExerciseRepository, RoutineRepository, Wor
   async findLatestProgramCycle(): PersistenceResult<ProgramCycle | null> { return success(this.store.current().programCycles.at(-1) ?? null); }
   async findProgramCycle(cycleId: import("../core").ProgramCycleId): PersistenceResult<ProgramCycle | null> { return success(this.store.current().programCycles.find((cycle) => cycle.id === cycleId) ?? null); }
   async saveProgramCycle(cycle: ProgramCycle): PersistenceResult<void> { const document = { ...this.store.current(), programCycles: replace(this.store.current().programCycles, cycle, (item) => item.id === cycle.id) }; return await this.store.replace(document) ? success(undefined) : failure({ code: "unavailable" }); }
-  async saveCompletedWorkoutAndProgramCycle(workout: CompletedWorkoutSession, cycle: ProgramCycle): PersistenceResult<void> { const workouts = replace(this.store.current().workouts, workout, (item) => item.id === workout.id); const document: TrainingDocument = { ...this.store.current(), workouts, history: previousSets(workouts), programCycles: replace(this.store.current().programCycles, cycle, (item) => item.id === cycle.id) }; return await this.store.replace(document) ? success(undefined) : failure({ code: "unavailable" }); }
+  async saveWorkoutAndProgramCycle(workout: WorkoutSession, cycle: ProgramCycle): PersistenceResult<void> { const workouts = replace(this.store.current().workouts, workout, (item) => item.id === workout.id); const document: TrainingDocument = { ...this.store.current(), workouts, history: previousSets(workouts), programCycles: replace(this.store.current().programCycles, cycle, (item) => item.id === cycle.id) }; return await this.store.replace(document) ? success(undefined) : failure({ code: "unavailable" }); }
   async clearProgress(): PersistenceResult<void> { return await this.store.replace({ ...this.store.current(), workouts: [], history: [], programCycles: [] }) ? success(undefined) : failure({ code: "unavailable" }); }
 
   async findWorkout(workoutSessionId: WorkoutSessionId): PersistenceResult<WorkoutSession | null> {

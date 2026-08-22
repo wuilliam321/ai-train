@@ -208,8 +208,15 @@ export class TrainingOrchestrator implements TrainingOrchestratorContract {
     return this.finishAndAdvanceProgram();
   }
 
-  discardWorkout(): ApplicationResult<void> {
-    return this.lifecycle.discardWorkout();
+  async discardWorkout(): ApplicationResult<void> {
+    const active = await this.activeWorkouts.getActiveWorkout();
+    if (!active.ok || active.value?.programSessionId === undefined) return this.lifecycle.discardWorkout();
+    const discarded = await this.lifecycle.prepareDiscardedWorkout();
+    if (!discarded.ok) return discarded;
+    const released = await this.programs.releaseDiscardedWorkout(discarded.value);
+    if (!released.ok) return released;
+    this.events.publish({ activeWorkout: null, restPeriod: null });
+    return released;
   }
 
   getRestPeriod(): ApplicationResult<RestPeriod | null> {

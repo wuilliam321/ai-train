@@ -34,4 +34,9 @@ test("closes and continues an active program session", async ({ page }) => {
   await page.getByRole("button", { name: "Programa", exact: true }).click();
   await page.getByRole("button", { name: "Continuar sesión" }).first().click();
   await expect(page.getByText("Entrenamiento activo")).toBeVisible();
+  await page.getByRole("button", { name: "Descartar", exact: true }).click();
+
+  await page.getByRole("button", { name: "Programa", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Continuar sesión" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Iniciar próxima" })).toBeVisible();
 });

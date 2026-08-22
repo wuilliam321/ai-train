@@ -130,6 +130,7 @@ describe("workout lifecycle", () => {
 
     expect(await workouts.finishWorkout()).toEqual({ ok: false, error: { code: "no_active_workout" } });
     expect(await workouts.discardWorkout()).toEqual({ ok: false, error: { code: "no_active_workout" } });
+    expect(await new TrainingOrchestrator({ ...environment, workouts: unavailableWorkouts() }).discardWorkout()).toMatchObject({ ok: false, error: { code: "persistence" } });
     expect(await workouts.listWorkoutSessions({ limit: 0 })).toEqual({
       ok: false,
       error: { code: "validation", details: { field: "query" } },
@@ -167,6 +168,7 @@ describe("workout lifecycle", () => {
       ok: false,
       error: { code: "persistence", details: { code: "unavailable" } },
     });
+    await workouts.discardWorkout();
     await workouts.startWorkout({ source: "empty" });
     const savingFails = new TrainingOrchestrator({
       ...environment,
@@ -181,6 +183,7 @@ describe("workout lifecycle", () => {
       ok: false,
       error: { code: "persistence", details: { code: "unavailable" } },
     });
+
   });
 
   it("forwards a stable cursor and period while summarizing routine workouts", async () => {

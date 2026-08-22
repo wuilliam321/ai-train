@@ -108,6 +108,12 @@ class InMemoryRoutineRepository implements RoutineRepository {
 class InMemoryProgramRepository implements ProgramRepository {
   private readonly programs = new Map<ProgramId, Program>();
   private readonly cycles = new Map<ProgramCycleId, ProgramCycle>();
+  private readonly workouts: InMemoryWorkoutRepository;
+
+  constructor(workouts: InMemoryWorkoutRepository) {
+    this.workouts = workouts;
+  }
+
   async findProgram(id: ProgramId): PersistenceResult<Program | null> { return success(this.programs.get(id) ?? null); }
   async listPrograms(): PersistenceResult<readonly Program[]> { return success([...this.programs.values()]); }
   async saveProgram(program: Program): PersistenceResult<void> { this.programs.set(program.id, program); return success(undefined); }
@@ -115,7 +121,7 @@ class InMemoryProgramRepository implements ProgramRepository {
   async findLatestProgramCycle(): PersistenceResult<ProgramCycle | null> { return success([...this.cycles.values()].at(-1) ?? null); }
   async findProgramCycle(id: ProgramCycleId): PersistenceResult<ProgramCycle | null> { return success(this.cycles.get(id) ?? null); }
   async saveProgramCycle(cycle: ProgramCycle): PersistenceResult<void> { this.cycles.set(cycle.id, cycle); return success(undefined); }
-  async saveCompletedWorkoutAndProgramCycle(_workout: import("../../src/core").CompletedWorkoutSession, cycle: ProgramCycle): PersistenceResult<void> { this.cycles.set(cycle.id, cycle); return success(undefined); }
+  async saveWorkoutAndProgramCycle(workout: WorkoutSession, cycle: ProgramCycle): PersistenceResult<void> { await this.workouts.saveWorkout(workout); this.cycles.set(cycle.id, cycle); return success(undefined); }
   clear(): void { this.cycles.clear(); }
 }
 
@@ -190,8 +196,8 @@ class InMemoryTrainingChangePublisher implements TrainingChangePublisher {
 }
 
 export const createTrainingEnvironment = (clock: Clock): TrainingOrchestratorDependencies => {
-  const programs = new InMemoryProgramRepository();
   const workouts = new InMemoryWorkoutRepository();
+  const programs = new InMemoryProgramRepository(workouts);
   return {
     exercises: new InMemoryExerciseRepository(), routines: new InMemoryRoutineRepository(), programs, workouts,
     progress: new InMemoryProgressRepository(workouts, programs), history: new EmptyWorkoutHistoryReader(),

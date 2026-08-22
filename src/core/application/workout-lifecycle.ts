@@ -1,4 +1,4 @@
-import type { CompletedWorkoutSession } from "../domain/workout";
+import type { CompletedWorkoutSession, DiscardedWorkoutSession } from "../domain/workout";
 import type { WorkoutRepository } from "../ports";
 import type { ApplicationResult } from "./contracts";
 import type { TrainingOrchestratorDependencies } from "./dependencies";
@@ -44,20 +44,17 @@ export class WorkoutLifecycleService {
   }
 
   async discardWorkout(): ApplicationResult<void> {
-    const active = await this.findActiveWorkout();
-
-    if (!active.ok) {
-      return active;
-    }
-
-    const { restPeriod: _restPeriod, ...workout } = active.value;
-    const discarded = {
-      ...workout,
-      status: "discarded" as const,
-      discardedAt: this.clock.now(),
-    };
-    const saved = await this.workouts.saveWorkout(discarded);
+    const discarded = await this.prepareDiscardedWorkout();
+    if (!discarded.ok) return discarded;
+    const saved = await this.workouts.saveWorkout(discarded.value);
     return isPersisted(saved) ? success(undefined) : failure(persistenceError(saved.error.code));
+  }
+
+  async prepareDiscardedWorkout(): ApplicationResult<DiscardedWorkoutSession> {
+    const active = await this.findActiveWorkout();
+    if (!active.ok) return active;
+    const { restPeriod: _restPeriod, ...workout } = active.value;
+    return success({ ...workout, status: "discarded", discardedAt: this.clock.now() });
   }
 
   private async findActiveWorkout() {

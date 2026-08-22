@@ -1,7 +1,6 @@
 import type { Exercise, ExerciseStatus } from "./domain/exercise";
 import type {
   ActiveWorkoutSession,
-  CompletedWorkoutSession,
   PreviousSetReference,
   RestPeriod,
   WorkoutSession,
@@ -65,8 +64,8 @@ export interface ProgramRepository {
   findLatestProgramCycle(): PersistenceResult<ProgramCycle | null>;
   findProgramCycle(programCycleId: ProgramCycleId): PersistenceResult<ProgramCycle | null>;
   saveProgramCycle(cycle: ProgramCycle): PersistenceResult<void>;
-  saveCompletedWorkoutAndProgramCycle(
-    workout: CompletedWorkoutSession,
+  saveWorkoutAndProgramCycle(
+    workout: WorkoutSession,
     cycle: ProgramCycle,
   ): PersistenceResult<void>;
 }

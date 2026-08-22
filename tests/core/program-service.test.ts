@@ -8,13 +8,14 @@ import { TestClock, createTrainingEnvironment } from "../support/training-enviro
 const now = "2026-07-28T12:00:00.000Z" as ISODateTime;
 
 const setup = async () => {
-  const training = new TrainingOrchestrator(createTrainingEnvironment(new TestClock(now)));
+  const environment = createTrainingEnvironment(new TestClock(now));
+  const training = new TrainingOrchestrator(environment);
   const exercise = await training.createExercise({ name: "Press", primaryMuscles: ["chest"], defaultRestSeconds: 60 as Seconds });
   if (!exercise.ok) throw new Error("Expected exercise");
   const routine = await training.createRoutine({ name: "A", variants: [{ name: "Gym", exercises: [{ exerciseId: exercise.value.id, sets: [{ type: "normal", repetitions: { kind: "range", minimum: 8 as Repetitions, maximum: 10 as Repetitions } }], laterality: "bilateral" }] }] });
   if (!routine.ok) throw new Error("Expected routine");
   const draft: ProgramDraft = { name: "Programa", weeks: 1, sessions: [{ routineId: routine.value.id, variantId: routine.value.variants[0]!.id }], goals: [{ exerciseId: exercise.value.id, repetitions: { kind: "range", minimum: 8 as Repetitions, maximum: 10 as Repetitions }, targetWeight: { amount: 105 as WeightAmount, unit: "kg" }, increment: { amount: 5 as WeightAmount, unit: "kg" } }] };
-  return { training, draft };
+  return { training, draft, environment };
 };
 
 describe("program cycles", () => {
@@ -39,6 +40,42 @@ describe("program cycles", () => {
       { position: 0, status: "pending" },
       { position: 1, status: "started" }
     ] } } });
+  });
+
+  it("releases a discarded program workout so it can be started again", async () => {
+    const { training, draft } = await setup();
+    const created = await training.createProgram(draft);
+    if (!created.ok) throw new Error("Expected program");
+    await training.startProgram(created.value.id);
+    await training.startNextProgramWorkout();
+
+    expect(await training.discardWorkout()).toEqual({ ok: true, value: undefined });
+    expect(await training.getActiveWorkout()).toEqual({ ok: true, value: null });
+    expect(await training.getProgramProgress()).toMatchObject({ ok: true, value: { cycle: { sessions: [{ status: "pending" }] } } });
+    expect(await training.startNextProgramWorkout()).toMatchObject({ ok: true });
+  });
+
+  it("keeps a program workout active when discarding it cannot be persisted atomically", async () => {
+    const { training, draft, environment } = await setup();
+    const created = await training.createProgram(draft);
+    if (!created.ok) throw new Error("Expected program");
+    await training.startProgram(created.value.id);
+    await training.startNextProgramWorkout();
+    const programs: ProgramRepository = {
+      findProgram: (id) => environment.programs.findProgram(id), listPrograms: () => environment.programs.listPrograms(), saveProgram: (program) => environment.programs.saveProgram(program),
+      findActiveProgramCycle: () => environment.programs.findActiveProgramCycle(), findLatestProgramCycle: () => environment.programs.findLatestProgramCycle(), findProgramCycle: (id) => environment.programs.findProgramCycle(id), saveProgramCycle: (cycle) => environment.programs.saveProgramCycle(cycle),
+      saveWorkoutAndProgramCycle: async () => failure({ code: "unavailable" }),
+    };
+
+    expect(await new TrainingOrchestrator({ ...environment, programs }).discardWorkout()).toMatchObject({ ok: false, error: { code: "persistence" } });
+    expect(await training.getActiveWorkout()).toMatchObject({ ok: true, value: { status: "active" } });
+    let reads = 0;
+    const workouts: WorkoutRepository = {
+      findWorkout: (id) => environment.workouts.findWorkout(id),
+      findActiveWorkout: () => ++reads === 1 ? environment.workouts.findActiveWorkout() : Promise.resolve(failure({ code: "unavailable" })),
+      listWorkouts: (query) => environment.workouts.listWorkouts(query), saveWorkout: (workout) => environment.workouts.saveWorkout(workout),
+    };
+    expect(await new TrainingOrchestrator({ ...environment, workouts }).discardWorkout()).toMatchObject({ ok: false, error: { code: "persistence" } });
   });
 
   it("abandons an active program and allows another one to start", async () => {
@@ -105,7 +142,7 @@ describe("program cycles", () => {
 
   it("handles unavailable repositories and all goal outcomes", async () => {
     const repo = {
-      findProgram: async () => failure({ code: "unavailable" }), listPrograms: async () => failure({ code: "unavailable" }), saveProgram: async () => failure({ code: "unavailable" }), findActiveProgramCycle: async () => failure({ code: "unavailable" }), findLatestProgramCycle: async () => failure({ code: "unavailable" }), findProgramCycle: async () => success(null), saveProgramCycle: async () => failure({ code: "unavailable" }), saveCompletedWorkoutAndProgramCycle: async () => failure({ code: "unavailable" }),
+      findProgram: async () => failure({ code: "unavailable" }), listPrograms: async () => failure({ code: "unavailable" }), saveProgram: async () => failure({ code: "unavailable" }), findActiveProgramCycle: async () => failure({ code: "unavailable" }), findLatestProgramCycle: async () => failure({ code: "unavailable" }), findProgramCycle: async () => success(null), saveProgramCycle: async () => failure({ code: "unavailable" }), saveWorkoutAndProgramCycle: async () => failure({ code: "unavailable" }),
     };
     const service = new ProgramService({ programs: repo, clock: new TestClock(now), ids: { generate: () => "x" } } as never);
     expect(await service.listPrograms()).toMatchObject({ ok: false });
@@ -120,6 +157,8 @@ describe("program cycles", () => {
     expect(await service.updateProgram("missing" as never, {})).toMatchObject({ ok: false });
     expect(await service.complete({ programSessionId: "session" } as never)).toMatchObject({ ok: false });
     expect(await service.complete({} as never)).toMatchObject({ ok: true });
+    expect(await service.releaseDiscardedWorkout({} as never)).toMatchObject({ ok: false });
+    expect(await service.releaseDiscardedWorkout({ programSessionId: "session" } as never)).toMatchObject({ ok: false });
     const privateService = service as unknown as { advanceGoal: (goal: never, workout: never) => unknown; asProgress: (cycle: never) => unknown; completeIfFinished: (cycle: never) => unknown; withSessionStatus: (cycle: never, sessionId: never, status: never) => unknown; withCompletedSession: (cycle: never, sessionId: never, completedAt: never) => unknown };
     const goal = { exerciseId: "e", repetitions: { kind: "exact", repetitions: 1 }, targetWeight: { amount: 10, unit: "kg" }, increment: { amount: 1, unit: "kg" }, achieved: false };
     expect(privateService.advanceGoal(goal as never, { exercises: [] } as never)).toEqual(goal);
@@ -133,6 +172,29 @@ describe("program cycles", () => {
     expect(privateService.completeIfFinished({ sessions: [{ status: "started" }] } as never)).toMatchObject({ sessions: [{ status: "started" }] });
     expect(privateService.withSessionStatus({ sessions: [{ id: "first" }, { id: "second" }] } as never, "first" as never, "started" as never)).toMatchObject({ sessions: [{ status: "started" }, { id: "second" }] });
     expect(privateService.withCompletedSession({ sessions: [{ id: "first" }, { id: "second" }] } as never, "first" as never, now as never)).toMatchObject({ sessions: [{ status: "completed", completedAt: now }, { id: "second" }] });
+  });
+
+  it("validates every discarded-program-session persistence outcome", async () => {
+    let cycle: object | null = { sessions: [{ id: "session", status: "pending" }] };
+    let saveFails = false;
+    const service = new ProgramService({
+      programs: {
+        findProgram: async () => success(null), listPrograms: async () => success([]), saveProgram: async () => success(undefined),
+        findActiveProgramCycle: async () => success(cycle as never), findLatestProgramCycle: async () => success(null), findProgramCycle: async () => success(null), saveProgramCycle: async () => success(undefined),
+        saveWorkoutAndProgramCycle: async () => saveFails ? failure({ code: "unavailable" }) : success(undefined),
+      }, clock: new TestClock(now), ids: { generate: () => "x" },
+    } as never);
+    const discarded = { programSessionId: "session" } as never;
+
+    cycle = null;
+    expect(await service.releaseDiscardedWorkout(discarded)).toMatchObject({ ok: false, error: { code: "not_found" } });
+    cycle = { sessions: [{ id: "session", status: "pending" }] };
+    expect(await service.releaseDiscardedWorkout(discarded)).toMatchObject({ ok: false, error: { code: "not_found" } });
+    cycle = { sessions: [{ id: "session", status: "started" }] };
+    saveFails = true;
+    expect(await service.releaseDiscardedWorkout(discarded)).toMatchObject({ ok: false, error: { code: "persistence" } });
+    saveFails = false;
+    expect(await service.releaseDiscardedWorkout(discarded)).toEqual({ ok: true, value: undefined });
   });
 
   it("validates program edits and reports all program lifecycle errors", async () => {
@@ -166,7 +228,7 @@ describe("program cycles", () => {
       findLatestProgramCycle: async () => success(latest as never),
       findProgramCycle: async () => success(null),
       saveProgramCycle: async (value) => failSaveCycle ? failure({ code: "unavailable" }) : (active = value as never, latest = value as never, success(undefined)),
-      saveCompletedWorkoutAndProgramCycle: async (_workout, value) => failSaveCycle ? failure({ code: "unavailable" }) : (active = value as never, latest = value as never, success(undefined)),
+      saveWorkoutAndProgramCycle: async (_workout, value) => failSaveCycle ? failure({ code: "unavailable" }) : (active = value as never, latest = value as never, success(undefined)),
     };
     const service = new ProgramService({ programs: repository, clock: new TestClock(now), ids: { generate: <Identifier extends EntityId>() => "new" as Identifier } });
 
@@ -228,7 +290,7 @@ describe("program cycles", () => {
       findLatestProgramCycle: async () => success(null),
       findProgramCycle: async () => success(null),
       saveProgramCycle: async () => success(undefined),
-      saveCompletedWorkoutAndProgramCycle: async () => success(undefined),
+      saveWorkoutAndProgramCycle: async () => success(undefined),
     };
     const training = new TrainingOrchestrator({ ...environment, programs });
     expect(await training.startNextProgramWorkout()).toMatchObject({ ok: false, error: { code: "persistence" } });
@@ -254,7 +316,7 @@ describe("program cycles", () => {
       findLatestProgramCycle: async () => success(null),
       findProgramCycle: async () => success(null),
       saveProgramCycle: async () => success(undefined),
-      saveCompletedWorkoutAndProgramCycle: async () => success(undefined),
+      saveWorkoutAndProgramCycle: async () => success(undefined),
     };
     const training = new TrainingOrchestrator({ ...environment, programs });
     const exercise = await training.createExercise({ name: "Press", primaryMuscles: ["chest"], defaultRestSeconds: 60 as Seconds });
@@ -270,7 +332,7 @@ describe("program cycles", () => {
     const environment = createTrainingEnvironment(new TestClock(now));
     const activeCycle = { id: "cycle", programId: "program", programName: "Programa", status: "active", startedAt: now, sessions: [{ id: "session", routineId: "routine", variantId: "variant", week: 1, position: 0, status: "started" }], goals: [] } as never;
     const programs: ProgramRepository = {
-      findProgram: async () => success(null), listPrograms: async () => success([]), saveProgram: async () => success(undefined), findActiveProgramCycle: async () => success(activeCycle), findLatestProgramCycle: async () => success(activeCycle), findProgramCycle: async () => success(null), saveProgramCycle: async () => success(undefined), saveCompletedWorkoutAndProgramCycle: async () => failure({ code: "unavailable" }),
+      findProgram: async () => success(null), listPrograms: async () => success([]), saveProgram: async () => success(undefined), findActiveProgramCycle: async () => success(activeCycle), findLatestProgramCycle: async () => success(activeCycle), findProgramCycle: async () => success(null), saveProgramCycle: async () => success(undefined), saveWorkoutAndProgramCycle: async () => failure({ code: "unavailable" }),
     };
     const training = new TrainingOrchestrator({ ...environment, programs });
     const exercise = await training.createExercise({ name: "Press", primaryMuscles: ["chest"], defaultRestSeconds: 60 as Seconds });
@@ -287,7 +349,7 @@ describe("program cycles", () => {
     const cycle = { id: "cycle", programId: "program", programName: "Programa", status: "active", startedAt: now, sessions: [{ id: "session", routineId: "missing", variantId: "missing", week: 1, position: 0, status: "pending" }], goals: [] } as never;
     let saves = 0;
     const programs: ProgramRepository = {
-      findProgram: async () => success(null), listPrograms: async () => success([]), saveProgram: async () => success(undefined), findActiveProgramCycle: async () => success(cycle), findLatestProgramCycle: async () => success(cycle), findProgramCycle: async () => success(null), saveProgramCycle: async () => (++saves === 1 ? success(undefined) : failure({ code: "unavailable" })), saveCompletedWorkoutAndProgramCycle: async () => success(undefined),
+      findProgram: async () => success(null), listPrograms: async () => success([]), saveProgram: async () => success(undefined), findActiveProgramCycle: async () => success(cycle), findLatestProgramCycle: async () => success(cycle), findProgramCycle: async () => success(null), saveProgramCycle: async () => (++saves === 1 ? success(undefined) : failure({ code: "unavailable" })), saveWorkoutAndProgramCycle: async () => success(undefined),
     };
     const training = new TrainingOrchestrator({ ...environment, programs });
     expect(await training.startNextProgramWorkout()).toMatchObject({ ok: false, error: { code: "not_found" } });

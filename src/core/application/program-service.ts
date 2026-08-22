@@ -1,5 +1,6 @@
 import type { CompletedWorkoutSession, WorkoutSet } from "../domain/workout";
 import type { Program, ProgramCycle, ProgramDraft, ProgramGoalProgress, ProgramPatch, ProgramProgress } from "../domain/program";
+import type { DiscardedWorkoutSession } from "../domain/workout";
 import type { ProgramCycleId, ProgramId, ProgramSessionId, Weight } from "../domain/primitives";
 import type { ProgramRepository } from "../ports";
 import type { TrainingOrchestratorDependencies } from "./dependencies";
@@ -214,8 +215,18 @@ export class ProgramService {
     return isPersisted(saved) ? success(undefined) : failure(applicationError("persistence"));
   }
 
+  async releaseDiscardedWorkout(workout: DiscardedWorkoutSession): ApplicationResult<void> {
+    if (workout.programSessionId === undefined) return failure(applicationError("validation", "programSessionId"));
+    const cycle = await this.activeCycle();
+    if (!cycle.ok) return cycle;
+    const session = cycle.value.sessions.find((candidate) => candidate.id === workout.programSessionId);
+    if (session === undefined || session.status !== "started") return failure(applicationError("not_found", "programSessionId"));
+    const saved = await this.programs.saveWorkoutAndProgramCycle(workout, this.withSessionStatus(cycle.value, session.id, "pending"));
+    return isPersisted(saved) ? success(undefined) : failure(applicationError("persistence"));
+  }
+
   async saveCompletion(workout: CompletedWorkoutSession, cycle: ProgramCycle): ApplicationResult<void> {
-    const saved = await this.programs.saveCompletedWorkoutAndProgramCycle(workout, cycle);
+    const saved = await this.programs.saveWorkoutAndProgramCycle(workout, cycle);
     return isPersisted(saved) ? success(undefined) : failure(applicationError("persistence"));
   }
 
