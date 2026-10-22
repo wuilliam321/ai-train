@@ -54,6 +54,7 @@ const resetProgress = async (): Promise<void> => {
   <section class="backup" aria-labelledby="backup-title">
     <header><p class="eyebrow">Datos locales</p><h2 id="backup-title">Respaldo</h2></header>
     <p>Exporta una copia JSON versionada para conservarla fuera del dispositivo o importar una copia válida.</p>
+    <p>Importar reemplaza todos los datos locales, incluido el historial. Exporta tu copia actual antes de restaurar otra.</p>
     <p v-if="error" class="notice" role="alert">{{ error }}</p>
     <p v-if="message" class="success" role="status">{{ message }}</p>
     <div class="editor-card"><button type="button" @click="exportBackup">Exportar copia</button><label class="field">Importar copia <input type="file" accept="application/json,.json" @change="importBackup" /></label></div>

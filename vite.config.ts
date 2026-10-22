@@ -3,8 +3,9 @@ import vue from "@vitejs/plugin-vue";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  define: { __VUE_OPTIONS_API__: false },
   plugins: [
-    vue(),
+    vue({ template: { compilerOptions: { hoistStatic: false } } }),
     VitePWA({
       registerType: "autoUpdate",
       manifest: {

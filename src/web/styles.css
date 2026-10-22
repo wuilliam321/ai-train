@@ -550,3 +550,60 @@ textarea:focus {
     left: max(1rem, calc((100vw - 44rem) / 2));
   }
 }
+
+.training-journey,
+.training-journey article,
+.program-days {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.training-journey > article:not(.active-card) {
+  padding: 0.5rem 1rem;
+}
+
+.training-journey span {
+  color: #9eabb0;
+  font-size: 0.85rem;
+}
+
+.training-journey .eyebrow {
+  font-size: 0.72rem;
+}
+
+.journey-compact .training-journey {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  font-size: 0.8rem;
+}
+
+.journey-compact .training-journey > article {
+  padding: 0.65rem;
+}
+
+.journey-compact .training-journey span {
+  display: none;
+}
+
+.program-sequence > li[aria-current="step"] {
+  border-color: #b9f52a;
+}
+
+.program-options summary {
+  min-height: 2.75rem;
+  padding: 0.75rem 0;
+  cursor: pointer;
+}
+
+.program-days {
+  padding: 0;
+  list-style: none;
+}
+
+.program-days li {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0.5rem 0;
+}

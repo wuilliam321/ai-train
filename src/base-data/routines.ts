@@ -38,6 +38,9 @@ const range = (minimum: number, maximum: number) => ({
 const sets = (count: number, repetitions: number, type: SetType = "normal"): readonly RoutineSetDraft[] =>
   Array.from({ length: count }, () => ({ type, repetitions: exact(repetitions) }));
 
+const rangedSets = (count: number, minimum: number, maximum: number): readonly RoutineSetDraft[] =>
+  Array.from({ length: count }, () => ({ type: "normal", repetitions: range(minimum, maximum) }));
+
 const prescribedSets = (
   repetitions: readonly number[],
   type: SetType = "normal",
@@ -74,6 +77,61 @@ const failureSets = (count: number): readonly RoutineSetDraft[] =>
   sets(count, 1, "failure");
 
 export const baseRoutines: readonly BaseRoutine[] = [
+  {
+    name: "Pecho, espalda y brazos",
+    variants: [{
+      name: "Gym",
+      exercises: [
+        exercise("Incline Bench Press", rangedSets(3, 6, 10)),
+        exercise("Lat Pulldown", rangedSets(3, 8, 12)),
+        exercise("Wide-Grip Seated Row", rangedSets(3, 8, 12)),
+        exercise("Lateral Raise", rangedSets(2, 12, 20)),
+        exercise("Preacher Curl", rangedSets(2, 10, 15)),
+        exercise("Cable Triceps Extension", rangedSets(2, 10, 15)),
+      ],
+    }],
+  },
+  {
+    name: "Piernas · Sentadilla y rumano",
+    variants: [{
+      name: "Gym",
+      exercises: [
+        exercise("Squat", rangedSets(3, 6, 10)),
+        exercise("Romanian Deadlift", rangedSets(3, 8, 12)),
+        exercise("Seated Leg Curl", rangedSets(2, 10, 15)),
+        exercise("Standing Calf Raise", rangedSets(2, 10, 20)),
+        exercise("Abdominal Exercise", rangedSets(2, 10, 20)),
+      ],
+    }],
+  },
+  {
+    name: "Hombros, pecho y brazos",
+    variants: [{
+      name: "Gym",
+      exercises: [
+        exercise("Incline Bench Press", rangedSets(3, 6, 10)),
+        exercise("Close-Grip Seated Row", rangedSets(3, 8, 12)),
+        exercise("Shoulder Press", rangedSets(3, 6, 10)),
+        exercise("Chest Fly", rangedSets(2, 10, 15)),
+        exercise("Preacher Curl", rangedSets(2, 10, 15)),
+        exercise("Triceps Overhead Extension", rangedSets(2, 10, 15)),
+      ],
+    }],
+  },
+  {
+    name: "Piernas · Glúteos y cuádriceps",
+    variants: [{
+      name: "Gym",
+      exercises: [
+        exercise("Hip Thrust", rangedSets(3, 8, 12)),
+        exercise("Squat", rangedSets(3, 6, 10)),
+        exercise("Leg Extension", rangedSets(2, 10, 15)),
+        exercise("Seated Leg Curl", rangedSets(2, 10, 15)),
+        exercise("Standing Calf Raise", rangedSets(2, 10, 20)),
+        exercise("Abdominal Exercise", rangedSets(2, 10, 20)),
+      ],
+    }],
+  },
   {
     name: "Lower Body Posterior Chain",
     variants: gymHome(

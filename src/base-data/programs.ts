@@ -18,6 +18,7 @@ const draft = (name: string, routineNames: readonly string[], routines: readonly
 };
 
 export const resolveBasePrograms = (routines: readonly Routine[]): readonly ProgramDraft[] => [
+  draft("Fuerza e hipertrofia · 4 días", ["Pecho, espalda y brazos", "Piernas · Sentadilla y rumano", "Hombros, pecho y brazos", "Piernas · Glúteos y cuádriceps"], routines),
   draft("Base 3 días", [names.lower, names.backChest, names.shoulders], routines),
   draft("Base 4 días", [names.lower, names.posterior, names.backChest, names.shoulders], routines),
   draft("Base 5 días", [names.lower, names.posterior, names.backBiceps, names.backChest, names.shoulders], routines),

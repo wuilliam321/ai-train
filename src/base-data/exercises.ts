@@ -21,6 +21,11 @@ const exercise = (
 });
 
 export const baseExercises: readonly ExerciseDraft[] = [
+  exercise("Romanian Deadlift", ["hamstrings", "glutes"], compoundRest, ["back"]),
+  exercise("Seated Leg Curl", ["hamstrings"], isolationRest),
+  exercise("Wide-Grip Seated Row", ["back"], compoundRest, ["shoulders", "biceps"]),
+  exercise("Close-Grip Seated Row", ["back"], compoundRest, ["biceps"]),
+  exercise("Standing Calf Raise", ["calves"], isolationRest),
   exercise("Deadlift", ["hamstrings", "glutes"], compoundRest, ["back"]),
   exercise("Sumo Deadlift", ["glutes", "hamstrings"], compoundRest, ["quadriceps"]),
   exercise("Good Morning", ["hamstrings", "glutes"], accessoryRest, ["back"]),

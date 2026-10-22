@@ -116,6 +116,17 @@ const unavailableWorkouts = (): WorkoutRepository => {
 };
 
 describe("training metrics", () => {
+  it("selects the latest completed workout even when stored history is out of order", async () => {
+    const environment = createTrainingEnvironment(new TestClock(period.from));
+    await environment.workouts.saveWorkout(second);
+    await environment.workouts.saveWorkout(first);
+    const training = new TrainingOrchestrator(environment);
+    expect(await training.getDashboard(period)).toMatchObject({
+      ok: true,
+      value: { lastWorkout: { id: second.id, completedAt: second.completedAt } },
+    });
+  });
+
   it("calculates effective volume, muscle distribution and progress without mixing units", async () => {
     const queries: WorkoutRepositoryQuery[] = [];
     const environment = createTrainingEnvironment(new TestClock(period.from));

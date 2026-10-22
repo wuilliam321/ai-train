@@ -40,3 +40,19 @@ test("closes and continues an active program session", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Continuar sesión" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Iniciar próxima" })).toBeVisible();
 });
+
+
+test("explains an unavailable active program workout without opening a blank view", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Iniciar programa" }).first().click();
+  await page.getByRole("button", { name: "Iniciar próxima" }).click();
+  await page.evaluate(() => {
+    const document = JSON.parse(localStorage.getItem("train-app")!);
+    document.workouts = [];
+    localStorage.setItem("train-app", JSON.stringify(document));
+  });
+  await page.reload();
+  await page.getByRole("button", { name: "Continuar sesión" }).first().click();
+  await expect(page.getByRole("alert")).toContainText("No se encontró el entrenamiento activo");
+  await expect(page.getByRole("heading", { name: "Programa", exact: true })).toBeVisible();
+});

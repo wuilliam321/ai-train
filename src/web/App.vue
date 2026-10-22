@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 import type { TrainingOrchestrator } from "../core";
-import type { ActiveWorkoutSession, Exercise, Routine, RoutineId, RoutineSummary, RoutineVariantId } from "../core";
+import type { ActiveWorkoutSession, Exercise, ProgramSessionId, Routine, RoutineId, RoutineSummary, RoutineVariantId } from "../core";
 import ActiveWorkout from "./ActiveWorkout.vue";
 import CatalogManager from "./CatalogManager.vue";
 import WorkoutHistory from "./WorkoutHistory.vue";
@@ -41,6 +41,7 @@ const changeView = (newView: typeof view.value) => {
     routineEditorOpen.value = false;
   }
   isMenuOpen.value = false;
+  void nextTick(() => window.scrollTo({ top: 0, behavior: "instant" }));
 };
 
 const toggleMenu = () => {
@@ -120,6 +121,14 @@ const selectRoutine = async (routineId: RoutineId, preferredVariantId?: RoutineV
     : routine.value.variants[0]?.id ?? null;
 };
 
+const chooseRoutine = async (routineId: RoutineId): Promise<void> => {
+  await selectRoutine(routineId);
+  await nextTick();
+  const startButton = document.getElementById(`start-${routineId}`);
+  startButton?.focus({ preventScroll: true });
+  startButton?.scrollIntoView({ block: "nearest" });
+};
+
 const loadCatalog = async (): Promise<void> => {
   loadingCatalog.value = true;
   const [loadedExercises, loadedRoutines, recoveredWorkout] = await Promise.all([
@@ -168,7 +177,7 @@ const startRoutine = async (): Promise<void> => {
 
   saveLastSelection({ routineId: selectedRoutine.value.id, variantId: selectedVariant.value.id });
   activeWorkout.value = workout.value;
-  view.value = "workout";
+  changeView("workout");
 };
 
 const startEmptyWorkout = async (): Promise<void> => {
@@ -183,11 +192,26 @@ const startEmptyWorkout = async (): Promise<void> => {
   }
 
   activeWorkout.value = workout.value;
-  view.value = "workout";
+  changeView("workout");
+};
+
+const continueWorkout = async (sessionId?: ProgramSessionId): Promise<void> => {
+  const recovered = await props.training.getActiveWorkout();
+  if (!recovered.ok) {
+    error.value = "No se pudo recuperar el entrenamiento activo. Reintenta.";
+    return;
+  }
+  activeWorkout.value = recovered.value;
+  if (recovered.value === null || (sessionId !== undefined && recovered.value.programSessionId !== sessionId)) {
+    error.value = "No se encontró el entrenamiento activo. Cambia de programa para iniciar otro ciclo; el historial se conserva.";
+    return;
+  }
+  error.value = null;
+  changeView("workout");
 };
 
 const closeWorkout = (): void => {
-  view.value = "routines";
+  changeView("program");
 };
 
 const discardWorkout = async (): Promise<void> => {
@@ -201,7 +225,7 @@ const discardWorkout = async (): Promise<void> => {
   }
 
   activeWorkout.value = null;
-  view.value = "routines";
+  changeView("program");
 };
 
 const finishWorkout = async (): Promise<void> => {
@@ -215,7 +239,7 @@ const finishWorkout = async (): Promise<void> => {
   }
 
   activeWorkout.value = null;
-  view.value = "routines";
+  changeView("program");
 };
 
 onMounted(() => {
@@ -252,39 +276,39 @@ onMounted(() => {
     <div v-if="error" class="notice" role="alert"><span>{{ error }}</span><button type="button" class="secondary-action" @click="loadCatalog">Reintentar</button></div>
     <p v-if="loadingCatalog" class="empty-state" role="status">Cargando datos locales…</p>
 
+    <ProgramProgress v-if="view === 'program' || view === 'workout'" :training="training" :workout="activeWorkout" :compact="view === 'workout'" @started="activeWorkout = $event; changeView('workout')" @continue-workout="continueWorkout" @edit-routine="editRoutine" />
+
     <ActiveWorkout v-if="activeWorkout && view === 'workout'" :training="training" :workout="activeWorkout" :available-exercises="exercises" @updated="activeWorkout = $event" @close="closeWorkout" @discard="discardWorkout" @finish="finishWorkout" />
 
-    <CatalogManager v-else-if="view === 'routines' && routineEditorOpen" :training="training" :routine-to-edit="routineToEdit" :create-routine="routineToEdit === null" routines-only @changed="routineEditorOpen = false; routineToEdit = null; loadCatalog" @close-routine-editor="routineEditorOpen = false; routineToEdit = null" />
+    <CatalogManager v-else-if="view === 'routines' && routineEditorOpen" :training="training" :routine-to-edit="routineToEdit" :create-routine="routineToEdit === null" routines-only @changed="routineEditorOpen = false; routineToEdit = null; loadCatalog()" @close-routine-editor="routineEditorOpen = false; routineToEdit = null" />
 
     <template v-else-if="view === 'routines'">
       <section aria-labelledby="routines-title">
         <div class="manager-heading"><h2 id="routines-title">Rutinas</h2><button type="button" @click="createRoutine">Nueva rutina</button></div>
-        <section v-if="selectedRoutine" aria-labelledby="selection-title" class="active-card">
-          <p class="eyebrow">Rutina elegida</p>
-          <h3 id="selection-title">{{ selectedRoutine.name }}</h3>
-          <label class="field">
-            Variante
-            <select v-model="selectedVariantId">
-              <option v-for="variant in selectedRoutine.variants" :key="variant.id" :value="variant.id">{{ variant.name }}</option>
-            </select>
-          </label>
-          <div v-if="selectedVariantExercises.length">
-            <h4 class="eyebrow" style="margin-bottom: 0.5rem">Ejercicios</h4>
-            <ul class="history-sets">
-              <li v-for="(ex, index) in selectedVariantExercises" :key="index">
-                <span>{{ ex.sets }} series</span>
-                <strong>{{ ex.name }}</strong>
-              </li>
-            </ul>
-          </div>
-          <button type="button" :disabled="busy || !selectedVariant" @click="startRoutine">Iniciar rutina</button>
-          <button type="button" class="secondary-action" @click="editRoutine(selectedRoutine.id)">Editar rutina</button>
-        </section>
         <ul v-if="routines.length" class="card-list">
           <li v-for="routine in routines" :key="routine.id">
             <strong>{{ routine.name }}</strong>
             <span>{{ routine.variantCount }} variantes</span>
-            <button type="button" class="secondary-action" :aria-pressed="selectedRoutine?.id === routine.id" @click="selectRoutine(routine.id)">{{ selectedRoutine?.id === routine.id ? "Rutina elegida" : "Elegir rutina" }}</button>
+            <button type="button" class="secondary-action" :aria-expanded="selectedRoutine?.id === routine.id" :aria-controls="`selection-${routine.id}`" @click="chooseRoutine(routine.id)">{{ selectedRoutine?.id === routine.id ? "Rutina elegida" : "Elegir rutina" }}</button>
+            <section v-if="selectedRoutine?.id === routine.id" :id="`selection-${routine.id}`" :aria-label="selectedRoutine.name" class="active-card">
+              <label class="field">
+                Variante
+                <select v-model="selectedVariantId">
+                  <option v-for="variant in selectedRoutine.variants" :key="variant.id" :value="variant.id">{{ variant.name }}</option>
+                </select>
+              </label>
+              <button :id="`start-${routine.id}`" type="button" :disabled="busy || !selectedVariant || activeWorkout !== null" @click="startRoutine">Iniciar rutina</button>
+              <button type="button" class="secondary-action" @click="editRoutine(selectedRoutine.id)">Editar rutina</button>
+              <div v-if="selectedVariantExercises.length">
+                <h4 class="eyebrow" style="margin-bottom: 0.5rem">Ejercicios</h4>
+                <ul class="history-sets">
+                  <li v-for="(ex, index) in selectedVariantExercises" :key="index">
+                    <span>{{ ex.sets }} series</span>
+                    <strong>{{ ex.name }}</strong>
+                  </li>
+                </ul>
+              </div>
+            </section>
           </li>
         </ul>
         <p v-else class="empty-state">No hay rutinas disponibles.</p>
@@ -296,7 +320,6 @@ onMounted(() => {
       </section>
     </template>
 
-    <ProgramProgress v-if="view === 'program'" :training="training" @started="activeWorkout = $event; view = 'workout'" @continue-workout="view = 'workout'" @edit-routine="editRoutine" />
 
     <CatalogManager v-if="view === 'manage'" :training="training" @changed="loadCatalog" />
     <WorkoutHistory v-if="view === 'history'" :training="training" />

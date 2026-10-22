@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from "vue";
-import type { Exercise, Program, ProgramCycleSession, ProgramProgress, Routine, RoutineId, RoutineVariantId, TrainingOrchestrator } from "../core";
+import { computed, onMounted, ref, watch } from "vue";
+import type { ActiveWorkoutSession, Exercise, ISODateTime, Program, ProgramCycleSession, ProgramProgress, ProgramSessionId, Routine, RoutineId, RoutineVariantId, TrainingOrchestrator, WorkoutSummary } from "../core";
 
 interface PlannedDay {
   readonly routineId: RoutineId;
   readonly variantId: RoutineVariantId;
 }
 
-const props = defineProps<{ readonly training: TrainingOrchestrator }>();
+const props = defineProps<{
+  readonly training: TrainingOrchestrator;
+  readonly workout: ActiveWorkoutSession | null;
+  readonly compact: boolean;
+}>();
 const emit = defineEmits<{
   readonly started: [workout: import("../core").ActiveWorkoutSession];
-  readonly continueWorkout: [];
+  readonly continueWorkout: [sessionId?: ProgramSessionId];
   readonly editRoutine: [routineId: RoutineId];
 }>();
 const programs = ref<readonly Program[]>([]);
@@ -22,10 +26,15 @@ const programName = ref("");
 const weeks = ref(8);
 const plannedDays = ref<readonly PlannedDay[]>([]);
 const selectedSessionId = ref<string | null>(null);
-const sessionContent = ref<HTMLElement | null>(null);
+const selectedWeek = ref<number | null>(null);
+const lastWorkout = ref<WorkoutSummary | null>(null);
+const busy = ref(false);
+const loading = ref(true);
 
 const routineFor = (routineId: RoutineId): Routine | undefined =>
   routines.value.find((routine) => routine.id === routineId);
+
+const routineName = (routineId: RoutineId): string => routineFor(routineId)?.name ?? "Rutina no disponible";
 
 const selectedSession = computed(() => progress.value?.cycle.sessions.find((session) => session.id === selectedSessionId.value));
 
@@ -39,14 +48,28 @@ const selectedExercises = computed(() => selectedVariant.value?.exercises.map((e
   sets: entry.sets.length,
 })) ?? []);
 
-const orderedSessions = computed<readonly ProgramCycleSession[]>(() => {
-  if (progress.value === null) return [];
-  const pending = progress.value.cycle.sessions.filter((session) => session.status !== "completed");
-  const completed = progress.value.cycle.sessions
-    .filter((session) => session.status === "completed")
-    .sort((left, right) => (left.completedAt ?? "").localeCompare(right.completedAt ?? "") || left.week - right.week || left.position - right.position);
-  return [...pending, ...completed];
+const currentSession = computed(() => {
+  if (progress.value?.cycle.status !== "active") return undefined;
+  return progress.value.cycle.sessions.find((session) => session.status === "started") ?? progress.value.nextSession;
 });
+
+const followingSession = computed(() => {
+  if (progress.value?.cycle.status !== "active") return undefined;
+  const currentId = props.workout ? props.workout.programSessionId : currentSession.value?.id;
+  return progress.value.cycle.sessions.find((session) => session.status === "pending" && session.id !== currentId);
+});
+
+const currentName = computed(() => {
+  if (props.workout) return props.workout.routine?.name ?? "Entrenamiento libre";
+  return currentSession.value ? routineName(currentSession.value.routineId) : null;
+});
+
+const weeksInCycle = computed(() => [...new Set(progress.value?.cycle.sessions.map((session) => session.week) ?? [])]);
+const visibleWeek = computed(() => selectedWeek.value ?? currentSession.value?.week ?? weeksInCycle.value.at(-1) ?? 1);
+const visibleSessions = computed(() => progress.value?.cycle.sessions.filter((session) => session.week === visibleWeek.value) ?? []);
+const hasActiveCycle = computed(() => progress.value?.cycle.status === "active");
+const sessionLabel = (session: ProgramCycleSession): string => `Sesión ${session.position + 1} · Semana ${session.week}`;
+const formatDate = (value: string): string => new Intl.DateTimeFormat("es", { dateStyle: "medium" }).format(new Date(value));
 
 const statusLabel = (status: ProgramCycleSession["status"]): string => ({
   pending: "pendiente",
@@ -82,22 +105,27 @@ const removeDay = (index: number): void => {
 };
 
 const load = async (): Promise<void> => {
-  const [listed, current, activeRoutines, archivedRoutines, availableExercises] = await Promise.all([
+  loading.value = true;
+  const [listed, current, activeRoutines, archivedRoutines, availableExercises, dashboard] = await Promise.all([
     props.training.listPrograms(),
     props.training.getProgramProgress(),
     props.training.listRoutines({ status: "active" }),
     props.training.listRoutines({ status: "archived" }),
     props.training.listExercises({ status: "active" }),
+    props.training.getDashboard({ from: "0001-01-01T00:00:00.000Z" as ISODateTime, to: "9999-12-31T23:59:59.999Z" as ISODateTime }),
   ]);
-  if (!listed.ok || !current.ok || !activeRoutines.ok || !archivedRoutines.ok || !availableExercises.ok) {
-    error.value = "No se pudieron leer los programas locales.";
+  loading.value = false;
+  if (!dashboard.ok || !listed.ok || !current.ok || !activeRoutines.ok || !archivedRoutines.ok || !availableExercises.ok) {
+    error.value = "No se pudo cargar el programa.";
     return;
   }
   const details = await Promise.all([...activeRoutines.value, ...archivedRoutines.value].map((routine) => props.training.getRoutine(routine.id)));
   if (details.some((routine) => !routine.ok)) {
-    error.value = "No se pudieron abrir las rutinas locales.";
+    error.value = "No se pudieron cargar las rutinas.";
     return;
   }
+  error.value = null;
+  lastWorkout.value = dashboard.value.lastWorkout ?? null;
   programs.value = listed.value;
   progress.value = current.value;
   routines.value = details.filter((routine): routine is { readonly ok: true; readonly value: Routine } => routine.ok).map((routine) => routine.value);
@@ -109,16 +137,23 @@ const load = async (): Promise<void> => {
 };
 
 const start = async (id: Program["id"]): Promise<void> => {
+  if (busy.value) return;
+  busy.value = true;
   const result = await props.training.startProgram(id);
+  busy.value = false;
   if (!result.ok) {
     error.value = "No se pudo iniciar el programa.";
     return;
   }
+  selectedWeek.value = null;
   await load();
 };
 
 const startSession = async (sessionId?: string): Promise<void> => {
+  if (busy.value || props.workout !== null) return;
+  busy.value = true;
   const result = await props.training.startNextProgramWorkout(sessionId as import("../core").ProgramSessionId | undefined);
+  busy.value = false;
   if (!result.ok) {
     error.value = "No se pudo iniciar la sesión.";
     return;
@@ -127,12 +162,14 @@ const startSession = async (sessionId?: string): Promise<void> => {
 };
 
 const selectSession = (session: ProgramCycleSession): void => {
-  selectedSessionId.value = session.id;
-  void nextTick(() => sessionContent.value?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  selectedSessionId.value = selectedSessionId.value === session.id ? null : session.id;
 };
 
 const skip = async (): Promise<void> => {
+  if (busy.value) return;
+  busy.value = true;
   const result = await props.training.skipNextProgramSession();
+  busy.value = false;
   if (!result.ok) error.value = "No se pudo omitir la sesión.";
   else progress.value = result.value;
 };
@@ -172,88 +209,118 @@ const create = async (): Promise<void> => {
 };
 
 onMounted(() => { void load(); });
+watch(() => props.workout?.id, () => { selectedWeek.value = null; void load(); });
 </script>
 
 <template>
-  <section aria-labelledby="program-title">
-    <header><p class="eyebrow">Plan local</p><h2 id="program-title">Programa</h2></header>
+  <section :class="{ 'journey-compact': compact }" aria-labelledby="program-title" :aria-busy="loading">
+    <header v-if="!compact"><p class="eyebrow">Tu entrenamiento</p><h2 id="program-title">Programa</h2></header>
+    <h2 v-else id="program-title" class="eyebrow">Tu secuencia</h2>
     <p v-if="error" class="notice" role="alert">{{ error }}</p>
+    <p v-if="loading && !progress" role="status">Cargando tu entrenamiento…</p>
 
-    <template v-if="progress">
-      <p>{{ progress.cycle.programName }} · {{ progress.completedSessions }}/{{ progress.plannedSessions }} sesiones · adherencia {{ Math.round(progress.adherence * 100) }}%</p>
-      <template v-if="progress.cycle.status === 'abandoned'">
-        <p>Ciclo abandonado. Puedes iniciar otro programa sin perder el historial registrado.</p>
-      </template>
-      <template v-else-if="progress.cycle.status === 'completed'">
-        <p>Informe final · {{ progress.cycle.goals.filter((goal) => goal.achieved).length }}/{{ progress.cycle.goals.length }} metas alcanzadas.</p>
-        <button type="button" @click="duplicate">Repetir ciclo</button>
-      </template>
-      <template v-else>
-        <p v-if="progress.nextSession">Próxima: Semana {{ progress.nextSession.week }}, sesión {{ progress.nextSession.position + 1 }}</p>
-        
-        <div class="inline-actions" style="margin-top: 1rem; margin-bottom: 1rem">
-          <button v-if="progress.nextSession" type="button" @click="startSession()">Iniciar próxima</button>
-          <button v-if="progress.nextSession" type="button" class="secondary-action" @click="skip">Omitir</button>
-          <button type="button" class="secondary-action" @click="abandon">Cambiar programa</button>
-        </div>
+    <div class="training-journey" aria-label="Continuidad del entrenamiento">
+      <article class="journey-previous" aria-labelledby="previous-title">
+        <h3 id="previous-title" class="eyebrow">{{ compact ? "Último" : "Último entrenamiento" }}</h3>
+        <template v-if="lastWorkout">
+          <strong>{{ lastWorkout.routineName ?? "Entrenamiento libre" }}</strong>
+          <span>{{ formatDate(lastWorkout.completedAt) }} · Series completadas: {{ lastWorkout.completedSetCount }}</span>
+        </template>
+        <p v-else>Aún no registraste entrenamientos.</p>
+      </article>
+      <article class="active-card journey-current" aria-labelledby="current-title">
+        <h3 id="current-title" class="eyebrow">{{ workout || currentSession?.status === 'started' ? 'En curso' : 'Para entrenar ahora' }}</h3>
+        <template v-if="currentName">
+          <strong>{{ currentName }}</strong>
+          <span v-if="currentSession && (!workout || workout.programSessionId === currentSession.id)">{{ sessionLabel(currentSession) }}</span>
+          <template v-if="!compact">
+            <button v-if="workout || currentSession?.status === 'started'" type="button" :disabled="busy" @click="emit('continueWorkout', workout ? workout.programSessionId : currentSession?.id)">Continuar sesión</button>
+            <template v-else-if="currentSession">
+              <button type="button" :disabled="busy" @click="startSession(currentSession.id)">Iniciar próxima</button>
+              <button type="button" class="secondary-action" :disabled="busy" @click="skip">Omitir esta sesión</button>
+            </template>
+          </template>
+        </template>
+        <p v-else-if="progress?.cycle.status === 'completed'">Ciclo completado. Puedes repetirlo.</p>
+        <p v-else>Elige un programa abajo.</p>
+      </article>
+      <article class="journey-next" aria-labelledby="following-title">
+        <h3 id="following-title" class="eyebrow">Después</h3>
+        <template v-if="followingSession">
+          <strong>{{ routineName(followingSession.routineId) }}</strong>
+          <span>{{ sessionLabel(followingSession) }}</span>
+        </template>
+        <p v-else-if="currentSession">Esta sesión cierra el ciclo.</p>
+        <p v-else>Elige tu siguiente programa.</p>
+      </article>
+    </div>
 
-      </template>
-
-      <section aria-labelledby="program-sessions-title">
-        <h3 id="program-sessions-title" class="eyebrow" style="margin-bottom: 0.5rem">Sesiones</h3>
-        <ul class="card-list" style="margin-bottom: 1rem">
-          <li v-for="session in orderedSessions" :key="session.id">
-            <strong>Semana {{ session.week }}, Día {{ session.position + 1 }}</strong>
-            <span>{{ routineFor(session.routineId)?.name ?? "Rutina" }} · {{ statusLabel(session.status) }}</span>
-            <div class="inline-actions" style="margin-top: 0.5rem">
-              <button type="button" class="secondary-action" @click="selectSession(session)">Ver contenido</button>
-              <button v-if="session.status === 'pending'" type="button" @click="startSession(session.id)">Iniciar esta sesión</button>
-              <button v-if="session.status === 'started'" type="button" @click="emit('continueWorkout')">Continuar sesión</button>
-            </div>
+    <template v-if="!compact">
+      <template v-if="progress">
+        <p>{{ programs.find((program) => program.id === progress?.cycle.programId)?.name ?? progress.cycle.programName }} · {{ progress.completedSessions }}/{{ progress.plannedSessions }} sesiones completadas</p>
+        <p v-if="progress.cycle.status === 'abandoned'">Ciclo cerrado. Tu historial se conserva.</p>
+        <template v-else-if="progress.cycle.status === 'completed'">
+          <p>Informe final · {{ progress.cycle.goals.filter((goal) => goal.achieved).length }}/{{ progress.cycle.goals.length }} metas alcanzadas.</p>
+          <button type="button" :disabled="busy || workout !== null" @click="duplicate">Repetir ciclo</button>
+        </template>
+        <template v-else>
+          <p>Sigue esta secuencia. Si faltas un día, retoma donde quedaste.</p>
+          <section aria-labelledby="program-sessions-title">
+            <h3 id="program-sessions-title">Secuencia del programa</h3>
+            <label class="field">Semana
+              <select :value="visibleWeek" @change="selectedWeek = Number(($event.target as HTMLSelectElement).value); selectedSessionId = null">
+                <option v-for="week in weeksInCycle" :key="week" :value="week">Semana {{ week }}</option>
+              </select>
+            </label>
+            <ol class="card-list program-sequence">
+              <li v-for="session in visibleSessions" :key="session.id" :aria-current="currentSession?.id === session.id ? 'step' : undefined">
+                <span>{{ sessionLabel(session) }} · {{ statusLabel(session.status) }}</span>
+                <strong>{{ routineName(session.routineId) }}</strong>
+                <span v-if="session.completedAt">Completada el {{ formatDate(session.completedAt) }}</span>
+                <button type="button" class="secondary-action" :aria-expanded="selectedSessionId === session.id" :aria-controls="`session-${session.id}`" @click="selectSession(session)">{{ selectedSessionId === session.id ? 'Ocultar' : 'Ver ejercicios' }}</button>
+                <section v-if="selectedSessionId === session.id" :id="`session-${session.id}`" aria-label="Contenido de la sesión">
+                  <ul v-if="selectedVariant" class="history-sets">
+                    <li v-for="(exercise, index) in selectedExercises" :key="index"><span>{{ exercise.sets }} series</span><strong>{{ exercise.name }}</strong></li>
+                  </ul>
+                  <p v-else class="empty-state">Rutina no disponible.</p>
+                  <div class="inline-actions">
+                    <button v-if="session.status === 'pending'" type="button" :disabled="busy || workout !== null || currentSession?.status === 'started'" @click="startSession(session.id)">Entrenar esta sesión</button>
+                    <button v-if="session.status === 'started'" type="button" :disabled="busy" @click="emit('continueWorkout', session.id)">Continuar sesión</button>
+                    <button v-if="selectedVariant" type="button" class="secondary-action" @click="emit('editRoutine', session.routineId)">Editar rutina</button>
+                  </div>
+                </section>
+              </li>
+            </ol>
+          </section>
+          <details class="program-options">
+            <summary>Opciones del programa</summary>
+            <button type="button" class="secondary-action" :disabled="busy" @click="abandon">Cambiar programa</button>
+          </details>
+        </template>
+        <ul v-if="progress.cycle.goals.length" class="card-list">
+          <li v-for="goal in progress.cycle.goals" :key="goal.exerciseId">
+            <strong>{{ exercises.find((exercise) => exercise.id === goal.exerciseId)?.name ?? goal.exerciseId }}</strong><span>{{ goal.achieved ? "Meta alcanzada" : "En progreso" }}</span>
+            <span v-if="goal.recommendedWeight">Siguiente: {{ goal.recommendedWeight.amount }} {{ goal.recommendedWeight.unit }}</span>
           </li>
         </ul>
+      </template>
 
-        <section v-if="selectedSession" ref="sessionContent" class="active-card" aria-labelledby="session-content-title">
-          <p class="eyebrow">Contenido de la sesión</p>
-          <h3 id="session-content-title">{{ routineFor(selectedSession.routineId)?.name ?? "Rutina no disponible" }}<template v-if="selectedVariant"> · {{ selectedVariant.name }}</template></h3>
-          <ul v-if="selectedVariant" class="history-sets">
-            <li v-for="(exercise, index) in selectedExercises" :key="index"><span>{{ exercise.sets }} series</span><strong>{{ exercise.name }}</strong></li>
-          </ul>
-          <p v-else class="empty-state">La estructura de esta rutina ya no está disponible.</p>
-          <div class="inline-actions">
-            <button v-if="selectedSession.status === 'pending'" type="button" @click="startSession(selectedSession.id)">Iniciar esta sesión</button>
-            <button v-if="selectedSession.status === 'started'" type="button" @click="emit('continueWorkout')">Continuar sesión</button>
-            <button v-if="selectedVariant" type="button" class="secondary-action" @click="emit('editRoutine', selectedSession.routineId)">Editar rutina</button>
-          </div>
-        </section>
-      </section>
-      <ul class="card-list">
-        <li v-for="goal in progress.cycle.goals" :key="goal.exerciseId">
-          <strong>{{ goal.exerciseId }}</strong><span>{{ goal.achieved ? "Meta alcanzada" : "En progreso" }}</span>
-          <span v-if="goal.recommendedWeight">Siguiente: {{ goal.recommendedWeight.amount }} {{ goal.recommendedWeight.unit }}</span>
-        </li>
-      </ul>
-    </template>
-
-    <template v-else><p class="empty-state">Elige un programa para ordenar tu próxima rutina y medir adherencia.</p></template>
-
-    <template v-if="!progress || !progress.nextSession">
-      <ul class="card-list">
-        <li v-for="program in programs" :key="program.id">
-          <strong>{{ program.name }}</strong><span>{{ program.weeks }} semanas · {{ program.sessions.length }} días por semana</span>
-          <div style="margin-top: 0.5rem">
-            <h4 class="eyebrow" style="margin-bottom: 0.5rem">Rutinas</h4>
-            <ul class="history-sets">
+      <template v-if="!hasActiveCycle && !loading">
+        <h3>Elige tu programa</h3>
+        <ul class="card-list">
+          <li v-for="program in programs" :key="program.id">
+            <strong>{{ program.name }}</strong><span>{{ program.weeks }} semanas · {{ program.sessions.length }} sesiones por semana</span>
+            <ol class="program-days">
               <li v-for="(session, index) in program.sessions" :key="index">
-                <span>Día {{ index + 1 }}</span>
-                <strong>{{ routineFor(session.routineId)?.name ?? "Rutina desconocida" }}</strong>
+                <span>Sesión {{ index + 1 }}</span>
+                <strong>{{ routineName(session.routineId) }}</strong>
               </li>
-            </ul>
-          </div>
-          <button type="button" @click="start(program.id)" style="margin-top: 0.5rem">Iniciar programa</button>
-        </li>
-      </ul>
-
+            </ol>
+            <button type="button" :disabled="busy || workout !== null" @click="start(program.id)">Iniciar programa</button>
+          </li>
+        </ul>
+        <details class="program-options">
+          <summary>Crear otro programa</summary>
       <form class="editor-card" @submit.prevent="create">
         <header><p class="eyebrow">Programa propio</p><h3>Diseña tu semana</h3><p>Agrega un día por cada sesión que quieras repetir cada semana.</p></header>
         <label class="field">Nombre <input v-model="programName" required /></label>
@@ -275,6 +342,9 @@ onMounted(() => { void load(); });
         <button type="button" class="secondary-action" @click="addDay">Añadir otro día</button>
         <button type="submit" :disabled="plannedDays.length === 0">Crear programa propio</button>
       </form>
+
+        </details>
+      </template>
     </template>
   </section>
 </template>

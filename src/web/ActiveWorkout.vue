@@ -349,6 +349,8 @@ onUnmounted(() => {
       </div>
     </aside>
 
+    <p v-if="workout.exercises.length === 0" class="empty-state">Este entrenamiento no tiene ejercicios. Añade uno abajo o descártalo para iniciar una rutina.</p>
+
     <article v-for="exItem in visualExercises" :key="exItem.exercise.id" class="exercise-card">
       <header class="exercise-header">
         <div>

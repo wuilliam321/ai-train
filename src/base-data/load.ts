@@ -10,6 +10,13 @@ export interface BaseDataLoadResult {
   readonly createdPrograms: number;
 }
 
+const previousRoutineNames = new Map([
+  ["Pecho, espalda y brazos", "Simple · Torso A"],
+  ["Piernas · Sentadilla y rumano", "Simple · Pierna A"],
+  ["Hombros, pecho y brazos", "Simple · Torso B"],
+  ["Piernas · Glúteos y cuádriceps", "Simple · Pierna B"],
+]);
+
 const normalizedName = (name: string): string => name.trim().toLocaleLowerCase();
 
 const asFailure = <Value>(error: ApplicationError): Result<Value, ApplicationError> => ({ ok: false, error });
@@ -72,7 +79,13 @@ export const loadBaseData = async (
   let createdRoutines = 0;
 
   for (const draft of resolveBaseRoutines(exerciseIds)) {
-    if (findByName(listedRoutines.value, draft.name) !== undefined) {
+    const existing = findByName(listedRoutines.value, draft.name)
+      ?? findByName(listedRoutines.value, previousRoutineNames.get(draft.name) ?? draft.name);
+    if (existing !== undefined) {
+      if (existing.name === previousRoutineNames.get(draft.name)) {
+        const renamed = await training.updateRoutine({ routineId: existing.id, patch: { name: draft.name } });
+        if (!renamed.ok) return asFailure(renamed.error);
+      }
       continue;
     }
 
@@ -93,7 +106,15 @@ export const loadBaseData = async (
   if (!programs.ok) return asFailure(programs.error);
   let createdPrograms = 0;
   for (const program of resolveBasePrograms(fullRoutines.filter((routine): routine is { readonly ok: true; readonly value: import("../core").Routine } => routine.ok).map((routine) => routine.value))) {
-    if (findByName(programs.value, program.name) !== undefined) continue;
+    const existing = findByName(programs.value, program.name)
+      ?? (program.name === "Fuerza e hipertrofia · 4 días" ? findByName(programs.value, "Simple · Torso/Pierna 4 días") : undefined);
+    if (existing !== undefined) {
+      if (existing.name === "Simple · Torso/Pierna 4 días") {
+        const renamed = await training.updateProgram({ programId: existing.id, patch: { name: program.name } });
+        if (!renamed.ok) return asFailure(renamed.error);
+      }
+      continue;
+    }
     const created = await training.createProgram(program);
     if (!created.ok) return asFailure(created.error);
     createdPrograms += 1;
@@ -113,5 +134,5 @@ export const loadBaseData = async (
 export const baseDataCounts = {
   exercises: baseExercises.length,
   routines: baseRoutines.length,
-  programs: 3,
+  programs: 4,
 } as const;

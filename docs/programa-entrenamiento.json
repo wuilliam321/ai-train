@@ -1,0 +1,1204 @@
+{
+  "version": 2,
+  "exercises": [
+    {
+      "id": "d843190b-7555-481b-8c4d-5212339bcac0",
+      "name": "Romanian Deadlift",
+      "primaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "back"
+      ],
+      "defaultRestSeconds": 120,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.297Z",
+      "updatedAt": "2026-10-22T16:33:59.297Z"
+    },
+    {
+      "id": "d90aedad-c600-4842-8414-5983f18be5c9",
+      "name": "Seated Leg Curl",
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [],
+      "defaultRestSeconds": 60,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.298Z",
+      "updatedAt": "2026-10-22T16:33:59.298Z"
+    },
+    {
+      "id": "037a430e-1945-49fb-a874-e11442b3c284",
+      "name": "Wide-Grip Seated Row",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "biceps"
+      ],
+      "defaultRestSeconds": 120,
+      "notes": "Remo abierto, codos separados del cuerpo.",
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.298Z",
+      "updatedAt": "2026-10-22T16:33:59.298Z"
+    },
+    {
+      "id": "e7e66411-240c-4774-b518-df092be2ea41",
+      "name": "Close-Grip Seated Row",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "defaultRestSeconds": 120,
+      "notes": "Remo con codos pegados al cuerpo.",
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.299Z",
+      "updatedAt": "2026-10-22T16:33:59.299Z"
+    },
+    {
+      "id": "7892ad00-59e7-4db0-825d-2af74cdb6d0e",
+      "name": "Standing Calf Raise",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [],
+      "defaultRestSeconds": 60,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.299Z",
+      "updatedAt": "2026-10-22T16:33:59.299Z"
+    },
+    {
+      "id": "c552a376-3f7a-43a7-9dfa-46c16518e55e",
+      "name": "Hip Thrust",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "defaultRestSeconds": 120,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.299Z",
+      "updatedAt": "2026-10-22T16:33:59.299Z"
+    },
+    {
+      "id": "c383ecdf-72a1-4f55-9d82-fa0fffe40aa5",
+      "name": "Squat",
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "defaultRestSeconds": 120,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.300Z",
+      "updatedAt": "2026-10-22T16:33:59.300Z"
+    },
+    {
+      "id": "f7eb2ecc-9f87-4698-b15e-b041f2033103",
+      "name": "Leg Extension",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [],
+      "defaultRestSeconds": 60,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.300Z",
+      "updatedAt": "2026-10-22T16:33:59.300Z"
+    },
+    {
+      "id": "1d383450-6cf9-49c6-a4d4-94f8feb0a1a0",
+      "name": "Shoulder Press",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "defaultRestSeconds": 120,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.302Z",
+      "updatedAt": "2026-10-22T16:33:59.302Z"
+    },
+    {
+      "id": "7a42dfb5-f4fe-4066-af45-bbbbc4a19b09",
+      "name": "Lateral Raise",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "secondaryMuscles": [],
+      "defaultRestSeconds": 60,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.303Z",
+      "updatedAt": "2026-10-22T16:33:59.303Z"
+    },
+    {
+      "id": "399cef44-b784-4296-88fb-bc468ca313da",
+      "name": "Triceps Overhead Extension",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "defaultRestSeconds": 60,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.306Z",
+      "updatedAt": "2026-10-22T16:33:59.306Z"
+    },
+    {
+      "id": "796f88e8-19b7-4288-9fa2-bb97bc7d0635",
+      "name": "Cable Triceps Extension",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "defaultRestSeconds": 60,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.307Z",
+      "updatedAt": "2026-10-22T16:33:59.307Z"
+    },
+    {
+      "id": "4be066dd-988e-427e-9041-5db82ce309d3",
+      "name": "Lat Pulldown",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "defaultRestSeconds": 120,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.308Z",
+      "updatedAt": "2026-10-22T16:33:59.308Z"
+    },
+    {
+      "id": "e3e1030c-bbfc-4bd4-b150-20503cbe594c",
+      "name": "Preacher Curl",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "defaultRestSeconds": 60,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.313Z",
+      "updatedAt": "2026-10-22T16:33:59.313Z"
+    },
+    {
+      "id": "01cb4637-03cf-4886-857d-8920a6155efd",
+      "name": "Incline Bench Press",
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "defaultRestSeconds": 120,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.315Z",
+      "updatedAt": "2026-10-22T16:33:59.315Z"
+    },
+    {
+      "id": "48694b10-91ee-4aa7-aa74-8fd37f65c02a",
+      "name": "Chest Fly",
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "defaultRestSeconds": 60,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.316Z",
+      "updatedAt": "2026-10-22T16:33:59.316Z"
+    },
+    {
+      "id": "628de40f-9999-4918-ae94-0ecd49b54cd0",
+      "name": "Abdominal Exercise",
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "secondaryMuscles": [],
+      "defaultRestSeconds": 45,
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.319Z",
+      "updatedAt": "2026-10-22T16:33:59.319Z"
+    }
+  ],
+  "routines": [
+    {
+      "id": "cfe4d13a-20c9-4628-9381-cf5a59f9a5c3",
+      "name": "Pecho, espalda y brazos",
+      "variants": [
+        {
+          "id": "b7d2dfbd-3be4-4ec6-8fc1-abc13c69a993",
+          "name": "Gym",
+          "exercises": [
+            {
+              "id": "36417019-5b15-4955-b4fd-b8c1f910d2cd",
+              "exerciseId": "01cb4637-03cf-4886-857d-8920a6155efd",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "569549e8-4dfe-4bab-a1ba-616caeadd450",
+              "exerciseId": "4be066dd-988e-427e-9041-5db82ce309d3",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "c523cd54-e5ff-4ec1-b915-009c9effee93",
+              "exerciseId": "037a430e-1945-49fb-a874-e11442b3c284",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "1379f149-ea84-482e-85d5-73bcd684304d",
+              "exerciseId": "7a42dfb5-f4fe-4066-af45-bbbbc4a19b09",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 12,
+                    "maximum": 20
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 12,
+                    "maximum": 20
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "a298f460-24f4-4e6e-9638-ef9028ea2050",
+              "exerciseId": "e3e1030c-bbfc-4bd4-b150-20503cbe594c",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "d9d6ed21-cafd-4739-b4c1-367c51031e43",
+              "exerciseId": "796f88e8-19b7-4288-9fa2-bb97bc7d0635",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            }
+          ]
+        }
+      ],
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.320Z",
+      "updatedAt": "2026-10-22T16:33:59.320Z"
+    },
+    {
+      "id": "abfde53e-8635-497b-bf54-4d436a3360ef",
+      "name": "Piernas · Sentadilla y rumano",
+      "variants": [
+        {
+          "id": "bf010386-f245-42eb-bebc-0bc3a51db618",
+          "name": "Gym",
+          "exercises": [
+            {
+              "id": "e8fc3f3d-3e7e-4dd2-863c-d3cde7b09945",
+              "exerciseId": "c383ecdf-72a1-4f55-9d82-fa0fffe40aa5",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "b1e9016e-111a-4200-a482-b25bbee24734",
+              "exerciseId": "d843190b-7555-481b-8c4d-5212339bcac0",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "52e4ec74-c2e9-4611-ac9a-f68918cebfca",
+              "exerciseId": "d90aedad-c600-4842-8414-5983f18be5c9",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "1b27d599-9c01-4c7a-bd4c-80da305f2dfb",
+              "exerciseId": "7892ad00-59e7-4db0-825d-2af74cdb6d0e",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 20
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 20
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "23b44a7e-ff78-4887-9dbd-c9e386ab99ad",
+              "exerciseId": "628de40f-9999-4918-ae94-0ecd49b54cd0",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 20
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 20
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            }
+          ]
+        }
+      ],
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.321Z",
+      "updatedAt": "2026-10-22T16:33:59.321Z"
+    },
+    {
+      "id": "acdf660f-c6db-4d5c-9043-a7abf31ccef9",
+      "name": "Hombros, pecho y brazos",
+      "variants": [
+        {
+          "id": "63a444c0-9cc6-4a60-ace5-492bde92b3da",
+          "name": "Gym",
+          "exercises": [
+            {
+              "id": "f5331391-c47f-4711-9c39-218676f0fd17",
+              "exerciseId": "01cb4637-03cf-4886-857d-8920a6155efd",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "aad4d0a9-f5ea-4c54-8d9c-5b1e484cb722",
+              "exerciseId": "e7e66411-240c-4774-b518-df092be2ea41",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "621cf156-0bdb-4a2c-87a0-2dbd92751fe7",
+              "exerciseId": "1d383450-6cf9-49c6-a4d4-94f8feb0a1a0",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "2d7f3de3-9e98-4cc4-a358-fdaa1ee93e12",
+              "exerciseId": "48694b10-91ee-4aa7-aa74-8fd37f65c02a",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "e171a98d-f45f-4b90-9b53-259ef76311d1",
+              "exerciseId": "e3e1030c-bbfc-4bd4-b150-20503cbe594c",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "43dbdc91-a78c-4f34-bb2a-7a915f7dc5d7",
+              "exerciseId": "399cef44-b784-4296-88fb-bc468ca313da",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            }
+          ]
+        }
+      ],
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.321Z",
+      "updatedAt": "2026-10-22T16:33:59.321Z"
+    },
+    {
+      "id": "9a018b2c-3ac5-44e9-9eb9-876522093039",
+      "name": "Piernas · Glúteos y cuádriceps",
+      "variants": [
+        {
+          "id": "79ae8433-e894-42f5-a9fa-f8124a545241",
+          "name": "Gym",
+          "exercises": [
+            {
+              "id": "7fb1b7d1-657a-4de7-9107-8e195a527638",
+              "exerciseId": "c552a376-3f7a-43a7-9dfa-46c16518e55e",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 8,
+                    "maximum": 12
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "0f8783fc-321e-4a97-8a5b-6b8ae30935bc",
+              "exerciseId": "c383ecdf-72a1-4f55-9d82-fa0fffe40aa5",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 6,
+                    "maximum": 10
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "638069e6-786a-47f2-8a81-c5cffc0cbf67",
+              "exerciseId": "f7eb2ecc-9f87-4698-b15e-b041f2033103",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "0ce6a235-5987-42d0-b40f-88b43097f525",
+              "exerciseId": "d90aedad-c600-4842-8414-5983f18be5c9",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 15
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "8de01aaf-6234-4caf-8b4f-38bb8a641c5d",
+              "exerciseId": "7892ad00-59e7-4db0-825d-2af74cdb6d0e",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 20
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 20
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            },
+            {
+              "id": "bd3b18fd-28ed-4887-9a19-cb8ee7065fd6",
+              "exerciseId": "628de40f-9999-4918-ae94-0ecd49b54cd0",
+              "sets": [
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 20
+                  }
+                },
+                {
+                  "type": "normal",
+                  "repetitions": {
+                    "kind": "range",
+                    "minimum": 10,
+                    "maximum": 20
+                  }
+                }
+              ],
+              "laterality": "bilateral"
+            }
+          ]
+        }
+      ],
+      "status": "active",
+      "createdAt": "2026-10-22T16:33:59.322Z",
+      "updatedAt": "2026-10-22T16:33:59.322Z"
+    }
+  ],
+  "workouts": [],
+  "history": [],
+  "programs": [
+    {
+      "name": "Fuerza e hipertrofia · 4 días",
+      "weeks": 8,
+      "sessions": [
+        {
+          "routineId": "cfe4d13a-20c9-4628-9381-cf5a59f9a5c3",
+          "variantId": "b7d2dfbd-3be4-4ec6-8fc1-abc13c69a993"
+        },
+        {
+          "routineId": "abfde53e-8635-497b-bf54-4d436a3360ef",
+          "variantId": "bf010386-f245-42eb-bebc-0bc3a51db618"
+        },
+        {
+          "routineId": "acdf660f-c6db-4d5c-9043-a7abf31ccef9",
+          "variantId": "63a444c0-9cc6-4a60-ace5-492bde92b3da"
+        },
+        {
+          "routineId": "9a018b2c-3ac5-44e9-9eb9-876522093039",
+          "variantId": "79ae8433-e894-42f5-a9fa-f8124a545241"
+        }
+      ],
+      "goals": [],
+      "id": "d414dd6c-0a34-4a6f-8819-a0638bc506b4",
+      "createdAt": "2026-10-22T16:33:59.338Z",
+      "updatedAt": "2026-10-22T16:33:59.338Z"
+    }
+  ],
+  "programCycles": [
+    {
+      "id": "bddfc5d3-71db-4416-ba08-c0b88d794941",
+      "programId": "d414dd6c-0a34-4a6f-8819-a0638bc506b4",
+      "programName": "Fuerza e hipertrofia · 4 días",
+      "status": "active",
+      "startedAt": "2026-10-22T16:33:59.342Z",
+      "sessions": [
+        {
+          "routineId": "cfe4d13a-20c9-4628-9381-cf5a59f9a5c3",
+          "variantId": "b7d2dfbd-3be4-4ec6-8fc1-abc13c69a993",
+          "id": "85c23ffe-98dd-475d-bf9d-fbc7f17f761a",
+          "week": 1,
+          "position": 0,
+          "status": "pending"
+        },
+        {
+          "routineId": "abfde53e-8635-497b-bf54-4d436a3360ef",
+          "variantId": "bf010386-f245-42eb-bebc-0bc3a51db618",
+          "id": "03565165-3508-4a83-b71f-c1a88e69613b",
+          "week": 1,
+          "position": 1,
+          "status": "pending"
+        },
+        {
+          "routineId": "acdf660f-c6db-4d5c-9043-a7abf31ccef9",
+          "variantId": "63a444c0-9cc6-4a60-ace5-492bde92b3da",
+          "id": "d159f77b-bf9f-4adb-b89b-38c31dd7b888",
+          "week": 1,
+          "position": 2,
+          "status": "pending"
+        },
+        {
+          "routineId": "9a018b2c-3ac5-44e9-9eb9-876522093039",
+          "variantId": "79ae8433-e894-42f5-a9fa-f8124a545241",
+          "id": "05e8ce6b-4838-44e3-83cf-8199425bcc99",
+          "week": 1,
+          "position": 3,
+          "status": "pending"
+        },
+        {
+          "routineId": "cfe4d13a-20c9-4628-9381-cf5a59f9a5c3",
+          "variantId": "b7d2dfbd-3be4-4ec6-8fc1-abc13c69a993",
+          "id": "e675a0a3-29b7-4606-885e-d4cea174480c",
+          "week": 2,
+          "position": 0,
+          "status": "pending"
+        },
+        {
+          "routineId": "abfde53e-8635-497b-bf54-4d436a3360ef",
+          "variantId": "bf010386-f245-42eb-bebc-0bc3a51db618",
+          "id": "952ab642-ba3d-4f41-93af-33c31e2cb4cf",
+          "week": 2,
+          "position": 1,
+          "status": "pending"
+        },
+        {
+          "routineId": "acdf660f-c6db-4d5c-9043-a7abf31ccef9",
+          "variantId": "63a444c0-9cc6-4a60-ace5-492bde92b3da",
+          "id": "936068e8-92f3-42db-bf6a-fe5dad4eabd0",
+          "week": 2,
+          "position": 2,
+          "status": "pending"
+        },
+        {
+          "routineId": "9a018b2c-3ac5-44e9-9eb9-876522093039",
+          "variantId": "79ae8433-e894-42f5-a9fa-f8124a545241",
+          "id": "7c741ecc-9a97-490a-9b3f-161c46850f2f",
+          "week": 2,
+          "position": 3,
+          "status": "pending"
+        },
+        {
+          "routineId": "cfe4d13a-20c9-4628-9381-cf5a59f9a5c3",
+          "variantId": "b7d2dfbd-3be4-4ec6-8fc1-abc13c69a993",
+          "id": "4eee2502-38d4-488a-ad6f-efaac20a9944",
+          "week": 3,
+          "position": 0,
+          "status": "pending"
+        },
+        {
+          "routineId": "abfde53e-8635-497b-bf54-4d436a3360ef",
+          "variantId": "bf010386-f245-42eb-bebc-0bc3a51db618",
+          "id": "ea42ec44-dcf4-4558-a0eb-92ccaf343854",
+          "week": 3,
+          "position": 1,
+          "status": "pending"
+        },
+        {
+          "routineId": "acdf660f-c6db-4d5c-9043-a7abf31ccef9",
+          "variantId": "63a444c0-9cc6-4a60-ace5-492bde92b3da",
+          "id": "44d5414b-8774-4326-96a8-8146641c97c5",
+          "week": 3,
+          "position": 2,
+          "status": "pending"
+        },
+        {
+          "routineId": "9a018b2c-3ac5-44e9-9eb9-876522093039",
+          "variantId": "79ae8433-e894-42f5-a9fa-f8124a545241",
+          "id": "9d506520-59f7-4479-a9ca-19ec3788c3c5",
+          "week": 3,
+          "position": 3,
+          "status": "pending"
+        },
+        {
+          "routineId": "cfe4d13a-20c9-4628-9381-cf5a59f9a5c3",
+          "variantId": "b7d2dfbd-3be4-4ec6-8fc1-abc13c69a993",
+          "id": "800bcd72-2fe2-4fd0-aaa2-d2d08dacc4ff",
+          "week": 4,
+          "position": 0,
+          "status": "pending"
+        },
+        {
+          "routineId": "abfde53e-8635-497b-bf54-4d436a3360ef",
+          "variantId": "bf010386-f245-42eb-bebc-0bc3a51db618",
+          "id": "9e81a760-e904-4192-97cf-91ac82219fec",
+          "week": 4,
+          "position": 1,
+          "status": "pending"
+        },
+        {
+          "routineId": "acdf660f-c6db-4d5c-9043-a7abf31ccef9",
+          "variantId": "63a444c0-9cc6-4a60-ace5-492bde92b3da",
+          "id": "e6018766-234a-4f2e-a286-ed219ada2d7b",
+          "week": 4,
+          "position": 2,
+          "status": "pending"
+        },
+        {
+          "routineId": "9a018b2c-3ac5-44e9-9eb9-876522093039",
+          "variantId": "79ae8433-e894-42f5-a9fa-f8124a545241",
+          "id": "01ded22c-0386-49ac-a1b3-68497100b727",
+          "week": 4,
+          "position": 3,
+          "status": "pending"
+        },
+        {
+          "routineId": "cfe4d13a-20c9-4628-9381-cf5a59f9a5c3",
+          "variantId": "b7d2dfbd-3be4-4ec6-8fc1-abc13c69a993",
+          "id": "8298c50c-438d-4d5e-ae70-620ac1a5b827",
+          "week": 5,
+          "position": 0,
+          "status": "pending"
+        },
+        {
+          "routineId": "abfde53e-8635-497b-bf54-4d436a3360ef",
+          "variantId": "bf010386-f245-42eb-bebc-0bc3a51db618",
+          "id": "ca4165b1-fc8c-4ceb-92a5-13f9c222e820",
+          "week": 5,
+          "position": 1,
+          "status": "pending"
+        },
+        {
+          "routineId": "acdf660f-c6db-4d5c-9043-a7abf31ccef9",
+          "variantId": "63a444c0-9cc6-4a60-ace5-492bde92b3da",
+          "id": "122c4d23-0a37-4812-8083-1762f061e54f",
+          "week": 5,
+          "position": 2,
+          "status": "pending"
+        },
+        {
+          "routineId": "9a018b2c-3ac5-44e9-9eb9-876522093039",
+          "variantId": "79ae8433-e894-42f5-a9fa-f8124a545241",
+          "id": "8ef2c07f-3f9e-47dd-9920-ac70f89ae052",
+          "week": 5,
+          "position": 3,
+          "status": "pending"
+        },
+        {
+          "routineId": "cfe4d13a-20c9-4628-9381-cf5a59f9a5c3",
+          "variantId": "b7d2dfbd-3be4-4ec6-8fc1-abc13c69a993",
+          "id": "674fe8ee-5a60-4dd9-a374-382501902ff5",
+          "week": 6,
+          "position": 0,
+          "status": "pending"
+        },
+        {
+          "routineId": "abfde53e-8635-497b-bf54-4d436a3360ef",
+          "variantId": "bf010386-f245-42eb-bebc-0bc3a51db618",
+          "id": "9cdcbc15-3f5d-431d-8399-38008133df2a",
+          "week": 6,
+          "position": 1,
+          "status": "pending"
+        },
+        {
+          "routineId": "acdf660f-c6db-4d5c-9043-a7abf31ccef9",
+          "variantId": "63a444c0-9cc6-4a60-ace5-492bde92b3da",
+          "id": "d1ff4aa8-d46f-4016-9dc7-432834688ba1",
+          "week": 6,
+          "position": 2,
+          "status": "pending"
+        },
+        {
+          "routineId": "9a018b2c-3ac5-44e9-9eb9-876522093039",
+          "variantId": "79ae8433-e894-42f5-a9fa-f8124a545241",
+          "id": "5887bdb6-23e9-4437-ab7f-0d66bd46e4ce",
+          "week": 6,
+          "position": 3,
+          "status": "pending"
+        },
+        {
+          "routineId": "cfe4d13a-20c9-4628-9381-cf5a59f9a5c3",
+          "variantId": "b7d2dfbd-3be4-4ec6-8fc1-abc13c69a993",
+          "id": "7746955c-70b8-4c1f-8ae1-e1bccab0887e",
+          "week": 7,
+          "position": 0,
+          "status": "pending"
+        },
+        {
+          "routineId": "abfde53e-8635-497b-bf54-4d436a3360ef",
+          "variantId": "bf010386-f245-42eb-bebc-0bc3a51db618",
+          "id": "ae4e5564-921e-4d49-8e29-ab8b5ff77e4f",
+          "week": 7,
+          "position": 1,
+          "status": "pending"
+        },
+        {
+          "routineId": "acdf660f-c6db-4d5c-9043-a7abf31ccef9",
+          "variantId": "63a444c0-9cc6-4a60-ace5-492bde92b3da",
+          "id": "20b9d5be-6c0a-4260-9d9b-08745456c92c",
+          "week": 7,
+          "position": 2,
+          "status": "pending"
+        },
+        {
+          "routineId": "9a018b2c-3ac5-44e9-9eb9-876522093039",
+          "variantId": "79ae8433-e894-42f5-a9fa-f8124a545241",
+          "id": "979acef0-77f3-4d99-9c69-8067ad5545a7",
+          "week": 7,
+          "position": 3,
+          "status": "pending"
+        },
+        {
+          "routineId": "cfe4d13a-20c9-4628-9381-cf5a59f9a5c3",
+          "variantId": "b7d2dfbd-3be4-4ec6-8fc1-abc13c69a993",
+          "id": "32bdb76d-604a-4822-8c6d-f5715f991d00",
+          "week": 8,
+          "position": 0,
+          "status": "pending"
+        },
+        {
+          "routineId": "abfde53e-8635-497b-bf54-4d436a3360ef",
+          "variantId": "bf010386-f245-42eb-bebc-0bc3a51db618",
+          "id": "76460ebc-ab47-4628-8300-a633660f9376",
+          "week": 8,
+          "position": 1,
+          "status": "pending"
+        },
+        {
+          "routineId": "acdf660f-c6db-4d5c-9043-a7abf31ccef9",
+          "variantId": "63a444c0-9cc6-4a60-ace5-492bde92b3da",
+          "id": "ac543908-0c6a-4a48-b2b2-e52e61f4e6e9",
+          "week": 8,
+          "position": 2,
+          "status": "pending"
+        },
+        {
+          "routineId": "9a018b2c-3ac5-44e9-9eb9-876522093039",
+          "variantId": "79ae8433-e894-42f5-a9fa-f8124a545241",
+          "id": "cbe67a34-51e2-4929-973c-9fac4f7097ed",
+          "week": 8,
+          "position": 3,
+          "status": "pending"
+        }
+      ],
+      "goals": []
+    }
+  ]
+}

@@ -1,3 +1,22 @@
+# Fase 9 — Rutinas y continuidad del entrenamiento
+
+Estado: `completed`.
+
+- [x] Elegir, consultar e iniciar una rutina en su misma tarjeta, sin saltos de scroll.
+- [x] Mostrar último entrenamiento, sesión actual y siguiente durante el programa y el entrenamiento.
+- [x] Secuencia con nombres musculares, semana visible y contenido inline; regreso al programa al terminar.
+- [x] Nuevo JSON y guía sin la denominación anterior; importación y recuperación offline verificadas.
+- [x] Pruebas de navegación móvil, continuidad entre semanas y `pnpm build` en verde.
+
+# Fase 8 — Sesiones visibles y programa del audio
+
+Estado: `completed`.
+
+- [x] Recuperar y validar la sesión al continuar; explicar sesiones ausentes y entrenamientos sin ejercicios.
+- [x] Programa torso/pierna de cuatro días basado en `train.mp3`, con gemelos y abdomen como complementos.
+- [x] JSON importable, transcripción y guía breve de uso.
+- [x] Regresión de UI y `pnpm build` en verde.
+
 # Fase 7 — Programas y progreso dirigido
 
 Estado: `completed`.

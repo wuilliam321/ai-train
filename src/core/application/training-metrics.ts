@@ -115,7 +115,7 @@ export class TrainingMetricsService {
       return workouts;
     }
 
-    const lastWorkout = workouts.value.at(-1);
+    const lastWorkout = [...workouts.value].sort((left, right) => right.completedAt.localeCompare(left.completedAt))[0];
     return success({
       period,
       workoutCount: workouts.value.length,
