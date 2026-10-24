@@ -7,3 +7,9 @@ test-results
 .env.*
 !.env.example
 server-dist
+!.env.default
+*.pem
+*.key
+service-account*.json
+*credentials*.json
+*adminsdk*.json

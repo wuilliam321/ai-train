@@ -8,3 +8,13 @@ test-results
 current-routines
 *.md
 data
+**/node_modules
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.default
+**/*.pem
+**/*.key
+**/service-account*.json
+**/*credentials*.json
+**/*adminsdk*.json
