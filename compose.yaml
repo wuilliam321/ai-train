@@ -1,5 +1,6 @@
 services:
   train-app:
+    image: security-candidate:train-app-runtime-20261110
     build:
       context: .
       dockerfile: Dockerfile
@@ -19,6 +20,7 @@ services:
       push-service:
         condition: service_healthy
   push-service:
+    image: security-candidate:train-push-minimal-20261110
     build:
       context: .
       dockerfile: push.Dockerfile

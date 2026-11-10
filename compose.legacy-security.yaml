@@ -1,0 +1,15 @@
+services:
+  ai-train:
+    image: security-update:legacy-nginx-os-20261110
+    container_name: ai-train
+    restart: unless-stopped
+    ports:
+    - 8001:80
+    volumes:
+    - /home/wuilliam/proyectos/ai-train:/usr/share/nginx/html:ro
+    logging:
+      driver: json-file
+networks:
+  default:
+    external: true
+    name: ai-train_default
